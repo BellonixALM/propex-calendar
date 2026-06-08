@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Календар Propex Ukraine</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>:root{--bg-color:#0b0c0e;--card-bg:#14161a;--card-hover:#1c1f26;--border-color:#22252d;--border-focus:#3b82f6;--text-color:#f3f4f6;--text-muted:#9ca3af;--text-dark:#4b5563;--primary:#10b981;--primary-hover:#059669;--accent-blue:#0284c7;--accent-purple:#8b5cf6;--danger:#ef4444;--status-planned:#6b7280;--status-in-progress:#3b82f6;--status-completed:#10b981;--status-problem:#ef4444;--font-title:'Outfit', 'Inter', sans-serif;--font-body:'Inter', sans-serif;--transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:var(--font-body);background-color:var(--bg-color);color:var(--text-color);line-height:1.5;overflow-x:hidden;height:100vh;}.app-container{display:flex;flex-direction:column;height:100vh;max-width:1600px;margin:0 auto;padding:16px;}header{display:flex;flex-direction:column;gap:16px;padding-bottom:16px;border-bottom:1px solid var(--border-color);margin-bottom:16px;}.header-top{display:flex;justify-content:space-between;align-items:center;}.logo-container{display:flex;align-items:baseline;font-family:var(--font-title);text-decoration:none;cursor:pointer;}.logo-pro{color:#ef4444;font-weight:800;font-size:32px;letter-spacing:-1px;}.logo-pex{color:#0284c7;font-weight:800;font-size:32px;letter-spacing:-1px;}.logo-sub{color:var(--text-muted);font-size:10px;margin-left:6px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}.header-actions{display:flex;gap:12px;align-items:center;}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background-color:var(--primary);color:#ffffff;border:none;padding:10px 20px;border-radius:8px;font-family:var(--font-title);font-weight:600;font-size:14px;cursor:pointer;transition:var(--transition);box-shadow:0 4px 12px rgba(16, 185, 129, 0.2);}.btn:hover{background-color:var(--primary-hover);transform:translateY(-1px);box-shadow:0 6px 16px rgba(16, 185, 129, 0.3);}.btn:active{transform:translateY(0);}.btn-secondary{background-color:transparent;border:1px solid var(--border-color);color:var(--text-color);box-shadow:none;}.btn-secondary:hover{background-color:var(--card-hover);border-color:var(--text-muted);box-shadow:none;}.btn-icon{width:38px;height:38px;padding:0;border-radius:8px;}.control-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;background-color:var(--card-bg);padding:12px 16px;border-radius:12px;border:1px solid var(--border-color);}.date-navigation{display:flex;align-items:center;gap:8px;}.date-display{font-family:var(--font-title);font-size:16px;font-weight:700;min-width:180px;text-align:center;cursor:pointer;padding:6px 12px;border-radius:6px;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:6px;}.date-display:hover{background-color:var(--border-color);}.datepicker-input{position:absolute;opacity:0;pointer-events:none;width:0;height:0;}.view-selector{display:flex;background-color:var(--bg-color);padding:4px;border-radius:8px;border:1px solid var(--border-color);}.view-btn{background:none;border:none;color:var(--text-muted);padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:6px;}.view-btn.active{background-color:var(--card-bg);color:var(--text-color);box-shadow:0 2px 8px rgba(0,0,0,0.4);}.view-btn:hover:not(.active){color:var(--text-color);}.car-filter-container{display:flex;align-items:center;gap:8px;}.car-filter-container label{font-size:12px;color:var(--text-muted);font-weight:500;}.select-custom{background-color:var(--bg-color);color:var(--text-color);border:1px solid var(--border-color);padding:6px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;outline:none;transition:var(--transition);}.select-custom:focus{border-color:var(--border-focus);}.calendar-body{flex-grow:1;position:relative;min-height:500px;}.view-panel{display:none;height:100%;animation:fadeIn 0.25s ease-out;}.view-panel.active{display:block;}@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}.day-grid{display:grid;grid-template-columns:80px repeat(4, 1fr);background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:hidden;height:100%;max-height:calc(100vh - 200px);overflow-y:auto;}.grid-header{position:sticky;top:0;z-index:100;background-color:var(--card-bg);padding:12px;text-align:center;font-weight:700;font-family:var(--font-title);border-bottom:2px solid var(--border-color);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}.driver-photo-container{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.3);}.driver-name{font-size:11px;color:var(--text-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}.time-col{background-color:var(--card-bg);padding:10px;text-align:center;font-weight:700;color:var(--text-muted);font-size:12px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border-color);}.grid-cell{background-color:var(--bg-color);padding:6px;min-height:48px;transition:var(--transition);position:relative;}.grid-cell:hover{background-color:var(--card-hover);}.delivery-card{background:linear-gradient(135deg, #1c1f26 0%, #252a34 100%);border-left:4px solid var(--status-planned);border-radius:6px;padding:8px 10px;font-size:12px;margin-bottom:4px;cursor:pointer;box-shadow:0 4px 10px rgba(0, 0, 0, 0.2);transition:var(--transition);position:relative;z-index:5;}.delivery-card:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 8px 16px rgba(0, 0, 0, 0.4);z-index:10;}.delivery-card.planned{border-left-color:var(--status-planned);}.delivery-card.in-progress{border-left-color:var(--status-in-progress);}.delivery-card.completed{border-left-color:var(--status-completed);}.delivery-card.problem{border-left-color:var(--status-problem);background:linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, #1c1f26 100%);border:1px solid rgba(239, 68, 68, 0.25);border-left:4px solid var(--status-problem);animation:problemCardPulse 2s infinite ease-in-out;}@keyframes problemCardPulse{0%{box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.25);}50%{box-shadow:0 4px 20px rgba(239, 68, 68, 0.45), 0 0 10px rgba(239, 68, 68, 0.2);border-color:rgba(239, 68, 68, 0.6);}100%{box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.25);}}.delivery-card.buffer{background:repeating-linear-gradient( 45deg, #14161a, #14161a 10px, #1c1f26 10px, #1c1f26 20px );border-left:4px dashed var(--text-dark);opacity:0.55;cursor:not-allowed;box-shadow:none;}.delivery-card.buffer:hover{transform:none;box-shadow:none;}.card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}.card-time{font-weight:800;color:#ffffff;font-size:11px;}.card-order-badge{background-color:var(--border-color);color:var(--accent-blue);padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;}.card-order-badge.cash{color:#eab308;}.card-address{font-weight:500;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}.card-footer{display:flex;justify-content:space-between;color:var(--text-muted);font-size:10px;}.card-car-badge{background-color:rgba(2, 132, 199, 0.15);color:var(--accent-blue);padding:0px 4px;border-radius:3px;font-weight:800;}.week-grid{display:grid;grid-template-columns:80px repeat(7, 1fr);background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:hidden;height:100%;max-height:calc(100vh - 200px);overflow-y:auto;}.grid-header.week-day{border-bottom:2px solid var(--border-color);}.week-day-title{font-size:13px;font-weight:700;}.week-day-date{font-size:18px;font-weight:800;color:var(--accent-blue);font-family:var(--font-title);}.week-day.today .week-day-date{background-color:var(--accent-blue);color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}.month-grid{display:grid;grid-template-columns:repeat(7, 1fr);background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:hidden;height:100%;}.month-header-cell{background-color:var(--card-bg);padding:10px;text-align:center;font-weight:700;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border-color);}.month-day-cell{background-color:var(--bg-color);min-height:100px;padding:8px;border-right:1px solid var(--border-color);border-bottom:1px solid var(--border-color);cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;gap:4px;}.month-day-cell:hover{background-color:var(--card-hover);}.month-day-cell.other-month{background-color:#08090a;opacity:0.4;}.month-day-number{font-family:var(--font-title);font-weight:800;font-size:14px;align-self:flex-end;color:var(--text-muted);}.month-day-cell.today .month-day-number{color:#ffffff;background-color:var(--accent-blue);width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;}.month-mini-card{font-size:10px;padding:2px 6px;border-radius:4px;background-color:var(--card-bg);border-left:3px solid var(--status-planned);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-color);font-weight:500;}.month-mini-card.planned{border-left-color:var(--status-planned);}.month-mini-card.in-progress{border-left-color:var(--status-in-progress);}.month-mini-card.completed{border-left-color:var(--status-completed);}.month-mini-card.problem{border-left-color:var(--status-problem);}.list-container{display:flex;flex-direction:column;gap:16px;}.list-search-bar{display:flex;gap:12px;background-color:var(--card-bg);padding:12px 16px;border-radius:12px;border:1px solid var(--border-color);}.search-input-wrapper{position:relative;flex-grow:1;}.search-input-wrapper i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);width:18px;height:18px;}.input-search{width:100%;background-color:var(--bg-color);border:1px solid var(--border-color);color:var(--text-color);padding:10px 10px 10px 40px;border-radius:8px;outline:none;font-size:14px;transition:var(--transition);}.input-search:focus{border-color:var(--border-focus);}.list-results{display:flex;flex-direction:column;gap:16px;max-height:calc(100vh - 260px);overflow-y:auto;padding-right:4px;}.list-group{display:flex;flex-direction:column;gap:8px;}.list-group-title{font-family:var(--font-title);font-size:14px;font-weight:700;color:var(--accent-blue);border-left:3px solid var(--accent-blue);padding-left:8px;margin-bottom:4px;}.list-row-card{background-color:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:16px;display:grid;grid-template-columns:80px 120px 1fr 100px 100px;align-items:center;gap:16px;cursor:pointer;transition:var(--transition);}.list-row-card:hover{background-color:var(--card-hover);border-color:var(--text-muted);transform:translateX(4px);}.list-time{font-family:var(--font-title);font-weight:800;font-size:16px;}.list-car-info{display:flex;align-items:center;gap:8px;}.list-address-info{font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.list-address-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}.list-badge-status{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:700;background-color:rgba(255,255,255,0.05);width:fit-content;}.list-badge-status.planned{color:var(--text-muted);border:1px solid var(--status-planned);}.list-badge-status.in-progress{color:var(--status-in-progress);border:1px solid var(--status-in-progress);}.list-badge-status.completed{color:var(--status-completed);border:1px solid var(--status-completed);}.list-badge-status.problem{color:var(--status-problem);border:1px solid var(--status-problem);}.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(6, 7, 9, 0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);justify-content:center;align-items:center;z-index:1000;opacity:0;transition:opacity 0.25s ease-out;}.modal.show{display:flex;opacity:1;}.modal-content{background-color:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;width:520px;max-width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.6);transform:scale(0.95);transition:transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);}.modal.show .modal-content{transform:scale(1);}.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border-color);}.modal-header h2{font-family:var(--font-title);font-size:20px;font-weight:800;}.modal-close-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:50%;transition:var(--transition);}.modal-close-btn:hover{background-color:var(--border-color);color:#fff;}.modal-body{padding:24px;}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.form-group{margin-bottom:18px;position:relative;}.form-group.full-width{grid-column:span 2;}.form-group label{display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--text-muted);}.form-control{width:100%;background-color:var(--bg-color);border:1px solid var(--border-color);color:var(--text-color);padding:10px 12px;border-radius:8px;font-family:var(--font-body);font-size:14px;outline:none;transition:var(--transition);}.form-control:focus{border-color:var(--border-focus);box-shadow:0 0 0 2px rgba(59, 130, 246, 0.15);}.autocomplete-items{position:absolute;border:1px solid var(--border-color);z-index:120;top:100%;left:0;right:0;background-color:var(--card-bg);max-height:180px;overflow-y:auto;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);margin-top:4px;}.autocomplete-items div{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border-color);font-size:13px;transition:var(--transition);}.autocomplete-items div:hover{background-color:var(--border-color);color:#ffffff;}.modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid var(--border-color);}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.detail-item{border-bottom:1px solid var(--border-color);padding-bottom:8px;}.detail-item.full-width{grid-column:span 2;}.detail-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}.detail-value{font-size:14px;font-weight:600;color:#ffffff;}@media (max-width:1024px){.day-grid{grid-template-columns:80px repeat(2, 1fr);}.day-grid > div[data-car="3"], .day-grid > div[data-car="4"], .day-grid > header[data-car="3"], .day-grid > header[data-car="4"]{display:none !important;}.list-row-card{grid-template-columns:80px 1fr 100px;}.list-car-info{display:none;}}@media (max-width:768px){.day-grid{grid-template-columns:60px 1fr;}.day-grid > div:not([data-car="1"]), .day-grid > header:not([data-car="1"]):not(:first-child){display:none !important;}.control-bar{flex-direction:column;align-items:stretch;}.date-navigation{justify-content:space-between;}.view-selector{justify-content:space-between;}.list-row-card{grid-template-columns:1fr;gap:8px;}.form-grid{grid-template-columns:1fr;}.form-group.full-width{grid-column:span 1;}}.delivery-card.incident-affected{border:1px dashed rgba(249, 115, 22, 0.45);border-left:4px dashed #f97316 !important;background:linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, #16181d 100%) !important;animation:incidentAffectedPulse 2.5s infinite ease-in-out;}.delivery-card.incident-affected .card-time{color:#f97316 !important;font-weight:700;}@keyframes incidentAffectedPulse{0%{box-shadow:0 4px 8px rgba(249, 115, 22, 0.05);border-color:rgba(249, 115, 22, 0.3);}50%{box-shadow:0 4px 15px rgba(249, 115, 22, 0.25), 0 0 8px rgba(249, 115, 22, 0.1);border-color:rgba(249, 115, 22, 0.6);}100%{box-shadow:0 4px 8px rgba(249, 115, 22, 0.05);border-color:rgba(249, 115, 22, 0.3);}}.month-mini-card.incident-affected{border-left:3px dashed #f97316 !important;background-color:rgba(249, 115, 22, 0.15) !important;color:#ff9d5c !important;}.list-row-card.incident-affected{border:1px dashed rgba(249, 115, 22, 0.35) !important;background:linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, #14161a 100%) !important;animation:listIncidentPulse 3s infinite ease-in-out;}.incident-alert-text{color:#f97316;font-size:11px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px;}@keyframes listIncidentPulse{0%{border-color:rgba(249, 115, 22, 0.2);}50%{border-color:rgba(249, 115, 22, 0.45);}100%{border-color:rgba(249, 115, 22, 0.2);}}.login-screen-container{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center, #111317 0%, #07080a 100%);display:flex;align-items:center;justify-content:center;z-index:99999;font-family:var(--font-body);}.login-card{width:100%;max-width:420px;padding:40px;background:rgba(20, 22, 26, 0.7);border:1px solid rgba(255, 255, 255, 0.05);border-radius:16px;box-shadow:0 20px 50px rgba(0, 0, 0, 0.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);text-align:center;animation:loginFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);}@keyframes loginFadeIn{from{opacity:0;transform:scale(0.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}.login-logo{font-family:var(--font-title);font-size:28px;font-weight:800;background:linear-gradient(135deg, #10b981 0%, #0284c7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;letter-spacing:-0.5px;}.login-subtitle{color:var(--text-muted);font-size:14px;margin-bottom:30px;}.login-form-group{text-align:left;margin-bottom:20px;position:relative;}.login-form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}.login-input{width:100%;padding:12px 16px;background:rgba(11, 12, 14, 0.6);border:1px solid rgba(255, 255, 255, 0.08);border-radius:8px;color:var(--text-color);font-size:14px;font-family:var(--font-body);transition:var(--transition);}.login-input:focus{outline:none;border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(2, 132, 199, 0.15);background:rgba(11, 12, 14, 0.9);}.password-toggle-btn{position:absolute;right:12px;top:35px;background:none;border:none;color:var(--text-dark);cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}.password-toggle-btn:hover{color:var(--text-muted);}.login-error{color:var(--danger);font-size:13px;font-weight:500;margin-bottom:15px;display:none;padding:8px 12px;background:rgba(239, 68, 68, 0.1);border-radius:6px;border:1px solid rgba(239, 68, 68, 0.15);text-align:left;}.login-btn{width:100%;padding:12px;background:linear-gradient(135deg, #10b981 0%, #059669 100%);border:none;border-radius:8px;color:white;font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);box-shadow:0 4px 12px rgba(16, 185, 129, 0.2);}.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(16, 185, 129, 0.35);}.login-btn:active{transform:translateY(0);}.login-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}@media (max-width:600px){.login-screen-container{padding:10px;}.login-card{max-width:94%;padding:36px 20px;border-radius:20px;box-shadow:0 15px 40px rgba(0, 0, 0, 0.6);}.login-logo{font-size:34px !important;margin-bottom:12px;}.login-subtitle{font-size:16px !important;margin-bottom:35px;}.login-form-group{margin-bottom:24px;}.login-form-group label{font-size:14px !important;margin-bottom:10px;}.login-input{padding:16px 20px !important;font-size:18px !important;border-radius:10px;}.password-toggle-btn{top:40px !important;right:16px !important;transform:scale(1.2);}.login-btn{padding:16px !important;font-size:18px !important;border-radius:10px;margin-top:10px;}.login-logo-container svg{width:80px !important;height:80px !important;margin-bottom:16px !important;}}.header-profile-info{display:flex;align-items:center;gap:12px;margin-left:15px;padding-left:15px;border-left:1px solid var(--border-color);}.profile-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:white;}.profile-details{display:flex;flex-direction:column;text-align:left;}.profile-name{font-size:12px;font-weight:700;color:var(--text-color);}.profile-role{font-size:10px;color:var(--text-muted);font-weight:500;}.logout-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}.logout-btn:hover{background:rgba(239, 68, 68, 0.1);color:var(--danger);}.director-banner{width:100%;background:linear-gradient(90deg, rgba(217, 119, 6, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%);border-bottom:1px solid rgba(217, 119, 6, 0.25);padding:8px 20px;font-size:12px;color:#f59e0b;font-weight:600;display:flex;align-items:center;gap:8px;}.delivery-card[draggable="true"]{cursor:grab;user-select:none;}.delivery-card.dragging{opacity:0.35;transform:scale(0.97);border:2px dashed var(--accent-blue) !important;box-shadow:0 4px 12px rgba(0, 0, 0, 0.3) !important;z-index:1000 !important;}.grid-cell.drag-hover{background-color:rgba(2, 132, 199, 0.12) !important;outline:2px dashed var(--border-focus) !important;outline-offset:-2px;transition:var(--transition);box-shadow:inset 0 0 10px rgba(59, 130, 246, 0.15);}.driver-photo-container{position:relative;cursor:default;}.driver-photo-container.admin-editable{cursor:pointer;}.avatar-edit-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0, 0, 0, 0.6);display:flex;align-items:center;justify-content:center;opacity:0;transition:var(--transition);border-radius:50%;}.driver-photo-container.admin-editable:hover .avatar-edit-overlay{opacity:1;}.card-driver-info{display:flex;align-items:center;gap:6px;}.card-driver-avatar{width:18px;height:18px;border-radius:50%;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1px solid rgba(255, 255, 255, 0.15);}.card-driver-avatar-initial{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1px solid rgba(255, 255, 255, 0.15);}</style>
+</head>
+<body>
+  
+  <div id="login-container" class="login-screen-container">
+    <div class="login-card">
+      <div class="login-logo-container" style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: center;">
+        
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.35)); margin-bottom: 12px;">
+          <path d="M12 8H36C45.9411 8 54 16.0589 54 26C54 35.9411 45.9411 44 36 44H24V56H12V8Z" fill="url(#logo-grad)" />
+          <path d="M24 20H36C39.3137 20 42 22.6863 42 26C42 29.3137 39.3137 32 36 32H24V20Z" fill="#ffffff" fill-opacity="0.9" />
+          <circle cx="44" cy="44" r="8" fill="#0284c7" />
+          <path d="M41 44H47M44 41V47" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+          <defs>
+            <linearGradient id="logo-grad" x1="12" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#10b981" />
+              <stop offset="1" stop-color="#0284c7" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="login-logo-text" style="font-family: var(--font-title); font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #10b981 0%, #0284c7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">Propex</span>
+      </div>
+      <div class="login-subtitle">Система планування та логістики Propex</div>
+      
+      <div class="login-error" id="login-error-msg">Невірний логін або пароль</div>
+      
+      <div id="login-form">
+        <div class="login-form-group">
+          <label for="login-username">Логін</label>
+          <input type="text" id="login-username" class="login-input" placeholder="Введіть ваш логін" required onkeypress="if(event.key === 'Enter') handleLogin()">
+        </div>
+        <div class="login-form-group">
+          <label for="login-password">Пароль</label>
+          <input type="password" id="login-password" class="login-input" placeholder="Введіть ваш пароль" required onkeypress="if(event.key === 'Enter') handleLogin()">
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()">
+            <i data-lucide="eye" id="password-toggle-icon" style="width:18px;height:18px;"></i>
+          </button>
+        </div>
+        <button type="button" class="login-btn" id="login-submit-btn" onclick="handleLogin()">Увійти в систему</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="director-banner" id="director-mode-banner" style="display: none;">
+    <i data-lucide="shield-alert" style="width:16px;height:16px;"></i>
+    <span id="director-banner-text">👑 Режим планування (Логіст)</span>
+  </div>
+  <div class="app-container" id="app-wrapper" style="display:none;">
+    <header>
+      <div class="header-top">
+        <a class="logo-container" onclick="resetToToday()">
+          <span class="logo-pro">Pro</span>
+          <span class="logo-pex">Pex</span>
+          <span class="logo-sub">Ukraine</span>
+        </a>
+        <div class="header-actions">
+          <button class="btn" id="add-delivery-btn" onclick="openNewDeliveryModal()">
+            <i data-lucide="plus-circle" style="width:18px;height:18px;"></i>
+            Додати доставку
+          </button>
+          
+          
+          <div class="header-profile-info" id="user-profile-widget" style="display: none;">
+            <div class="profile-avatar" id="user-avatar-char">U</div>
+            <div class="profile-details">
+              <span class="profile-name" id="user-profile-name">Користувач</span>
+              <span class="profile-role" id="user-profile-role">Роль</span>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()" title="Вийти з системи">
+              <i data-lucide="log-out" style="width:16px;height:16px;"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-bar">
+        
+        <div class="date-navigation">
+          <button class="btn btn-secondary btn-icon" onclick="navigateDate(-1)" title="Попередній період">
+            <i data-lucide="chevron-left" style="width:18px;height:18px;"></i>
+          </button>
+          <div class="date-display" onclick="triggerDatePicker()">
+            <i data-lucide="calendar" style="width:16px;height:16px;color:var(--accent-blue);"></i>
+            <span id="date-label">Завантаження...</span>
+            <input type="date" id="calendar-datepicker" class="datepicker-input" onchange="onDateSelected(this.value)">
+          </div>
+          <button class="btn btn-secondary btn-icon" onclick="navigateDate(1)" title="Наступний період">
+            <i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
+          </button>
+          <button class="btn btn-secondary" onclick="resetToToday()">Сьогодні</button>
+        </div>
+
+        
+        <div class="car-filter-container">
+          <label for="car-filter">Автомобіль:</label>
+          <select id="car-filter" class="select-custom" onchange="onCarFilterChanged(this.value)">
+            <option value="all">🚙 Всі автомобілі</option>
+            <option value="1">🚙 Авто 1</option>
+            <option value="2">🚙 Авто 2</option>
+            <option value="3">🚙 Авто 3</option>
+            <option value="4">🚙 Авто 4</option>
+          </select>
+        </div>
+
+        
+        <div class="view-selector">
+          <button class="view-btn active" id="view-day-btn" onclick="switchView('day')">
+            <i data-lucide="clock" style="width:14px;height:14px;"></i>День
+          </button>
+          <button class="view-btn" id="view-week-btn" onclick="switchView('week')">
+            <i data-lucide="calendar-range" style="width:14px;height:14px;"></i>Тиждень
+          </button>
+          <button class="view-btn" id="view-month-btn" onclick="switchView('month')">
+            <i data-lucide="calendar-days" style="width:14px;height:14px;"></i>Місяць
+          </button>
+          <button class="view-btn" id="view-list-btn" onclick="switchView('list')">
+            <i data-lucide="list-todo" style="width:14px;height:14px;"></i>Список
+          </button>
+        </div>
+      </div>
+    </header>
+
+    
+    <div class="calendar-body">
+      
+      <div id="day-view-panel" class="view-panel active">
+        <div class="day-grid" id="day-grid-container">
+          
+        </div>
+      </div>
+
+      
+      <div id="week-view-panel" class="view-panel">
+        <div class="week-grid" id="week-grid-container">
+          
+        </div>
+      </div>
+
+      
+      <div id="month-view-panel" class="view-panel">
+        <div class="month-grid" id="month-grid-container">
+          
+        </div>
+      </div>
+
+      
+      <div id="list-view-panel" class="view-panel">
+        <div class="list-container">
+          <div class="list-search-bar">
+            <div class="search-input-wrapper">
+              <i data-lucide="search"></i>
+              <input type="text" id="list-search-input" class="input-search" placeholder="Пошук доставок за адресою, замовленням чи коментарем..." oninput="renderListView()">
+            </div>
+          </div>
+          <div class="list-results" id="list-results-container">
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="modal" id="delivery-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title">Нова доставка</h2>
+        <button class="modal-close-btn" onclick="closeModal('delivery-modal')">
+          <i data-lucide="x" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="delivery-form" onsubmit="return false;">
+          <div class="form-grid">
+            <div class="form-group" id="form-group-manager">
+              <label for="form-manager-id">ID Менеджера (Telegram ID)</label>
+              <input type="text" id="form-manager-id" class="form-control" placeholder="Напр. 1931242904">
+            </div>
+            <div class="form-group">
+              <label for="form-car">Автомобіль *</label>
+              <select id="form-car" class="form-control" required>
+                <option value="1">Авто 1</option>
+                <option value="2">Авто 2</option>
+                <option value="3">Авто 3</option>
+                <option value="4">Авто 4</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-date">Дата доставки *</label>
+              <input type="date" id="form-date" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="form-time">Час доставки *</label>
+              <select id="form-time" class="form-control" required>
+                
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-order-num">Номер замовлення *</label>
+              <input type="text" id="form-order-num" class="form-control" placeholder="Напр. 12345" required>
+            </div>
+            <div class="form-group">
+              <label for="form-payment">Статус оплати *</label>
+              <select id="form-payment" class="form-control" required>
+                <option value="Оплачено">🟢 Оплачено</option>
+                <option value="Оплачено частково">🟡 Оплачено частково</option>
+                <option value="Не оплачено">🔴 Не оплачено</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-receiver-name">Ім'я одержувача</label>
+              <input type="text" id="form-receiver-name" class="form-control" placeholder="Хто зустрічає?">
+            </div>
+            <div class="form-group">
+              <label for="form-receiver-phone">Телефон одержувача</label>
+              <input type="text" id="form-receiver-phone" class="form-control" placeholder="+380...">
+            </div>
+            <div class="form-group full-width">
+              <label for="form-address">Адреса доставки *</label>
+              <input type="text" id="form-address" class="form-control" placeholder="Введіть вулицю та будинок в Києві..." autocomplete="off" required>
+              <div id="autocomplete-list" class="autocomplete-items"></div>
+            </div>
+            <div class="form-group full-width">
+              <label for="form-comment">Коментар / Примітки</label>
+              <textarea id="form-comment" class="form-control" rows="3" placeholder="Особливості заїзду, ліфт, час зустрічі тощо..."></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('delivery-modal')">Скасувати</button>
+        <button class="btn" id="save-btn" onclick="saveDelivery()">Зберегти доставку</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="modal" id="details-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Деталі доставки</h2>
+        <button class="modal-close-btn" onclick="closeModal('details-modal')">
+          <i data-lucide="x" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">Автомобіль</div>
+            <div class="detail-value" id="det-car">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Час та дата</div>
+            <div class="detail-value" id="det-time-date">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Номер замовлення</div>
+            <div class="detail-value" id="det-order">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Статус оплати</div>
+            <div class="detail-value" id="det-payment">-</div>
+          </div>
+          <div class="detail-item full-width">
+            <div class="detail-label">Адреса доставки</div>
+            <div class="detail-value" id="det-address">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Ім'я одержувача</div>
+            <div class="detail-value" id="det-receiver-name">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Телефон одержувача</div>
+            <div class="detail-value" id="det-receiver-phone">-</div>
+          </div>
+          <div class="detail-item full-width">
+            <div class="detail-label">Статус доставки</div>
+            <div class="detail-value" id="det-status">-</div>
+          </div>
+          <div class="detail-item full-width" style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 8px;">
+            <div class="detail-label">Змінити статус доставки</div>
+            <div style="display: flex; gap: 10px; margin-top: 6px;">
+              <select id="det-status-select" class="select-custom" style="flex-grow: 1; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; font-weight: 600; color: var(--text-color); outline: none;">
+                <option value="Заплановано">⚪ Заплановано</option>
+                <option value="В процесі">🔵 В процесі</option>
+                <option value="Виконано">🟢 Виконано</option>
+                <option value="Аварія на дорозі">🔴 Аварія на дорозі</option>
+              </select>
+              <button class="btn" id="update-status-btn" onclick="submitStatusUpdate()" style="padding: 8px 16px;">Оновити</button>
+            </div>
+          </div>
+          <div class="detail-item full-width">
+            <div class="detail-label">Коментар / Примітки</div>
+            <div class="detail-value" id="det-comment">-</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <button class="btn btn-secondary" onclick="closeModal('details-modal')">Закрити</button>
+        <button class="btn" id="edit-delivery-btn" onclick="editCurrentDelivery()" style="background: linear-gradient(135deg, var(--accent-blue) 0%, #0284c7 100%); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);">✏️ Редагувати</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.alert = function(msg) {
+      console.log("ALERT INTERCEPTED:", msg);
+      const errBox = document.getElementById('login-error-msg');
+      if (errBox) {
+        errBox.textContent = "АЛЕРТ: " + msg;
+        errBox.style.display = 'block';
+      }
+    };
+    (function() {
+      let scriptUrlTemplate = "<?= scriptUrl ?>";
+      let WEBAPP_URL = scriptUrlTemplate.includes("?=") 
+          ? "https://script.google.com/macros/s/AKfycbxlPcoji6rbvbtkmKX_UOmdZu0eupN-1P8jlkqo0EuEcKuf6uj58jYibi6mNe5UxGyF/exec" 
+          : scriptUrlTemplate;
+      
+      const paramApi = new URLSearchParams(window.location.search).get('api');
+      if (paramApi) WEBAPP_URL = paramApi;
+      
+      console.log("🚀 Bulletproof Fetch Bridge active: using REST API CORS calls to", WEBAPP_URL);
+      function ScriptRunBridge() {
+        this._successHandler = null;
+        this._failureHandler = null;
+      }
+      ScriptRunBridge.prototype.withSuccessHandler = function(callback) {
+        this._successHandler = callback;
+        return this;
+      };
+      ScriptRunBridge.prototype.withFailureHandler = function(callback) {
+        this._failureHandler = callback;
+        return this;
+      };
+      ScriptRunBridge.prototype._callAPI = function(action, data) {
+        const self = this;
+        const callbackName = 'propex_cb_' + Math.round(1000000000 * Math.random());
+        
+        // Capture handlers in closure and reset them immediately
+        const successCb = this._successHandler;
+        const failureCb = this._failureHandler;
+        this._successHandler = null;
+        this._failureHandler = null;
+        
+        window[callbackName] = function(result) {
+          delete window[callbackName];
+          const scriptEl = document.getElementById(callbackName);
+          if (scriptEl) scriptEl.remove();
+          
+          if (result && result.status === 'error') {
+            if (failureCb) {
+              failureCb(result.message || "Unknown server error");
+            } else {
+              const errD = document.getElementById('login-error-msg');
+              if (errD) { errD.textContent = "Помилка: " + (result.message || "Unknown"); errD.style.display = 'block'; }
+            }
+          } else {
+            if (successCb) {
+              successCb(result);
+            }
+          }
+        };
+
+        const script = document.createElement('script');
+        script.id = callbackName;
+        script.onerror = function() {
+          delete window[callbackName];
+          script.remove();
+          if (failureCb) {
+            failureCb("Мережева помилка при виконанні JSONP запиту");
+          } else {
+            const errD = document.getElementById('login-error-msg');
+            if (errD) { errD.textContent = "Мережева помилка (JSONP)"; errD.style.display = 'block'; }
+          }
+        };
+
+        const encodedPayload = encodeURIComponent(JSON.stringify(data || {}));
+        const separator = WEBAPP_URL.includes('?') ? '&' : '?';
+        script.src = WEBAPP_URL + separator + 'action=' + encodeURIComponent(action) + '&payload=' + encodedPayload + '&callback=' + callbackName;
+        
+        document.head.appendChild(script);
+      };
+      ScriptRunBridge.prototype.authenticateUser = function(login, password) {
+        this._callAPI('login', { login: login, password: password });
+        return this;
+      };
+      ScriptRunBridge.prototype.getDeliveries = function() {
+        this._callAPI('getDeliveries', {});
+        return this;
+      };
+      ScriptRunBridge.prototype.getDailyCrews = function() {
+        this._callAPI('getDailyCrews', {});
+        return this;
+      };
+      ScriptRunBridge.prototype.getDrivers = function() {
+        this._callAPI('getDrivers', {});
+        return this;
+      };
+      ScriptRunBridge.prototype.updateDriverPhoto = function(carId, photoBase64) {
+        this._callAPI('updateDriverPhoto', { carId: carId, photoBase64: photoBase64 });
+        return this;
+      };
+      ScriptRunBridge.prototype.updateDeliveryStatus = function(deliveryId, newStatus, comment) {
+        this._callAPI('updateDeliveryStatus', { id: deliveryId, status: newStatus, comment: comment });
+        return this;
+      };
+      ScriptRunBridge.prototype.addDelivery = function(deliveryData) {
+        this._callAPI('addDelivery', deliveryData);
+        return this;
+      };
+      ScriptRunBridge.prototype.updateDeliveryDetails = function(deliveryId, deliveryData, userRole) {
+        this._callAPI('updateDeliveryDetails', { id: deliveryId, deliveryData: deliveryData, userRole: userRole });
+        return this;
+      };
+      ScriptRunBridge.prototype.saveDailyCrew = function(dateStr, crewDataJson) {
+        this._callAPI('saveDailyCrew', { dateStr: dateStr, crewData: crewDataJson });
+        return this;
+      };
+      window.propexApi = new ScriptRunBridge();
+      console.log("💎 Custom propexApi Bridge successfully initialized!");
+    })();
+    window.onerror = function(message, source, lineno, colno, error) {
+      const msg = "JS Error: " + message + " (Line " + lineno + ")";
+      console.error(msg, error);
+      try {
+        const errDiv = document.createElement('div');
+        errDiv.id = "global-js-error-banner";
+        errDiv.style.cssText = "position:fixed; top:0; left:0; width:100%; background:#ef4444; color:white; padding:12px; z-index:999999; font-size:13px; font-family:monospace; font-weight:700; box-shadow:0 4px 12px rgba(0,0,0,0.5); text-align:center;";
+        errDiv.innerHTML = `⚠️ Критична помилка скрипту: ${message} (Рядок ${lineno}) <button onclick="this.parentElement.remove()" style="margin-left:20px; background:rgba(0,0,0,0.2); border:1px solid white; color:white; padding:2px 8px; border-radius:4px; cursor:pointer;">Закрити</button>`;
+        document.body.appendChild(errDiv);
+      } catch (e) {
+        alert(msg);
+      }
+      return false;
+    };
+    const hours = [
+      '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', 
+      '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', 
+      '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', 
+      '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'
+    ];
+    const state = {
+      currentDate: new Date(),
+      currentView: 'day',
+      selectedCar: 'all',
+      deliveries: [],
+      drivers: [],
+      currentUser: null
+    };
+    let isEditMode = false;
+    let editDeliveryId = null;
+    function parseDateStr(str) {
+      if (!str) return null;
+      const parts = str.split('.');
+      if (parts.length !== 3) return null;
+      return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
+    function formatDateStr(date) {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${d}.${m}.${y}`;
+    }
+    function formatDateISO(date) {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${y}-${m}-${d}`;
+    }
+    function getMonday(d) {
+      d = new Date(d);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(d.setDate(diff));
+    }
+    const monthNames = [
+      "Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень",
+      "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"
+    ];
+    const dayNamesShort = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+    function getUkrainianDateString(date) {
+      if (!date) return '';
+      const daysOfWeek = ["неділя", "понеділок", "вівторок", "середа", "четвер", "п'ятниця", "субота"];
+      const months = ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"];
+      const dayOfWeek = daysOfWeek[date.getDay()];
+      const day = date.getDate();
+      const month = months[date.getMonth()];
+      const year = date.getFullYear();
+      return `${dayOfWeek}, ${day} ${month} ${year} р.`;
+    }
+    function updateDateLabel() {
+      const label = document.getElementById('date-label');
+      const debugSuffix = window.debugLoadedText || '';
+      if (state.currentView === 'day') {
+        label.textContent = getUkrainianDateString(state.currentDate) + debugSuffix;
+      } else if (state.currentView === 'week') {
+        const monday = getMonday(state.currentDate);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        const monStr = monday.getDate() + " " + monthNames[monday.getMonth()].substring(0, 3).toLowerCase();
+        const sunStr = sunday.getDate() + " " + monthNames[sunday.getMonth()].substring(0, 3).toLowerCase();
+        label.textContent = `${monStr} – ${sunStr} ${sunday.getFullYear()}` + debugSuffix;
+      } else if (state.currentView === 'month') {
+        label.textContent = `${monthNames[state.currentDate.getMonth()]} ${state.currentDate.getFullYear()}` + debugSuffix;
+      } else if (state.currentView === 'list') {
+        label.textContent = `Список доставок` + debugSuffix;
+      }
+    }
+    let dataLoadedSuccessfully = false;
+    function loadDeliveriesSafely() {
+      const label = document.getElementById('date-label');
+      label.textContent = "⏱️ Завантаження доставок...";
+      propexApi
+        .withFailureHandler(function(err) {
+          dataLoadedSuccessfully = true;
+          console.error("Failed to load deliveries from Sheets:", err);
+          label.textContent = "❌ Помилка доставок: " + (err.message || err).substring(0, 50);
+          state.deliveries = [];
+          renderCalendar();
+        })
+        .withSuccessHandler(function(response) {
+          dataLoadedSuccessfully = true;
+          state.deliveries = (response && response.status === 'success') ? response.data : (response || []);
+          window.debugLoadedText = ' (Loaded: ' + (state.deliveries ? state.deliveries.length : 'null') + ')';
+          label.textContent = "⚙️ Оновлення сітки...";
+          renderCalendar();
+          updateDateLabel();
+        })
+        .getDeliveries();
+    }
+    function loadData() {
+      const label = document.getElementById('date-label');
+      
+        label.textContent = "⏱️ Завантаження водіїв...";
+        propexApi
+          .withSuccessHandler(function(response) {
+            state.dailyCrews = (response && response.status === 'success') ? response.data : (response || []);
+          })
+          .withFailureHandler(function(err) {
+            console.error("Failed to load daily shifts:", err);
+            state.dailyCrews = [];
+          })
+          .getDailyCrews();
+        propexApi
+          .withFailureHandler(function(err) {
+            dataLoadedSuccessfully = true;
+            console.error("Failed to load drivers from Sheets:", err);
+            label.textContent = "⏱️ Водіїв не знайдено, вантажимо доставки...";
+            state.drivers = [];
+            renderDriversHeader();
+            loadDeliveriesSafely();
+          })
+          .withSuccessHandler(function(response) {
+            state.drivers = (response && response.status === 'success') ? response.data : (response || []);
+            renderDriversHeader();
+            loadDeliveriesSafely();
+          })
+          .getDrivers();
+    }
+    function renderDriversHeader() {
+    }
+    function navigateDate(direction) {
+      if (state.currentView === 'day') {
+        state.currentDate.setDate(state.currentDate.getDate() + direction);
+      } else if (state.currentView === 'week') {
+        state.currentDate.setDate(state.currentDate.getDate() + direction * 7);
+      } else if (state.currentView === 'month') {
+        state.currentDate.setMonth(state.currentDate.getMonth() + direction);
+      }
+      updateDateLabel();
+      renderCalendar();
+    }
+    function resetToToday() {
+      state.currentDate = new Date();
+      updateDateLabel();
+      renderCalendar();
+    }
+    function triggerDatePicker() {
+      const picker = document.getElementById('calendar-datepicker');
+      picker.value = formatDateISO(state.currentDate);
+      picker.showPicker();
+    }
+    function onDateSelected(isoValue) {
+      if (!isoValue) return;
+      const parts = isoValue.split('-');
+      state.currentDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      updateDateLabel();
+      renderCalendar();
+    }
+    function onCarFilterChanged(value) {
+      state.selectedCar = value;
+      renderCalendar();
+    }
+    function switchView(view) {
+      state.currentView = view;
+      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`view-${view}-btn`).classList.add('active');
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(`${view}-view-panel`).classList.add('active');
+      updateDateLabel();
+      renderCalendar();
+    }
+    function togglePasswordVisibility() {
+      const passwordInput = document.getElementById('login-password');
+      const toggleIcon = document.getElementById('password-toggle-icon');
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.setAttribute('data-lucide', 'eye');
+      }
+      safeCreateIcons();
+    }
+    function handleLogin() {
+      try {
+        console.log("handleLogin triggered");
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value.trim();
+        const errorMsg = document.getElementById('login-error-msg');
+        const submitBtn = document.getElementById('login-submit-btn');
+        if (!username || !password) {
+          errorMsg.textContent = "Будь ласка, введіть логін та пароль!";
+          errorMsg.style.display = 'block';
+          return;
+        }
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Перевірка...";
+        errorMsg.style.display = 'none';
+        if (typeof propexApi !== 'undefined') {
+          propexApi
+            .withSuccessHandler(function(response) {
+              try {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Увійти в систему";
+                if (!response) throw new Error("Empty response from server");
+                if (response.status === 'success') {
+                  if (!response.user) throw new Error("User object missing in response");
+                  loginUser(response.user);
+                } else {
+                  errorMsg.textContent = response.message || "Невірний логін або пароль";
+                  errorMsg.style.display = 'block';
+                }
+              } catch (innerErr) {
+                errorMsg.textContent = "UI Crash (Success): " + innerErr.message;
+                errorMsg.style.display = 'block';
+              }
+            })
+            .withFailureHandler(function(err) {
+              try {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Увійти в систему";
+                const errMsg = err.message || err;
+                errorMsg.textContent = "Помилка сервера: " + errMsg;
+                errorMsg.style.display = 'block';
+              } catch (innerErr) {
+                errorMsg.textContent = "UI Crash (Failure): " + innerErr.message;
+                errorMsg.style.display = 'block';
+              }
+            })
+            .authenticateUser(username, password);
+        } else {
+          errorMsg.textContent = "API is undefined. Bridge initialization failed.";
+          errorMsg.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Увійти в систему";
+        }
+      } catch (err) {
+        console.error("Помилка в handleLogin:", err);
+        const errorMsg = document.getElementById('login-error-msg');
+        if (errorMsg) {
+          errorMsg.textContent = "Критична помилка в handleLogin: " + err.message;
+          errorMsg.style.display = 'block';
+        }
+      }
+    }
+    function loginUser(user) {
+      state.currentUser = user;
+      try { sessionStorage.setItem('propex_user', JSON.stringify(user)); } catch(e) { console.warn('Storage blocked'); }
+      document.getElementById('user-profile-name').textContent = user.name;
+      document.getElementById('user-profile-role').textContent = user.role.toUpperCase();
+      document.getElementById('user-avatar-char').textContent = user.name.charAt(0).toUpperCase();
+      document.getElementById('login-container').style.display = 'none';
+      document.getElementById('app-wrapper').style.display = 'block';
+      document.getElementById('user-profile-widget').style.display = 'flex';
+      applyRoleRestrictions();
+      loadData();
+      document.getElementById('login-username').value = '';
+      document.getElementById('login-password').value = '';
+    }
+    function handleLogout() {
+      state.currentUser = null;
+      try { sessionStorage.removeItem('propex_user'); } catch(e) {}
+      document.getElementById('login-container').style.display = 'flex';
+      document.getElementById('app-wrapper').style.display = 'none';
+      document.getElementById('user-profile-widget').style.display = 'none';
+      document.getElementById('director-mode-banner').style.display = 'none';
+    }
+    function checkSession() {
+      let savedUser = null;
+      try { savedUser = sessionStorage.getItem('propex_user'); } catch(e) {}
+      if (savedUser) {
+        try {
+          const user = JSON.parse(savedUser);
+          loginUser(user);
+        } catch (e) {
+          handleLogout();
+        }
+      } else {
+        handleLogout();
+      }
+    }
+    function applyRoleRestrictions() {
+      const user = state.currentUser;
+      if (!user) return;
+      const banner = document.getElementById('director-mode-banner');
+      const addBtn = document.getElementById('add-delivery-btn');
+      if (user.role === 'director') {
+        banner.style.display = 'block';
+        banner.className = 'director-banner';
+        banner.style.background = 'linear-gradient(90deg, rgba(217, 119, 6, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%)';
+        banner.style.borderBottom = '1px solid rgba(217, 119, 6, 0.25)';
+        banner.style.color = '#f59e0b';
+        document.getElementById('director-banner-text').innerHTML = `👑 <b>Режим директора:</b> ${user.name} — перегляд та редагування дозволено`;
+        addBtn.style.display = 'inline-flex';
+        document.getElementById('det-status-select').disabled = false;
+        document.getElementById('update-status-btn').style.display = 'inline-block';
+        document.getElementById('edit-delivery-btn').style.display = 'inline-block';
+      } else if (user.role === 'logist') {
+        banner.style.display = 'block';
+        banner.className = 'director-banner';
+        banner.style.background = 'linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)';
+        banner.style.borderBottom = '1px solid rgba(59, 130, 246, 0.25)';
+        banner.style.color = '#3b82f6';
+        document.getElementById('director-banner-text').innerHTML = `⚙️ <b>Режим логістики:</b> ${user.name} — повний контроль розкладу`;
+        addBtn.style.display = 'inline-flex';
+        document.getElementById('det-status-select').disabled = false;
+        document.getElementById('update-status-btn').style.display = 'inline-block';
+        document.getElementById('edit-delivery-btn').style.display = 'inline-block';
+      } else if (user.role === 'admin') {
+        banner.style.display = 'block';
+        banner.className = 'director-banner';
+        banner.style.background = 'linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)';
+        banner.style.borderBottom = '1px solid rgba(16, 185, 129, 0.25)';
+        banner.style.color = '#10b981';
+        document.getElementById('director-banner-text').innerHTML = `🛡️ <b>Режим розробника:</b> ${user.name} — адміністрування системи`;
+        addBtn.style.display = 'inline-flex';
+        document.getElementById('det-status-select').disabled = false;
+        document.getElementById('update-status-btn').style.display = 'inline-block';
+        document.getElementById('edit-delivery-btn').style.display = 'inline-block';
+      } else if (user.role === 'manager') {
+        banner.style.display = 'none';
+        addBtn.style.display = 'inline-flex';
+      }
+    }
+    function hasCarIncidentOnDate(carId, dateStr) {
+      if (!state.deliveries || !Array.isArray(state.deliveries)) return false;
+      return state.deliveries.some(del => {
+        let delDateStr = del['Дата'];
+        if (delDateStr) {
+          delDateStr = String(delDateStr).replace(/^'/, '').trim();
+          if (delDateStr.includes('-')) {
+            const parts = delDateStr.split('-');
+            if (parts.length >= 3) {
+              const y = parts[0];
+              const m = parts[1];
+              const d = parts[2].substring(0, 2);
+              delDateStr = `${d}.${m}.${y}`;
+            }
+          }
+        }
+        const matchesDate = delDateStr === dateStr;
+        const matchesCar = String(del['ID_Авто']) === String(carId);
+        const matchesStatus = del['Статус'] === 'Аварія на дорозі';
+        return matchesDate && matchesCar && matchesStatus;
+      });
+    }
+    function editCurrentDelivery() {
+      if (!currentDetailDelivery) return;
+      const user = state.currentUser;
+      if (user && user.role === 'manager') {
+        const creatorId = currentDetailDelivery['ID_Менеджера'] || '';
+        if (creatorId && creatorId !== user.telegramId) {
+          alert("Ви не можете редагувати замовлення інших менеджерів!");
+          return;
+        }
+      }
+      closeModal('details-modal');
+      isEditMode = true;
+      editDeliveryId = currentDetailDelivery['ID'];
+      document.getElementById('modal-title').textContent = "Редагувати доставку";
+      document.getElementById('delivery-form').reset();
+      const parts = currentDetailDelivery['Дата'].split('.');
+      if (parts.length === 3) {
+        document.getElementById('form-date').value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+      const timeSelect = document.getElementById('form-time');
+      timeSelect.innerHTML = '';
+      hours.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h;
+        opt.textContent = h;
+        if (h === currentDetailDelivery['Час']) opt.selected = true;
+        timeSelect.appendChild(opt);
+      });
+      document.getElementById('form-car').value = currentDetailDelivery['ID_Авто'];
+      document.getElementById('form-order-num').value = currentDetailDelivery['Номер_замовлення'] || '';
+      document.getElementById('form-payment').value = currentDetailDelivery['Статус_оплати'] || 'Не оплачено';
+      document.getElementById('form-receiver-name').value = currentDetailDelivery["Ім'я_одержувача"] || '';
+      document.getElementById('form-receiver-phone').value = currentDetailDelivery['Телефон_одержувача'] || '';
+      document.getElementById('form-address').value = currentDetailDelivery['Адреса'] || '';
+      document.getElementById('form-comment').value = currentDetailDelivery['Коментар'] || '';
+      document.getElementById('form-manager-id').value = currentDetailDelivery['ID_Менеджера'] || '';
+      if (user && user.role === 'manager') {
+        document.getElementById('form-car').disabled = true;
+        document.getElementById('form-manager-id').disabled = true;
+      } else {
+        document.getElementById('form-car').disabled = false;
+        document.getElementById('form-manager-id').disabled = false;
+      }
+      openModal('delivery-modal');
+    }
+    function renderCalendar() {
+      if (state.currentView === 'day') {
+        renderDayView();
+      } else if (state.currentView === 'week') {
+        renderWeekView();
+      } else if (state.currentView === 'month') {
+        renderMonthView();
+      } else if (state.currentView === 'list') {
+        renderListView();
+      }
+      safeCreateIcons();
+    }
+    function getFilteredDeliveries(dateObj, specificCar = null) {
+      const dateStr = formatDateStr(dateObj);
+      const carFilter = specificCar || state.selectedCar;
+      return state.deliveries.filter(del => {
+        let delDateStr = del['Дата'];
+        if (delDateStr) {
+          delDateStr = String(delDateStr).replace(/^'/, '').trim();
+          if (delDateStr.includes('-')) {
+            const parts = delDateStr.split('-');
+            if (parts.length >= 3) {
+              const y = parts[0];
+              const m = parts[1];
+              const d = parts[2].substring(0, 2);
+              delDateStr = `${d}.${m}.${y}`;
+            }
+          }
+        }
+        const matchesDate = delDateStr === dateStr;
+        const matchesCar = carFilter === 'all' || del['ID_Авто'] === carFilter;
+        return matchesDate && matchesCar;
+      });
+    }
+    function renderDayView() {
+      const grid = document.getElementById('day-grid-container');
+      grid.innerHTML = '';
+      const timeHeader = document.createElement('div');
+      timeHeader.className = 'grid-header';
+      timeHeader.innerHTML = `<div>Час</div>`;
+      grid.appendChild(timeHeader);
+      for (let carId = 1; carId <= 4; carId++) {
+        const currentDateStr = formatDateStr(state.currentDate);
+        const dynamicDriver = (state.dailyCrews && Array.isArray(state.dailyCrews))
+          ? state.dailyCrews.find(c => String(c['ID_Авто']) === String(carId) && c['Дата'] === currentDateStr)
+          : null;
+        const driver = dynamicDriver || ((state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => d['ID_Авто'] == carId) : null);
+        const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає водія';
+        const initial = name ? name.charAt(0) : '?';
+        const carHeader = document.createElement('div');
+        carHeader.className = 'grid-header';
+        carHeader.setAttribute('data-car', carId);
+        carHeader.innerHTML = `
+          <div class="driver-photo-container">
+            ${driver && driver['Фото'] ? `<img src="${driver['Фото']}" style="width:100%;height:100%;object-fit:cover;">` : initial}
+          </div>
+          <div style="font-weight: 700;">Авто ${carId}</div>
+          <div class="driver-name">${name}</div>
+        `;
+        if (state.currentUser && state.currentUser.role === 'admin') {
+          const photoContainer = carHeader.querySelector('.driver-photo-container');
+          photoContainer.classList.add('admin-editable');
+          photoContainer.title = "Натисніть для зміни фото водія";
+          const overlay = document.createElement('div');
+          overlay.className = 'avatar-edit-overlay';
+          overlay.innerHTML = '<i data-lucide="camera" style="width:14px;height:14px;color:#fff;"></i>';
+          photoContainer.appendChild(overlay);
+          photoContainer.addEventListener('click', () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.onchange = (event) => {
+              const file = event.target.files[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                const base64Photo = e.target.result;
+                const driverObj = (state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => d['ID_Авто'] == carId) : null;
+                if (driverObj) {
+                  driverObj['Фото'] = base64Photo;
+                } else {
+                  if (!state.drivers) state.drivers = [];
+                  state.drivers.push({ 'ID_Авто': carId, 'Ім\'я': name, 'Фото': base64Photo });
+                }
+                renderCalendar();
+                
+                  propexApi.updateDriverPhoto(carId, base64Photo);
+              };
+              reader.readAsDataURL(file);
+            };
+            fileInput.click();
+          });
+        }
+        grid.appendChild(carHeader);
+      }
+      const activeDeliveries = getFilteredDeliveries(state.currentDate);
+      hours.forEach(hour => {
+        const timeCell = document.createElement('div');
+        timeCell.className = 'time-col';
+        timeCell.textContent = hour;
+        grid.appendChild(timeCell);
+        for (let carId = 1; carId <= 4; carId++) {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell';
+          cell.dataset.car = carId;
+          cell.dataset.time = hour;
+          cell.addEventListener('dragover', handleDragOver);
+          cell.addEventListener('dragleave', handleDragLeave);
+          cell.addEventListener('drop', handleDrop);
+          const delivery = activeDeliveries.find(del => (del['ID_Automobile'] === String(carId) || del['ID_Авто'] === String(carId)) && del['Час'] === hour);
+          if (delivery) {
+            const card = createDeliveryCard(delivery);
+            cell.appendChild(card);
+          }
+          grid.appendChild(cell);
+        }
+      });
+      activeDeliveries.forEach(del => {
+        const car = del['ID_Авто'];
+        const time = del['Час'];
+        const timeIndex = hours.indexOf(time);
+        if (timeIndex > 0) {
+          const prevTime = hours[timeIndex - 1];
+          const prevCell = grid.querySelector(`.grid-cell[data-car="${car}"][data-time="${prevTime}"]`);
+          if (prevCell && !prevCell.querySelector('.delivery-card')) {
+            const buffer = document.createElement('div');
+            buffer.className = 'delivery-card buffer';
+            buffer.innerHTML = `
+              <div class="card-meta"><span class="card-time">${prevTime}</span></div>
+              <div class="card-address">Погрузка / Дорога</div>
+            `;
+            prevCell.appendChild(buffer);
+          }
+        }
+        if (timeIndex < hours.length - 1) {
+          const nextTime = hours[timeIndex + 1];
+          const nextCell = grid.querySelector(`.grid-cell[data-car="${car}"][data-time="${nextTime}"]`);
+          if (nextCell && !nextCell.querySelector('.delivery-card')) {
+            const buffer = document.createElement('div');
+            buffer.className = 'delivery-card buffer';
+            buffer.innerHTML = `
+              <div class="card-meta"><span class="card-time">${nextTime}</span></div>
+              <div class="card-address">Розвантаження / Наступний рейс</div>
+            `;
+            nextCell.appendChild(buffer);
+          }
+        }
+      });
+    }
+    function renderWeekView() {
+      const grid = document.getElementById('week-grid-container');
+      grid.innerHTML = '';
+      const timeHeader = document.createElement('div');
+      timeHeader.className = 'grid-header';
+      timeHeader.innerHTML = `<div>Час</div>`;
+      grid.appendChild(timeHeader);
+      const monday = getMonday(state.currentDate);
+      const weekDates = [];
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+        weekDates.push(date);
+      }
+      weekDates.forEach((date, index) => {
+        const isToday = date.toDateString() === new Date().toDateString();
+        const dayHeader = document.createElement('div');
+        dayHeader.className = `grid-header week-day ${isToday ? 'today' : ''}`;
+        dayHeader.innerHTML = `
+          <div class="week-day-title">${dayNamesShort[index]}</div>
+          <div class="week-day-date">${date.getDate()}</div>
+        `;
+        grid.appendChild(dayHeader);
+      });
+      const weekDeliveries = [];
+      weekDates.forEach(date => {
+        weekDeliveries.push({
+          dateStr: formatDateStr(date),
+          deliveries: getFilteredDeliveries(date)
+        });
+      });
+      hours.forEach(hour => {
+        const timeCell = document.createElement('div');
+        timeCell.className = 'time-col';
+        timeCell.textContent = hour;
+        grid.appendChild(timeCell);
+        weekDates.forEach((date, dIndex) => {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell';
+          cell.dataset.date = formatDateStr(date);
+          cell.dataset.time = hour;
+          cell.addEventListener('dragover', handleDragOver);
+          cell.addEventListener('dragleave', handleDragLeave);
+          cell.addEventListener('drop', handleDrop);
+          const dayDels = weekDeliveries[dIndex].deliveries;
+          const matchingDeliveries = dayDels.filter(del => del['Час'] === hour);
+          matchingDeliveries.forEach(delivery => {
+            const card = createDeliveryCard(delivery, true);
+            cell.appendChild(card);
+          });
+          grid.appendChild(cell);
+        });
+      });
+    }
+    function renderMonthView() {
+      const grid = document.getElementById('month-grid-container');
+      grid.innerHTML = '';
+      dayNamesShort.forEach(name => {
+        const cell = document.createElement('div');
+        cell.className = 'month-header-cell';
+        cell.textContent = name;
+        grid.appendChild(cell);
+      });
+      const date = new Date(state.currentDate);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const firstDay = new Date(year, month, 1);
+      let startDayOffset = firstDay.getDay() - 1;
+      if (startDayOffset === -1) startDayOffset = 6;
+      const lastDay = new Date(year, month + 1, 0);
+      const totalDays = lastDay.getDate();
+      const totalCells = startDayOffset + totalDays > 35 ? 42 : 35;
+      for (let i = 0; i < totalCells; i++) {
+        const cellDate = new Date(year, month, 1 - startDayOffset + i);
+        const isOtherMonth = cellDate.getMonth() !== month;
+        const isToday = cellDate.toDateString() === new Date().toDateString();
+        const cell = document.createElement('div');
+        cell.className = `month-day-cell ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`;
+        cell.innerHTML = `<span class="month-day-number">${cellDate.getDate()}</span>`;
+        const dayDeliveries = getFilteredDeliveries(cellDate);
+        dayDeliveries.sort((a, b) => a['Час'].localeCompare(b['Час']));
+        const maxVisible = 3;
+        dayDeliveries.slice(0, maxVisible).forEach(del => {
+          const miniCard = document.createElement('div');
+          let statusClass = 'planned';
+          if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
+          else if (del['Статус'] === 'Виконано') statusClass = 'completed';
+          else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
+          let isIncidentAffected = false;
+          if (statusClass !== 'completed' && statusClass !== 'problem') {
+            if (hasCarIncidentOnDate(del['ID_Авто'], del['Дата'])) {
+              isIncidentAffected = true;
+            }
+          }
+          miniCard.className = `month-mini-card ${statusClass} ${isIncidentAffected ? 'incident-affected' : ''}`;
+          const prefix = isIncidentAffected ? '⚠️ ' : (statusClass === 'problem' ? '🚨 ' : '');
+          miniCard.textContent = `${prefix}${del['Час']} [🚗${del['ID_Авто']}] ${del['Адреса'].split(',')[0]}`;
+          cell.appendChild(miniCard);
+        });
+        if (dayDeliveries.length > maxVisible) {
+          const moreBadge = document.createElement('div');
+          moreBadge.style.cssText = "font-size: 9px; text-align: center; color: var(--accent-blue); font-weight: 700;";
+          moreBadge.textContent = `+ ще ${dayDeliveries.length - maxVisible}`;
+          cell.appendChild(moreBadge);
+        }
+        cell.addEventListener('click', () => {
+          state.currentDate = cellDate;
+          switchView('day');
+        });
+        grid.appendChild(cell);
+      }
+    }
+    function renderListView() {
+      const container = document.getElementById('list-results-container');
+      container.innerHTML = '';
+      const searchQuery = document.getElementById('list-search-input').value.toLowerCase().trim();
+      let filtered = state.deliveries;
+      if (state.selectedCar !== 'all') {
+        filtered = filtered.filter(del => del['ID_Авто'] === state.selectedCar);
+      }
+      if (searchQuery) {
+        filtered = filtered.filter(del => {
+          const addr = (del['Адреса'] || '').toLowerCase();
+          const order = (del['Номер_замовлення'] || '').toLowerCase();
+          const comment = (del['Коментар'] || '').toLowerCase();
+          return addr.includes(searchQuery) || order.includes(searchQuery) || comment.includes(searchQuery);
+        });
+      }
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+            <i data-lucide="info" style="width: 48px; height: 48px; margin: 0 auto 12px; display: block;"></i>
+            <p>Не знайдено жодної доставки за обраними параметрами.</p>
+          </div>
+        `;
+        return;
+      }
+      const groups = {};
+      filtered.forEach(del => {
+        const dateStr = del['Дата'];
+        if (!groups[dateStr]) groups[dateStr] = [];
+        groups[dateStr].push(del);
+      });
+      const sortedDates = Object.keys(groups).sort((a, b) => {
+        const dA = parseDateStr(a) || new Date(0);
+        const dB = parseDateStr(b) || new Date(0);
+        return dB - dA;
+      });
+      sortedDates.forEach(dateStr => {
+        const groupDels = groups[dateStr];
+        groupDels.sort((a, b) => a['Час'].localeCompare(b['Час']));
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'list-group';
+        const dateObj = parseDateStr(dateStr);
+        const formattedDate = dateObj ? getUkrainianDateString(dateObj) : dateStr;
+        groupDiv.innerHTML = `<div class="list-group-title">${formattedDate}</div>`;
+        groupDels.forEach(del => {
+          const row = document.createElement('div');
+          let statusClass = 'planned';
+          if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
+          else if (del['Статус'] === 'Виконано') statusClass = 'completed';
+          else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
+          let isIncidentAffected = false;
+          if (statusClass !== 'completed' && statusClass !== 'problem') {
+            if (hasCarIncidentOnDate(del['ID_Automobile'] || del['ID_Авто'], del['Дата'])) {
+              isIncidentAffected = true;
+            }
+          }
+          row.className = `list-row-card ${isIncidentAffected ? 'incident-affected' : ''}`;
+          row.innerHTML = `
+            <div class="list-time">${del['Час']}</div>
+            <div class="list-car-info">
+              <span class="card-car-badge">🚗 Авто ${del['ID_Авто']}</span>
+            </div>
+            <div>
+              <div class="list-address-info">${isIncidentAffected ? '⚠️ ' : ''}№${del['Номер_замовлення']} — ${del['Адреса']}</div>
+              ${del['Коментар'] ? `<div class="list-address-sub">💬 ${del['Коментар']}</div>` : ''}
+              ${isIncidentAffected ? `<div class="incident-alert-text"><i data-lucide="shield-alert" style="width:14px;height:14px;display:inline-block;"></i> 🚨 Аварійний режим: у водія виявлено проблему!</div>` : ''}
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted);">Оплата:</div>
+              <div style="font-size: 12px; font-weight: 700;">${del['Статус_оплати'] || 'Невідомо'}</div>
+            </div>
+            <div class="list-badge-status ${statusClass}">${del['Статус']}</div>
+          `;
+          row.addEventListener('click', () => showDetails(del));
+          groupDiv.appendChild(row);
+        });
+        container.appendChild(groupDiv);
+      });
+    }
+    function createDeliveryCard(del, showCarBadge = false) {
+      const card = document.createElement('div');
+      let statusClass = 'planned';
+      if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
+      else if (del['Статус'] === 'Виконано') statusClass = 'completed';
+      else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
+      let isIncidentAffected = false;
+      if (statusClass !== 'completed' && statusClass !== 'problem') {
+        if (hasCarIncidentOnDate(del['ID_Авто'], del['Дата'])) {
+          isIncidentAffected = true;
+        }
+      }
+      card.className = `delivery-card ${statusClass} ${isIncidentAffected ? 'incident-affected' : ''}`;
+      const isProblem = del['Статус'] === 'Аварія на дорозі';
+      const addressShort = del['Адреса'].split(',')[0];
+      let addressDisplay = isProblem ? `🚨 ${addressShort}` : addressShort;
+      if (isIncidentAffected) {
+        addressDisplay = `⚠️ ${addressShort} (Аварійний режим)`;
+      }
+      const dateStr = del['Дата'];
+      const dynamicDriver = (state.dailyCrews && Array.isArray(state.dailyCrews))
+        ? state.dailyCrews.find(c => String(c['ID_Авто']) === String(del['ID_Авто']) && c['Дата'] === dateStr)
+        : null;
+      const driver = dynamicDriver || ((state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => String(d['ID_Авто']) === String(del['ID_Авто'])) : null);
+      const driverName = driver ? driver["Ім'я"] : `Авто ${del['ID_Авто']}`;
+      const driverInitial = driverName ? driverName.charAt(0) : '?';
+      const tinyAvatarHTML = (driver && driver['Фото'])
+        ? `<img src="${driver['Фото']}" class="card-driver-avatar" title="${driverName}">`
+        : `<div class="card-driver-avatar-initial" title="${driverName}">${driverInitial}</div>`;
+      card.innerHTML = `
+        <div class="card-meta">
+          <span class="card-time">${isProblem ? '⚠️ ' : ''}${del['Час']}</span>
+          <span class="card-order-badge ${isProblem ? 'problem-badge' : (del['Статус_оплати'] === 'Не оплачено' ? 'cash' : '')}">№${del['Номер_замовлення']}</span>
+        </div>
+        <div class="card-address" title="${del['Адреса']}">${addressDisplay}</div>
+        <div class="card-footer">
+          <span>${del['Ім\'я_одержувача'] || ''}</span>
+          <div class="card-driver-info">
+            ${tinyAvatarHTML}
+            ${showCarBadge ? `<span class="card-car-badge">Авто ${del['ID_Авто']}</span>` : ''}
+          </div>
+        </div>
+      `;
+      const user = state.currentUser;
+      if (user && (user.role === 'admin' || user.role === 'logist' || user.role === 'director' || (user.role === 'manager' && del['ID_Менеджера'] == user.telegramId))) {
+        card.draggable = true;
+        card.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', del['ID']);
+          card.classList.add('dragging');
+        });
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+        });
+      }
+      card.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showDetails(del);
+      });
+      return card;
+    }
+    function openModal(id) {
+      document.getElementById(id).classList.add('show');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+    function openNewDeliveryModal() {
+      isEditMode = false;
+      editDeliveryId = null;
+      document.getElementById('modal-title').textContent = "Нова доставка";
+      document.getElementById('delivery-form').reset();
+      const user = state.currentUser;
+      if (user) {
+        document.getElementById('form-manager-id').value = user.telegramId || '';
+        if (user.role === 'manager') {
+          document.getElementById('form-manager-id').disabled = true;
+          document.getElementById('form-car').disabled = true;
+          document.getElementById('form-car').value = "1";
+        } else {
+          document.getElementById('form-manager-id').disabled = false;
+          document.getElementById('form-car').disabled = false;
+        }
+      }
+      const timeSelect = document.getElementById('form-time');
+      timeSelect.innerHTML = '';
+      hours.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h;
+        opt.textContent = h;
+        timeSelect.appendChild(opt);
+      });
+      document.getElementById('form-date').value = formatDateISO(state.currentDate);
+      openModal('delivery-modal');
+    }
+    let currentDetailDelivery = null;
+    function showDetails(del) {
+      currentDetailDelivery = del;
+      document.getElementById('det-car').textContent = "🚗 Автомобіль " + del['ID_Авто'];
+      document.getElementById('det-time-date').textContent = `${del['Час']} — ${del['Дата']}`;
+      document.getElementById('det-order').textContent = `№ ${del['Номер_замовлення']}`;
+      document.getElementById('det-payment').textContent = del['Статус_оплати'] || 'Не вказано';
+      document.getElementById('det-address').textContent = del['Адреса'];
+      document.getElementById('det-receiver-name').textContent = del['Ім\'я_одержувача'] || 'Не вказано';
+      document.getElementById('det-receiver-phone').textContent = del['Телефон_одержувача'] || 'Не вказано';
+      document.getElementById('det-status').textContent = del['Статус'] || 'Заплановано';
+      document.getElementById('det-comment').textContent = del['Коментар'] || 'Немає коментарів';
+      document.getElementById('det-status-select').value = del['Статус'] || 'Заплановано';
+      openModal('details-modal');
+    }
+    function submitStatusUpdate() {
+      if (!currentDetailDelivery) return;
+      const newStatus = document.getElementById('det-status-select').value;
+      const deliveryId = currentDetailDelivery['ID'];
+      let comment = '';
+      if (newStatus === 'Аварія на дорозі') {
+        comment = prompt("Будь ласка, вкажіть причину виникнення проблеми:", "Зламався автомобіль");
+        if (comment === null) return;
+      } else {
+        comment = prompt("Ви можете додати додатковий коментар / причину зміни (необов'язково):", "");
+        if (comment === null) comment = '';
+      }
+      document.getElementById('update-status-btn').disabled = true;
+      document.getElementById('update-status-btn').textContent = "Оновлення...";
+      
+        propexApi
+          .withSuccessHandler(function(response) {
+            document.getElementById('update-status-btn').disabled = false;
+            document.getElementById('update-status-btn').textContent = "Оновити";
+            closeModal('details-modal');
+            loadData();
+            alert("Статус доставки успішно оновлено!");
+          })
+          .withFailureHandler(function(err) {
+            document.getElementById('update-status-btn').disabled = false;
+            document.getElementById('update-status-btn').textContent = "Оновити";
+            alert("Помилка оновлення статусу: " + (err.message || err));
+          })
+          .updateDeliveryStatus(deliveryId, newStatus, comment);
+    }
+    function saveDelivery() {
+      const car = document.getElementById('form-car').value;
+      const rawDate = document.getElementById('form-date').value;
+      const time = document.getElementById('form-time').value;
+      const order_num = document.getElementById('form-order-num').value.trim();
+      const payment = document.getElementById('form-payment').value;
+      const address = document.getElementById('form-address').value.trim();
+      const receiver_name = document.getElementById('form-receiver-name').value.trim();
+      const receiver_phone = document.getElementById('form-receiver-phone').value.trim();
+      const comment = document.getElementById('form-comment').value.trim();
+      if (!rawDate || !order_num || !address) {
+        alert("Будь ласка, заповніть усі обов'язкові поля (*)");
+        return;
+      }
+      const parts = rawDate.split('-');
+      const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
+      const deliveryData = {
+        driver_id: car,
+        date: formattedDate,
+        time: time,
+        address: address,
+        order_num: order_num,
+        payment: payment,
+        receiver_name: receiver_name,
+        receiver_phone: receiver_phone,
+        comment: comment
+      };
+      document.getElementById('save-btn').disabled = true;
+      document.getElementById('save-btn').textContent = "Збереження...";
+      
+        propexApi.withSuccessHandler(function(response) {
+          document.getElementById('save-btn').disabled = false;
+          document.getElementById('save-btn').textContent = "Зберегти доставку";
+          closeModal('delivery-modal');
+          loadData();
+          }).withFailureHandler(function(err) {
+            document.getElementById('save-btn').disabled = false;
+            document.getElementById('save-btn').textContent = "Зберегти доставку";
+            alert("Помилка збереження: " + (err.message || err));
+          }).addDelivery(deliveryData);
+    }
+    const addressInput = document.getElementById('form-address');
+    const autocompleteList = document.getElementById('autocomplete-list');
+    let debounceTimer;
+    addressInput.addEventListener('input', function() {
+      const val = this.value.trim();
+      autocompleteList.innerHTML = '';
+      clearTimeout(debounceTimer);
+      if (!val || val.length < 3) return;
+      debounceTimer = setTimeout(() => {
+        let searchQuery = val;
+        if (!val.toLowerCase().includes('київ') && !val.toLowerCase().includes('киев')) {
+          searchQuery = 'Київ, ' + val;
+        }
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&addressdetails=1&limit=5&countrycodes=ua&bounded=1&viewbox=30.0,50.2,31.0,50.7`;
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+          .then(response => {
+            if (!response.ok) throw new Error("HTTP error! status: " + response.status);
+            return response.json();
+          })
+          .then(data => {
+            autocompleteList.innerHTML = '';
+            if (!data || data.length === 0) {
+              const div = document.createElement('div');
+              div.style.cssText = "padding: 10px 14px; color: var(--text-muted); font-size: 13px; font-style: italic;";
+              div.textContent = "Адресу не знайдено. Перевірте написання.";
+              autocompleteList.appendChild(div);
+              return;
+            }
+            data.forEach(item => {
+              const div = document.createElement('div');
+              const cleanName = item.display_name.replace(', Україна', '').replace(', Ukraine', '');
+              div.textContent = cleanName;
+              div.addEventListener('click', function() {
+                addressInput.value = cleanName;
+                autocompleteList.innerHTML = '';
+              });
+              autocompleteList.appendChild(div);
+            });
+          })
+          .catch(err => {
+            console.error("Autocomplete error:", err);
+            const div = document.createElement('div');
+            div.style.cssText = "padding: 10px 14px; color: var(--danger); font-size: 13px; font-weight: 600;";
+            div.textContent = "⚠️ Помилка пошуку (можливо, ліміт запитів). Спробуйте ввести вручну.";
+            autocompleteList.appendChild(div);
+          });
+      }, 400);
+    });
+    document.addEventListener('click', function (e) {
+      if (e.target !== addressInput) autocompleteList.innerHTML = '';
+    });
+    function handleDragOver(e) {
+      e.preventDefault();
+      const cell = e.currentTarget.closest('.grid-cell');
+      if (cell) cell.classList.add('drag-hover');
+    }
+    function handleDragLeave(e) {
+      const cell = e.currentTarget.closest('.grid-cell');
+      if (cell) cell.classList.remove('drag-hover');
+    }
+    function handleDrop(e) {
+      e.preventDefault();
+      const cell = e.currentTarget.closest('.grid-cell');
+      if (!cell) return;
+      cell.classList.remove('drag-hover');
+      const delId = e.dataTransfer.getData('text/plain');
+      if (!delId) return;
+      const newTime = cell.dataset.time;
+      const newCarId = cell.dataset.car;
+      const newDate = cell.dataset.date;
+      moveDelivery(delId, newTime, newCarId, newDate);
+    }
+    function moveDelivery(delId, newTime, newCarId, newDate) {
+      const user = state.currentUser;
+      if (!user) return;
+      const del = state.deliveries.find(d => d['ID'] == delId);
+      if (!del) return;
+      if (user.role === 'manager') {
+        if (del['ID_Менеджера'] != user.telegramId) {
+          alert("Ви не можете переносити замовлення інших менеджерів!");
+          return;
+        }
+        if (newCarId && String(newCarId) !== String(del['ID_Авто'])) {
+          alert("Менеджери не мають прав на зміну призначеного автомобіля!");
+          return;
+        }
+      }
+      const targetCar = newCarId || del['ID_Авто'];
+      const targetDate = newDate || formatDateStr(state.currentDate);
+      const targetTime = newTime;
+      const isOccupied = state.deliveries.some(d => 
+        d['ID'] != delId && 
+        String(d['ID_Авто']) === String(targetCar) && 
+        d['Дата'] === targetDate && 
+        d['Час'] === targetTime
+      );
+      if (isOccupied) {
+        alert(`Цей часовий слот (${targetTime}) для Авто ${targetCar} вже зайнятий іншою доставкою!`);
+        return;
+      }
+      const oldTime = del['Час'];
+      const oldCar = del['ID_Авто'];
+      const oldDate = del['Дата'];
+      del['Час'] = targetTime;
+      del['ID_Авто'] = String(targetCar);
+      del['Дата'] = targetDate;
+      renderCalendar();
+      const deliveryData = {
+        driver_id: del['ID_Авто'],
+        date: del['Дата'],
+        time: del['Час'],
+        address: del['Адреса'],
+        order_num: del['Номер_замовлення'] || '',
+        payment: del['Статус_оплати'] || '',
+        receiver_name: del['Ім\'я_одержувача'] || '',
+        receiver_phone: del['Телефон_одержувача'] || '',
+        comment: del['Коментар'] || '',
+        manager_chat_id: del['ID_Менеджера'] || ''
+      };
+      
+        propexApi
+          .withSuccessHandler(function() { loadData(); })
+          .withFailureHandler(function(err) {
+            alert("Помилка перетягування: " + (err.message || err));
+            del['Час'] = oldTime;
+            del['ID_Авто'] = oldCar;
+            del['Дата'] = oldDate;
+            renderCalendar();
+          })
+          .updateDeliveryDetails(delId, deliveryData, user.role);
+    }
+    function safeCreateIcons() {
+      try {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      } catch (e) {
+        console.error("Lucide failed to initialize:", e);
+      }
+    }
+    function initApp() {
+      console.log("Initializing Propex Calendar App...");
+      safeCreateIcons();
+      checkSession();
+      updateDateLabel();
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initApp();
+    } else {
+      window.addEventListener('DOMContentLoaded', initApp);
+    }</script>
+</body>
+</html>
