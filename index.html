@@ -2141,9 +2141,9 @@
       let clients = state.clients || [];
       if (query) {
         clients = clients.filter(c => 
-          (c['Назва'] || '').toLowerCase().includes(query) || 
-          (c['Контакт'] || '').toLowerCase().includes(query) ||
-          (c['Телефон'] || '').toLowerCase().includes(query)
+          String(c['Назва'] || '').toLowerCase().includes(query) || 
+          String(c['Контакт'] || '').toLowerCase().includes(query) ||
+          String(c['Телефон'] || '').toLowerCase().includes(query)
         );
       }
       
