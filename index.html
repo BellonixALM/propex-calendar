@@ -2158,6 +2158,16 @@
           container.style.gridTemplateColumns = '1fr';
         } else {
           container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+
+        const debugDiv = document.createElement('div');
+        debugDiv.style.padding = '10px';
+        debugDiv.style.background = '#facc15';
+        debugDiv.style.color = '#000';
+        debugDiv.style.marginBottom = '20px';
+        debugDiv.style.borderRadius = '8px';
+        debugDiv.innerHTML = "<b>DEBUG:</b> Клієнтів завантажено: " + clients.length + ". Query: '" + query + "'";
+        container.appendChild(debugDiv);
+
         }
         
         clients.forEach(c => {
