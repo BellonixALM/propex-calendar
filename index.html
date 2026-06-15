@@ -197,7 +197,19 @@
         <i data-lucide="search"></i>
         <input type="text" id="global-search-input" placeholder="Search..." onkeyup="if(event.key==='Enter') document.getElementById('list-search-input').value = this.value; if(state.currentView !== 'list') switchView('list'); renderListView();">
       </div>
-      
+
+      <!-- Контекстна кнопка Фільтри -->
+      <button id="header-filter-btn" class="btn btn-secondary" onclick="headerFilterAction()" style="display:none; margin-left:12px; border-radius:20px; font-size:13px; padding:8px 18px; align-items:center; gap:6px; font-weight:600; white-space:nowrap;">
+        <i data-lucide="filter" style="width:15px;height:15px;"></i>
+        <span>Фільтри</span>
+      </button>
+
+      <!-- Контекстна кнопка Додати (зелена) -->
+      <button id="header-create-btn" onclick="headerCreateAction()" style="display:none; margin-left:12px; border-radius:20px; font-size:13px; padding:8px 18px; background:linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; cursor:pointer; align-items:center; gap:6px; font-weight:600; white-space:nowrap;">
+        <i data-lucide="plus" style="width:15px;height:15px;"></i>
+        <span id="header-create-btn-label">Додати</span>
+      </button>
+
       <div class="topbar-actions">
         <button class="action-icon-btn"><i data-lucide="moon" style="width:16px;height:16px;"></i></button>
         <button class="action-icon-btn"><i data-lucide="bell" style="width:16px;height:16px;"></i></button>
@@ -210,6 +222,7 @@
         </div>
       </div>
     </header>
+
     
     <div class="content-area">
       <div id="tracking-view" class="main-tab-view active">
@@ -239,12 +252,6 @@
           <select id="car-filter" class="select-custom" onchange="onCarFilterChanged(this.value)" style="display:none;">
             <option value="all">Всі автомобілі</option>
           </select>
-          <button class="btn btn-secondary" onclick="openAdvancedFilters()" title="Розширені фільтри" style="border-radius:20px; font-size:12px; padding:6px 14px;">
-            <i data-lucide="filter" style="width:14px;height:14px;"></i> Фільтри
-          </button>
-          <button class="btn" id="add-delivery-btn" onclick="openNewDeliveryModal()" style="border-radius:20px; font-size:12px; padding:6px 14px;">
-            <i data-lucide="plus" style="width:14px;height:14px;"></i> Додати
-          </button>
         </div>
       </div>
 
@@ -397,17 +404,18 @@
 
       <!-- Clients Tab -->
       <div id="clients-view" class="main-tab-view" style="display:none; padding-right: 10px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-          <h2 style="font-size: 24px; font-weight: 700;">Клієнти / Компанії</h2>
-          <div class="view-selector">
-            <button class="btn" onclick="openClientModal()" style="border-radius:20px; font-size:12px; padding:6px 14px;"><i data-lucide="plus" style="width:14px;height:14px;"></i> Створити картку</button>
-            <button class="view-btn active" id="btn-clients-grid" onclick="switchClientView('grid')"><i data-lucide="grid"></i> Картки</button>
-            <button class="view-btn" id="btn-clients-list" onclick="switchClientView('list')"><i data-lucide="list"></i> Список</button>
+        <div style="position: sticky; top: 0; z-index: 10; background: var(--bg-color); padding: 16px 0 12px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h2 style="font-size: 24px; font-weight: 700; margin: 0;">Клієнти / Компанії</h2>
+            <div class="view-selector">
+              <button class="view-btn active" id="btn-clients-grid" onclick="switchClientView('grid')"><i data-lucide="grid"></i> Картки</button>
+              <button class="view-btn" id="btn-clients-list" onclick="switchClientView('list')"><i data-lucide="list"></i> Список</button>
+            </div>
           </div>
-        </div>
-        <div class="search-container" style="margin-bottom: 20px; max-width: 400px;">
-          <i data-lucide="search"></i>
-          <input type="text" id="clients-search-input" placeholder="Пошук клієнтів..." onkeyup="renderClients()">
+          <div class="search-container" style="max-width: 400px;">
+            <i data-lucide="search"></i>
+            <input type="text" id="clients-search-input" placeholder="Пошук клієнтів..." onkeyup="renderClients()">
+          </div>
         </div>
         <div id="clients-container" class="dash-cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px;">
           <!-- Clients will be rendered here -->
@@ -415,17 +423,20 @@
       </div>
       <!-- End Clients Tab -->
 
+
       <!-- Employees Tab -->
       <div id="employees-view" class="main-tab-view" style="display:none; padding-right: 10px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-          <h2 style="font-size: 24px; font-weight: 700;">Співробітники</h2>
-          <button class="btn" onclick="openEmployeeModal()" style="border-radius:20px; font-size:12px; padding:6px 14px;"><i data-lucide="user-plus" style="width:14px;height:14px;"></i> Створити співробітника</button>
+        <div style="position: sticky; top: 0; z-index: 10; background: var(--bg-color); padding: 16px 0 12px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 24px; font-weight: 700; margin: 0;">Співробітники</h2>
+          </div>
         </div>
         <div id="employees-container" class="dash-cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px;">
           <!-- Employees will be rendered here -->
         </div>
       </div>
       <!-- End Employees Tab -->
+
 
       <!-- Settings Tab -->
       <div id="settings-view" class="main-tab-view" style="display:none; padding-right: 10px;">
@@ -771,7 +782,7 @@
 (function() {
       let scriptUrlTemplate = "<?= scriptUrl ?>";
       let WEBAPP_URL = scriptUrlTemplate.includes("?=") 
-          ? "https://script.google.com/macros/s/AKfycbxlPcoji6rbvbtkmKX_UOmdZu0eupN-1P8jlkqo0EuEcKuf6uj58jYibi6mNe5UxGyF/exec" 
+          ? "https://script.google.com/macros/s/AKfycbwQYZp7jg7fwSx3r7cNNjfHUjeSLIkNNafjjOajUeRSTNWGppqszaGARGux5gKHAcWP/exec" 
           : scriptUrlTemplate;
       
       const paramApi = new URLSearchParams(window.location.search).get('api');
@@ -872,6 +883,30 @@
       };
       ScriptRunBridge.prototype.saveDailyCrew = function(dateStr, crewDataJson) {
         this._callAPI('saveDailyCrew', { dateStr: dateStr, crewData: crewDataJson });
+        return this;
+      };
+      ScriptRunBridge.prototype.saveClient = function(clientData) {
+        this._callAPI('saveClient', clientData);
+        return this;
+      };
+      ScriptRunBridge.prototype.deleteClient = function(id) {
+        this._callAPI('deleteClient', { id: id });
+        return this;
+      };
+      ScriptRunBridge.prototype.saveEmployee = function(employeeData) {
+        this._callAPI('saveEmployee', employeeData);
+        return this;
+      };
+      ScriptRunBridge.prototype.deleteEmployee = function(id) {
+        this._callAPI('deleteEmployee', { id: id });
+        return this;
+      };
+      ScriptRunBridge.prototype.get_clients = function() {
+        this._callAPI('get_clients', {});
+        return this;
+      };
+      ScriptRunBridge.prototype.get_employees = function() {
+        this._callAPI('get_employees', {});
         return this;
       };
       window.propexApi = new ScriptRunBridge();
@@ -2646,6 +2681,8 @@
 let statusChartInstance = null;
 let comparativeChartInstance = null;
 
+window.headerCreateAction = function() {};
+
 window.switchMainTab = function(tabId) {
     const allTabs = ['tracking', 'dashboard', 'analytics', 'clients', 'employees', 'settings'];
 
@@ -2662,6 +2699,39 @@ window.switchMainTab = function(tabId) {
     const targetNav  = document.getElementById('nav-' + tabId);
     if (targetView) { targetView.style.display = 'block'; targetView.classList.add('active'); }
     if (targetNav)  targetNav.classList.add('active');
+
+    // Налаштування глобальної кнопки "Створити" в хедері
+    const headerBtn = document.getElementById('header-create-btn');
+    const headerBtnLabel = document.getElementById('header-create-btn-label');
+    const filterBtn = document.getElementById('header-filter-btn');
+    
+    if (headerBtn && headerBtnLabel && filterBtn) {
+        if (tabId === 'tracking') {
+            headerBtn.style.display = 'flex';
+            headerBtnLabel.textContent = 'Додати';
+            window.headerCreateAction = openNewDeliveryModal;
+            
+            filterBtn.style.display = 'flex';
+            window.headerFilterAction = openAdvancedFilters;
+        } else if (tabId === 'clients') {
+            headerBtn.style.display = 'flex';
+            headerBtnLabel.textContent = 'Додати';
+            window.headerCreateAction = openClientModal;
+            
+            filterBtn.style.display = 'flex';
+            window.headerFilterAction = function() { alert('Фільтри для клієнтів в розробці'); };
+        } else if (tabId === 'employees') {
+            headerBtn.style.display = 'flex';
+            headerBtnLabel.textContent = 'Додати';
+            window.headerCreateAction = openEmployeeModal;
+            
+            filterBtn.style.display = 'flex';
+            window.headerFilterAction = function() { alert('Фільтри для співробітників в розробці'); };
+        } else {
+            headerBtn.style.display = 'none';
+            filterBtn.style.display = 'none';
+        }
+    }
 
     // Додаткові дії при відкритті вкладки
     if (tabId === 'dashboard') {
