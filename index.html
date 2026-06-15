@@ -2735,14 +2735,14 @@ window.switchMainTab = function(tabId) {
     allTabs.forEach(function(id) {
         const view = document.getElementById(id + '-view');
         const nav  = document.getElementById('nav-' + id);
-        if (view) { view.style.display = ''; view.classList.remove('active'); }
+        if (view) { view.style.display = 'none'; view.classList.remove('active'); }
         if (nav)  nav.classList.remove('active');
     });
 
     // Показати потрібну вкладку
     const targetView = document.getElementById(tabId + '-view');
     const targetNav  = document.getElementById('nav-' + tabId);
-    if (targetView) { targetView.style.display = ''; targetView.classList.add('active'); }
+    if (targetView) { targetView.style.display = 'flex'; targetView.classList.add('active'); }
     if (targetNav)  targetNav.classList.add('active');
 
     // Налаштування глобальної кнопки "Створити" в хедері
