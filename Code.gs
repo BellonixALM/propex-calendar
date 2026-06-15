@@ -875,8 +875,9 @@ function get_clients() {
       obj[key] = row[index]; 
     });
     
-    // Auto-assign ID if missing
-    if (!obj['ID'] && idIndex > -1) {
+    // Auto-assign ID if missing and row has actual data
+    var hasData = Object.keys(obj).some(function(k) { return k !== 'ID' && obj[k] !== ''; });
+    if (!obj['ID'] && idIndex > -1 && hasData) {
       obj['ID'] = 'CLI-' + new Date().getTime() + '-' + rowIndex;
       sheet.getRange(rowIndex + 2, idIndex + 1).setValue(obj['ID']);
     }
