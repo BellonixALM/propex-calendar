@@ -2646,26 +2646,49 @@ let statusChartInstance = null;
 let comparativeChartInstance = null;
 
 window.switchMainTab = function(tabId) {
-    // Hide all
-    document.getElementById('tracking-view').classList.remove('active');
-    document.getElementById('dashboard-view').classList.remove('active');
-    document.getElementById('analytics-view').classList.remove('active');
-    
-    // Deactivate nav
-    document.getElementById('nav-tracking').classList.remove('active');
-    document.getElementById('nav-dashboard').classList.remove('active');
-    document.getElementById('nav-analytics').classList.remove('active');
-    
-    // Show active
-    document.getElementById(tabId + '-view').classList.add('active');
-    document.getElementById('nav-' + tabId).classList.add('active');
-    
+    const allTabs = ['tracking', 'dashboard', 'analytics', 'clients', 'employees', 'settings'];
+
+    // Сховати всі вкладки та зняти active з навігації
+    allTabs.forEach(function(id) {
+        const view = document.getElementById(id + '-view');
+        const nav  = document.getElementById('nav-' + id);
+        if (view) { view.style.display = 'none'; view.classList.remove('active'); }
+        if (nav)  nav.classList.remove('active');
+    });
+
+    // Показати потрібну вкладку
+    const targetView = document.getElementById(tabId + '-view');
+    const targetNav  = document.getElementById('nav-' + tabId);
+    if (targetView) { targetView.style.display = 'block'; targetView.classList.add('active'); }
+    if (targetNav)  targetNav.classList.add('active');
+
+    // Додаткові дії при відкритті вкладки
     if (tabId === 'dashboard') {
         renderDashboard();
     } else if (tabId === 'analytics') {
         renderAnalytics();
+    } else if (tabId === 'tracking') {
+        renderCalendar();
+    } else if (tabId === 'settings') {
+        // Заповнити профіль користувача
+        const u = state.currentUser;
+        if (u) {
+            const nameEl = document.getElementById('settings-name');
+            const roleEl = document.getElementById('settings-role');
+            const avatarEl = document.getElementById('settings-avatar');
+            const inputName = document.getElementById('settings-input-name');
+            const inputTg   = document.getElementById('settings-input-telegram');
+            if (nameEl) nameEl.textContent = u.name || u.login || '—';
+            if (roleEl) roleEl.textContent = u.role || '—';
+            if (avatarEl) avatarEl.textContent = (u.name || u.login || 'U').charAt(0).toUpperCase();
+            if (inputName) inputName.value = u.name || u.login || '';
+            if (inputTg) inputTg.value = u.telegram || u.login || '';
+            const adminSection = document.getElementById('admin-settings-section');
+            if (adminSection) adminSection.style.display = (u.role === 'admin' || u.role === 'director') ? 'block' : 'none';
+        }
     }
 };
+
 
 // Helpers for data
 function filterDeliveriesByDateRange(deliveries, startStr, endStr) {
