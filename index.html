@@ -2077,18 +2077,51 @@
       }
     }
     
-    function openClientModal() {
+    function openClientModal(client = null) {
       document.getElementById('client-form').reset();
-      document.getElementById('form-client-id').value = '';
-      document.getElementById('form-client-address').value = '';
-      document.getElementById('group-client-note').style.display = 'none';
+      
+      if (client && client['ID']) {
+        document.getElementById('form-client-id').value = client['ID'] || '';
+        document.getElementById('form-client-type').value = client['Тип'] || 'company';
+        document.getElementById('form-client-name').value = client['Назва'] || '';
+        document.getElementById('form-client-contact').value = client['Контакт'] || '';
+        document.getElementById('form-client-phone').value = client['Телефон'] || '';
+        document.getElementById('form-client-email').value = client['Email'] || '';
+        document.getElementById('form-client-telegram').value = client['Telegram'] || '';
+        document.getElementById('form-client-viber').value = client['Viber'] || '';
+        document.getElementById('form-client-whatsapp').value = client['WhatsApp'] || '';
+        document.getElementById('form-client-address').value = client['Адреса'] || '';
+        document.getElementById('form-client-note').value = client['Примітки'] || '';
+        if (client['Примітки']) {
+          document.getElementById('group-client-note').style.display = 'block';
+          document.getElementById('check-add-client-note').checked = true;
+        } else {
+          document.getElementById('group-client-note').style.display = 'none';
+          document.getElementById('check-add-client-note').checked = false;
+        }
+      } else {
+        document.getElementById('form-client-id').value = '';
+        document.getElementById('form-client-address').value = '';
+        document.getElementById('group-client-note').style.display = 'none';
+        document.getElementById('check-add-client-note').checked = false;
+      }
+      
       toggleClientFields();
       openModal('client-modal');
     }
     
-    function openEmployeeModal() {
+    function openEmployeeModal(emp = null) {
       document.getElementById('employee-form').reset();
-      document.getElementById('form-emp-id').value = '';
+      if (emp && emp['ID']) {
+        document.getElementById('form-emp-id').value = emp['ID'] || '';
+        document.getElementById('form-emp-name').value = emp['ПІБ'] || '';
+        document.getElementById('form-emp-role').value = emp['Роль'] || 'водій';
+        document.getElementById('form-emp-car').value = emp['Авто'] || '';
+        document.getElementById('form-emp-phone').value = emp['Телефон'] || '';
+        document.getElementById('form-emp-telegram').value = emp['Telegram'] || '';
+      } else {
+        document.getElementById('form-emp-id').value = '';
+      }
       openModal('employee-modal');
     }
     
@@ -2141,6 +2174,8 @@
         const card = document.createElement('div');
         card.className = 'dash-card dash-dark';
         card.style.position = 'relative';
+        card.style.cursor = 'pointer';
+        card.ondblclick = () => openClientModal(c);
         
         // Delete button for Admin/Director
         let deleteBtn = '';
@@ -2251,6 +2286,8 @@
         const card = document.createElement('div');
         card.className = 'dash-card dash-dark';
         card.style.position = 'relative';
+        card.style.cursor = 'pointer';
+        card.ondblclick = () => openEmployeeModal(e);
         
         // Delete button for Admin/Director
         let deleteBtn = '';
@@ -2690,14 +2727,14 @@ window.switchMainTab = function(tabId) {
     allTabs.forEach(function(id) {
         const view = document.getElementById(id + '-view');
         const nav  = document.getElementById('nav-' + id);
-        if (view) { view.style.display = 'none'; view.classList.remove('active'); }
+        if (view) { view.style.display = ''; view.classList.remove('active'); }
         if (nav)  nav.classList.remove('active');
     });
 
     // Показати потрібну вкладку
     const targetView = document.getElementById(tabId + '-view');
     const targetNav  = document.getElementById('nav-' + tabId);
-    if (targetView) { targetView.style.display = 'block'; targetView.classList.add('active'); }
+    if (targetView) { targetView.style.display = ''; targetView.classList.add('active'); }
     if (targetNav)  targetNav.classList.add('active');
 
     // Налаштування глобальної кнопки "Створити" в хедері
