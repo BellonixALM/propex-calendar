@@ -2094,16 +2094,16 @@
         document.getElementById('form-client-note').value = client['Примітки'] || '';
         if (client['Примітки']) {
           document.getElementById('group-client-note').style.display = 'block';
-          document.getElementById('check-add-client-note').checked = true;
+          document.getElementById('form-client-has-note').checked = true;
         } else {
           document.getElementById('group-client-note').style.display = 'none';
-          document.getElementById('check-add-client-note').checked = false;
+          document.getElementById('form-client-has-note').checked = false;
         }
       } else {
         document.getElementById('form-client-id').value = '';
         document.getElementById('form-client-address').value = '';
         document.getElementById('group-client-note').style.display = 'none';
-        document.getElementById('check-add-client-note').checked = false;
+        document.getElementById('form-client-has-note').checked = false;
       }
       
       toggleClientFields();
