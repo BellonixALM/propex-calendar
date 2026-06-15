@@ -2165,9 +2165,9 @@
         const typeLabel = isCompany ? 'Компанія' : 'Приватна особа';
         
         let actionsHtml = '';
-        if (c['Telegram']) actionsHtml += `<a href="https://t.me/${c['Telegram'].replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
-        if (c['Viber']) actionsHtml += `<a href="viber://chat?number=${c['Viber'].replace('+', '')}" class="contact-btn" title="Viber">💜</a>`;
-        if (c['WhatsApp']) actionsHtml += `<a href="https://wa.me/${c['WhatsApp'].replace('+', '')}" target="_blank" class="contact-btn" title="WhatsApp">💬</a>`;
+        if (c['Telegram']) actionsHtml += `<a href="https://t.me/${String(c['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
+        if (c['Viber']) actionsHtml += `<a href="viber://chat?number=${String(c['Viber']).replace('+', '')}" class="contact-btn" title="Viber">💜</a>`;
+        if (c['WhatsApp']) actionsHtml += `<a href="https://wa.me/${String(c['WhatsApp']).replace('+', '')}" target="_blank" class="contact-btn" title="WhatsApp">💬</a>`;
         if (c['Телефон']) actionsHtml += `<a href="tel:${c['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
         if (c['Email']) actionsHtml += `<a href="mailto:${c['Email']}" class="contact-btn" title="Написати Email">📧</a>`;
         
@@ -2280,7 +2280,7 @@
         if (roleLabel === 'driver') { roleIcon = '🚗'; roleLabel = 'Водій'; }
         
         let actionsHtml = '';
-        if (e['Telegram']) actionsHtml += `<a href="https://t.me/${e['Telegram'].replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
+        if (e['Telegram']) actionsHtml += `<a href="https://t.me/${String(e['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
         if (e['Телефон']) actionsHtml += `<a href="tel:${e['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
         
         const card = document.createElement('div');
