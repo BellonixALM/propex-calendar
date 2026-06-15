@@ -2135,70 +2135,74 @@
     
     function renderClients() {
       const container = document.getElementById('clients-container');
-      container.innerHTML = '';
-      
-      const query = (document.getElementById('clients-search-input').value || '').toLowerCase();
-      let clients = state.clients || [];
-      if (query) {
-        clients = clients.filter(c => 
-          String(c['Назва'] || '').toLowerCase().includes(query) || 
-          String(c['Контакт'] || '').toLowerCase().includes(query) ||
-          String(c['Телефон'] || '').toLowerCase().includes(query)
-        );
-      }
-      
-      if (clients.length === 0) {
-        container.innerHTML = '<div style="color:#9ca3af; padding: 20px;">Клієнтів не знайдено.</div>';
-        return;
-      }
-      
-      // grid vs list view logic
-      if (clientViewMode === 'list') {
-        container.style.gridTemplateColumns = '1fr';
-      } else {
-        container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
-      }
-      
-      clients.forEach(c => {
-        const isCompany = c['Тип'] === 'company';
-        const icon = isCompany ? '🏢' : '👤';
-        const typeLabel = isCompany ? 'Компанія' : 'Приватна особа';
+      try {
+        container.innerHTML = '';
         
-        let actionsHtml = '';
-        if (c['Telegram']) actionsHtml += `<a href="https://t.me/${String(c['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
-        if (c['Viber']) actionsHtml += `<a href="viber://chat?number=${String(c['Viber']).replace('+', '')}" class="contact-btn" title="Viber">💜</a>`;
-        if (c['WhatsApp']) actionsHtml += `<a href="https://wa.me/${String(c['WhatsApp']).replace('+', '')}" target="_blank" class="contact-btn" title="WhatsApp">💬</a>`;
-        if (c['Телефон']) actionsHtml += `<a href="tel:${c['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
-        if (c['Email']) actionsHtml += `<a href="mailto:${c['Email']}" class="contact-btn" title="Написати Email">📧</a>`;
-        
-        const card = document.createElement('div');
-        card.className = 'dash-card dash-dark';
-        card.style.position = 'relative';
-        card.style.cursor = 'pointer';
-        card.ondblclick = () => openClientModal(c);
-        
-        // Delete button for Admin/Director
-        let deleteBtn = '';
-        if (state.currentUser && ['admin', 'director', 'керівник'].includes(state.currentUser.role.toLowerCase())) {
-          deleteBtn = `<button class="action-icon-btn" style="position:absolute; top:10px; right:10px; color:var(--danger);" onclick="deleteClient('${c['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
+        const query = (document.getElementById('clients-search-input').value || '').toLowerCase();
+        let clients = state.clients || [];
+        if (query) {
+          clients = clients.filter(c => 
+            String(c['Назва'] || '').toLowerCase().includes(query) || 
+            String(c['Контакт'] || '').toLowerCase().includes(query) ||
+            String(c['Телефон'] || '').toLowerCase().includes(query)
+          );
         }
         
-        card.innerHTML = `
-          ${deleteBtn}
-          <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${icon} ${typeLabel}</div>
-          <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${c['Назва'] || '-'}</h3>
-          ${isCompany && c['Контакт'] ? `<div style="font-size: 14px; margin-bottom: 5px;">👤 ${c['Контакт']}</div>` : ''}
-          ${c['Телефон'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📱 ${c['Телефон']}</div>` : ''}
-          ${c['Адреса'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📍 ${c['Адреса']}</div>` : ''}
-          ${c['Примітки'] ? `<div style="font-size: 12px; color: #6b7280; margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">📝 ${c['Примітки']}</div>` : ''}
+        if (clients.length === 0) {
+          container.innerHTML = '<div style="color:#9ca3af; padding: 20px;">Клієнтів не знайдено. (Дані: ' + (state.clients ? state.clients.length : '0') + ')</div>';
+          return;
+        }
+        
+        // grid vs list view logic
+        if (clientViewMode === 'list') {
+          container.style.gridTemplateColumns = '1fr';
+        } else {
+          container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+        }
+        
+        clients.forEach(c => {
+          const isCompany = c['Тип'] === 'company';
+          const icon = isCompany ? '🏢' : '👤';
+          const typeLabel = isCompany ? 'Компанія' : 'Приватна особа';
           
-          <div style="margin-top: 15px; display: flex; gap: 8px;">
-            ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
-          </div>
-        `;
-        container.appendChild(card);
-      });
-      safeCreateIcons();
+          let actionsHtml = '';
+          if (c['Telegram']) actionsHtml += `<a href="https://t.me/${String(c['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
+          if (c['Viber']) actionsHtml += `<a href="viber://chat?number=${String(c['Viber']).replace('+', '')}" class="contact-btn" title="Viber">💜</a>`;
+          if (c['WhatsApp']) actionsHtml += `<a href="https://wa.me/${String(c['WhatsApp']).replace('+', '')}" target="_blank" class="contact-btn" title="WhatsApp">💬</a>`;
+          if (c['Телефон']) actionsHtml += `<a href="tel:${c['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
+          if (c['Email']) actionsHtml += `<a href="mailto:${c['Email']}" class="contact-btn" title="Написати Email">📧</a>`;
+          
+          const card = document.createElement('div');
+          card.className = 'dash-card dash-dark';
+          card.style.position = 'relative';
+          card.style.cursor = 'pointer';
+          card.ondblclick = () => openClientModal(c);
+          
+          // Delete button for Admin/Director
+          let deleteBtn = '';
+          if (state.currentUser && state.currentUser.role && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
+            deleteBtn = `<button class="action-icon-btn" style="position:absolute; top:10px; right:10px; color:var(--danger);" onclick="deleteClient('${c['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
+          }
+          
+          card.innerHTML = `
+            ${deleteBtn}
+            <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${icon} ${typeLabel}</div>
+            <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${c['Назва'] || '-'}</h3>
+            ${isCompany && c['Контакт'] ? `<div style="font-size: 14px; margin-bottom: 5px;">👤 ${c['Контакт']}</div>` : ''}
+            ${c['Телефон'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📱 ${c['Телефон']}</div>` : ''}
+            ${c['Адреса'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📍 ${c['Адреса']}</div>` : ''}
+            ${c['Примітки'] ? `<div style="font-size: 12px; color: #6b7280; margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">📝 ${c['Примітки']}</div>` : ''}
+            
+            <div style="margin-top: 15px; display: flex; gap: 8px;">
+              ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+        safeCreateIcons();
+      } catch (err) {
+        container.innerHTML = '<div style="color:red; padding: 20px;">Помилка рендеру клієнтів: ' + err.toString() + '</div>';
+      }
     }
     
     function saveClient() {
@@ -2261,54 +2265,58 @@
     // --- Employees ---
     function renderEmployees() {
       const container = document.getElementById('employees-container');
-      container.innerHTML = '';
-      
-      let employees = state.employees || [];
-      
-      if (employees.length === 0) {
-        container.innerHTML = '<div style="color:#9ca3af; padding: 20px;">Співробітників не знайдено.</div>';
-        return;
-      }
-      
-      employees.forEach(e => {
-        let roleIcon = '👤';
-        let roleLabel = e['Роль'] || 'Невідомо';
-        if (roleLabel === 'admin') { roleIcon = '🛡️'; roleLabel = 'Адміністратор'; }
-        if (roleLabel === 'director') { roleIcon = '👑'; roleLabel = 'Директор'; }
-        if (roleLabel === 'manager') { roleIcon = '💼'; roleLabel = 'Менеджер'; }
-        if (roleLabel === 'logist') { roleIcon = '⚙️'; roleLabel = 'Логіст'; }
-        if (roleLabel === 'driver') { roleIcon = '🚗'; roleLabel = 'Водій'; }
+      try {
+        container.innerHTML = '';
         
-        let actionsHtml = '';
-        if (e['Telegram']) actionsHtml += `<a href="https://t.me/${String(e['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
-        if (e['Телефон']) actionsHtml += `<a href="tel:${e['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
+        let employees = state.employees || [];
         
-        const card = document.createElement('div');
-        card.className = 'dash-card dash-dark';
-        card.style.position = 'relative';
-        card.style.cursor = 'pointer';
-        card.ondblclick = () => openEmployeeModal(e);
-        
-        // Delete button for Admin/Director
-        let deleteBtn = '';
-        if (state.currentUser && ['admin', 'director', 'керівник'].includes(state.currentUser.role.toLowerCase())) {
-          deleteBtn = `<button class="action-icon-btn" style="position:absolute; top:10px; right:10px; color:var(--danger);" onclick="deleteEmployee('${e['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
+        if (employees.length === 0) {
+          container.innerHTML = '<div style="color:#9ca3af; padding: 20px;">Співробітників не знайдено.</div>';
+          return;
         }
         
-        card.innerHTML = `
-          ${deleteBtn}
-          <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${roleIcon} ${roleLabel}</div>
-          <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${e['ПІБ'] || '-'}</h3>
-          ${e['Авто'] && roleLabel === 'Водій' ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">🚗 Закріплене авто: ${e['Авто']}</div>` : ''}
-          ${e['Телефон'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📱 ${e['Телефон']}</div>` : ''}
+        employees.forEach(e => {
+          let roleIcon = '👤';
+          let roleLabel = e['Роль'] || 'Невідомо';
+          if (roleLabel === 'admin') { roleIcon = '🛡️'; roleLabel = 'Адміністратор'; }
+          if (roleLabel === 'director') { roleIcon = '👑'; roleLabel = 'Директор'; }
+          if (roleLabel === 'manager') { roleIcon = '💼'; roleLabel = 'Менеджер'; }
+          if (roleLabel === 'logist') { roleIcon = '⚙️'; roleLabel = 'Логіст'; }
+          if (roleLabel === 'driver') { roleIcon = '🚗'; roleLabel = 'Водій'; }
           
-          <div style="margin-top: 15px; display: flex; gap: 8px;">
-            ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
-          </div>
-        `;
-        container.appendChild(card);
-      });
-      safeCreateIcons();
+          let actionsHtml = '';
+          if (e['Telegram']) actionsHtml += `<a href="https://t.me/${String(e['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
+          if (e['Телефон']) actionsHtml += `<a href="tel:${e['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
+          
+          const card = document.createElement('div');
+          card.className = 'dash-card dash-dark';
+          card.style.position = 'relative';
+          card.style.cursor = 'pointer';
+          card.ondblclick = () => openEmployeeModal(e);
+          
+          // Delete button for Admin/Director
+          let deleteBtn = '';
+          if (state.currentUser && state.currentUser.role && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
+            deleteBtn = `<button class="action-icon-btn" style="position:absolute; top:10px; right:10px; color:var(--danger);" onclick="deleteEmployee('${e['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
+          }
+          
+          card.innerHTML = `
+            ${deleteBtn}
+            <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${roleIcon} ${roleLabel}</div>
+            <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${e['ПІБ'] || '-'}</h3>
+            ${e['Авто'] && roleLabel === 'Водій' ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">🚗 Закріплене авто: ${e['Авто']}</div>` : ''}
+            ${e['Телефон'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📱 ${e['Телефон']}</div>` : ''}
+            
+            <div style="margin-top: 15px; display: flex; gap: 8px;">
+              ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+        safeCreateIcons();
+      } catch (err) {
+        container.innerHTML = '<div style="color:red; padding: 20px;">Помилка рендеру: ' + err.toString() + '</div>';
+      }
     }
     
     function saveEmployee() {
