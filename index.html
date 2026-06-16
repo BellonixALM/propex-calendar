@@ -2685,7 +2685,7 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
           }
           
           card.innerHTML = `
-            <div style="display:flex; align-items:center;">${actionButtons}</div>
+            <div style="display:flex; align-items:center; justify-content:flex-end;">${deleteBtn}</div>
             <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${roleIcon} ${roleLabel}</div>
             <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${e['ПІБ'] || '-'}</h3>
             ${e['Авто'] && roleLabel === 'Водій' ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">🚗 Закріплене авто: ${e['Авто']}</div>` : ''}
