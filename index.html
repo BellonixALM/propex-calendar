@@ -861,6 +861,14 @@
         script.src = WEBAPP_URL + separator + 'action=' + encodeURIComponent(action) + '&payload=' + encodedPayload + '&callback=' + callbackName + '&_t=' + Date.now();
         
         document.head.appendChild(script);
+        setTimeout(function() {
+          if (window[callbackName]) {
+            alert('JSONP ЗАВИС! Таймаут для: ' + action);
+            if (self.failureHandler) self.failureHandler(new Error('JSONP timeout for ' + action));
+            delete window[callbackName];
+            script.remove();
+          }
+        }, 8000);
       };
       ScriptRunBridge.prototype.authenticateUser = function(login, password) {
         this._callAPI('login', { login: login, password: password });
