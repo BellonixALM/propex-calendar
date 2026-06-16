@@ -2305,10 +2305,11 @@
           card.style.flexDirection = 'column';
           card.onclick = () => openClientModal(c);
           
-          // Delete button for Admin/Director
-          let deleteBtn = '';
+          let actionButtons = `<button class="action-icon-btn" style="color:var(--text-muted); padding:4px;" onclick="event.stopPropagation(); openClientModal(c)" title="Редагувати"><i data-lucide="more-horizontal" style="width:18px;height:18px;"></i></button>`;
+          
+          // Delete button only for Admin/Director
           if (state.currentUser && state.currentUser.role && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
-            deleteBtn = `<button class="action-icon-btn" style="color:var(--text-muted); padding:4px;" onclick="event.stopPropagation(); deleteClient('${c['ID']}')" title="Видалити"><i data-lucide="more-horizontal" style="width:18px;height:18px;"></i></button>`;
+            actionButtons += `<button class="action-icon-btn" style="color:var(--danger); padding:4px; margin-left: 4px;" onclick="event.stopPropagation(); confirmDeleteClient('${c['ID']}')" title="Видалити клієнта"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
           }
           
           // Avatar Color Generator
@@ -2336,7 +2337,7 @@
                   <div style="font-size: 12px; color: #9ca3af; margin-top: 2px;">${typeLabel}</div>
                 </div>
               </div>
-              ${deleteBtn}
+              <div style="display:flex; align-items:center;">${actionButtons}</div>
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; flex: 1;">
@@ -2426,6 +2427,13 @@
       }).saveClient(payload);
     }
     
+    
+    function confirmDeleteClient(id) {
+      if (confirm("Ви впевнені, що хочете видалити цю картку? Ці дані буде неможливо відновити.")) {
+        deleteClient(id);
+      }
+    }
+
     function deleteClient(id) {
       if (!confirm("Ви впевнені, що хочете видалити цього клієнта?")) return;
       
@@ -2480,7 +2488,7 @@
           }
           
           card.innerHTML = `
-            ${deleteBtn}
+            <div style="display:flex; align-items:center;">${actionButtons}</div>
             <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${roleIcon} ${roleLabel}</div>
             <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${e['ПІБ'] || '-'}</h3>
             ${e['Авто'] && roleLabel === 'Водій' ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">🚗 Закріплене авто: ${e['Авто']}</div>` : ''}
