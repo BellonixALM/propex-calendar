@@ -109,6 +109,9 @@ function doPost(e) {
     if (action === 'add_delivery') {
       return ContentService.createTextOutput(JSON.stringify(addDelivery(data.data)))
         .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'get_employees') {
+      return ContentService.createTextOutput(JSON.stringify(get_employees()))
+        .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'get_deliveries') {
       return ContentService.createTextOutput(JSON.stringify(getDeliveries()))
         .setMimeType(ContentService.MimeType.JSON);
