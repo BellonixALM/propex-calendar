@@ -781,13 +781,13 @@
 
     window.addEventListener('error', function(e) {
       const errDiv = document.createElement('div');
-      errDiv.style = 'position:fixed;top:0;left:0;width:100%;background:red;color:white;z-index:99999;padding:20px;font-size:20px;';
+      errDiv.style = 'display:none;';
       errDiv.innerHTML = 'GLOBAL ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
       document.body.appendChild(errDiv);
     });
     window.addEventListener('unhandledrejection', function(e) {
       const errDiv = document.createElement('div');
-      errDiv.style = 'position:fixed;top:0;left:0;width:100%;background:red;color:white;z-index:99999;padding:20px;font-size:20px;';
+      errDiv.style = 'display:none;';
       errDiv.innerHTML = 'PROMISE ERROR: ' + e.reason;
       document.body.appendChild(errDiv);
     });
@@ -2745,13 +2745,13 @@
 
     window.addEventListener('error', function(e) {
       const errDiv = document.createElement('div');
-      errDiv.style = 'position:fixed;top:0;left:0;width:100%;background:red;color:white;z-index:99999;padding:20px;font-size:20px;';
+      errDiv.style = 'display:none;';
       errDiv.innerHTML = 'GLOBAL ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
       document.body.appendChild(errDiv);
     });
     window.addEventListener('unhandledrejection', function(e) {
       const errDiv = document.createElement('div');
-      errDiv.style = 'position:fixed;top:0;left:0;width:100%;background:red;color:white;z-index:99999;padding:20px;font-size:20px;';
+      errDiv.style = 'display:none;';
       errDiv.innerHTML = 'PROMISE ERROR: ' + e.reason;
       document.body.appendChild(errDiv);
     });
@@ -3230,16 +3230,8 @@ function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe) {
 
 </script>
 
-  <div id="ui-debug-log" style="position:fixed; bottom:0; left:0; right:0; height:150px; background:rgba(0,0,0,0.9); color:#0f0; font-family:monospace; padding:10px; overflow-y:auto; z-index:999999; font-size:12px;">
-    <div>UI DEBUG LOG:</div>
-  </div>
-  <script>
-    window.uiLog = function(msg) {
-      const d = document.getElementById('ui-debug-log');
-      if (d) { d.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + msg + '</div>'; d.scrollTop = d.scrollHeight; }
-      console.log('UI_LOG:', msg);
-    };
-  </script>
 
+
+  <script>window.uiLog = function(){};</script>
 </body>
 </html>
