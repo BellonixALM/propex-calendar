@@ -577,6 +577,11 @@
               <label for="form-client-address">Адреса</label>
               <input type="text" id="form-client-address" class="form-control" placeholder="Місто, вулиця...">
             </div>
+                        <div class="form-group full-width" id="extra-contacts-container" style="display:none; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+              <label>Додаткові контакти (тільки для компаній)</label>
+              <div id="extra-contacts-list" style="display:flex; flex-direction:column; gap:10px; margin-top: 10px;"></div>
+              <button type="button" class="btn btn-secondary" onclick="addExtraContact()" style="margin-top:10px; font-size:12px; padding:6px 12px; width: fit-content;">+ Додати ще один контакт</button>
+            </div>
             <div class="form-group full-width" style="display:flex; align-items:center; gap: 10px; margin-top:10px;">
               <input type="checkbox" id="form-client-has-note" onchange="document.getElementById('group-client-note').style.display = this.checked ? 'block' : 'none';" style="width:16px;height:16px;">
               <label for="form-client-has-note" style="margin:0; cursor:pointer;">Додати примітки</label>
@@ -2142,10 +2147,13 @@
     function toggleClientFields() {
       const type = document.getElementById('form-client-type').value;
       const contactGroup = document.getElementById('group-client-contact');
+      const extraContactsGroup = document.getElementById('extra-contacts-container');
       if (type === 'company') {
         contactGroup.style.display = 'block';
+        if (extraContactsGroup) extraContactsGroup.style.display = 'block';
       } else {
         contactGroup.style.display = 'none';
+        if (extraContactsGroup) extraContactsGroup.style.display = 'none';
       }
     }
     
@@ -2205,6 +2213,22 @@
       renderClients();
     }
     
+    
+    function addExtraContact(contactObj = null) {
+       const list = document.getElementById('extra-contacts-list');
+       if (!list) return;
+       const div = document.createElement('div');
+       div.style.cssText = "display:grid; grid-template-columns: 1fr 1fr 1fr 30px; gap:8px; align-items:center; background:rgba(255,255,255,0.03); padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);";
+       div.innerHTML = `
+         <input type="text" class="form-control extra-contact-name" placeholder="ПІБ (напр. Іван)" value="${contactObj ? (contactObj.name || '') : ''}">
+         <input type="text" class="form-control extra-contact-phone" placeholder="Телефон" value="${contactObj ? (contactObj.phone || '') : ''}">
+         <input type="text" class="form-control extra-contact-role" placeholder="Посада (напр. Директор)" value="${contactObj ? (contactObj.role || '') : ''}">
+         <button type="button" class="action-icon-btn" style="color:var(--danger);" onclick="this.parentElement.remove()" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>
+       `;
+       list.appendChild(div);
+       if (window.lucide) window.lucide.createIcons();
+    }
+
     function renderClients() {
       const container = document.getElementById('clients-container');
       try {
@@ -2258,7 +2282,7 @@
           card.className = 'dash-card dash-dark';
           card.style.position = 'relative';
           card.style.cursor = 'pointer';
-          card.ondblclick = () => openClientModal(c);
+          card.onclick = () => openClientModal(c);
           
           // Delete button for Admin/Director
           let deleteBtn = '';
@@ -2293,8 +2317,24 @@
       btn.textContent = 'Збереження...';
       btn.disabled = true;
       
+      const extraContacts = [];
+      const extraNodes = document.querySelectorAll('#extra-contacts-list > div');
+      if (extraNodes) {
+        extraNodes.forEach(div => {
+          const name = div.querySelector('.extra-contact-name').value.trim();
+          if (name) {
+            extraContacts.push({
+              name: name,
+              phone: div.querySelector('.extra-contact-phone').value.trim(),
+              role: div.querySelector('.extra-contact-role').value.trim()
+            });
+          }
+        });
+      }
+      
       const payload = {
         id: document.getElementById('form-client-id').value,
+        extra_contacts: JSON.stringify(extraContacts),
         type: document.getElementById('form-client-type').value,
         name: document.getElementById('form-client-name').value,
         contact: document.getElementById('form-client-contact').value,
