@@ -143,7 +143,7 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'getDailyCrews') {
-      return ContentService.createTextOutput(JSON.stringify(get_daily_crews()))
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getDailyCrews() }))
         .setMimeType(ContentService.MimeType.JSON);
     }
     
@@ -1123,27 +1123,3 @@ function register_driver(data) {
   }
 }
 
-function get_daily_crews() {
-  var ss = getSpreadsheet();
-  if (!ss) return { status: 'error', message: 'No spreadsheet connection' };
-  
-  var sheet = ss.getSheetByName('Чергування');
-  if (!sheet) return { status: 'success', data: [] }; // No shifts assigned yet
-  
-  var data = sheet.getDataRange().getDisplayValues();
-  if (data.length <= 1) return { status: 'success', data: [] };
-  
-  var headers = data[0];
-  var results = [];
-  
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    var obj = {};
-    for (var j = 0; j < headers.length; j++) {
-      obj[headers[j]] = row[j];
-    }
-    results.push(obj);
-  }
-  
-  return { status: 'success', data: results };
-}
