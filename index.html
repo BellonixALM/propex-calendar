@@ -1141,7 +1141,7 @@
          btn.innerHTML = '<i data-lucide="panel-left-open" style="width:18px;height:18px;"></i>';
          btn.onclick = toggleSidebar;
          btn.title = "Розгорнути панель";
-         searchCont.parentNode.insertBefore(btn, searchCont);
+         searchCont.parentNode.insertBefore(btn, searchCont); if (window.lucide) window.lucide.createIcons();
        }
     }
 
