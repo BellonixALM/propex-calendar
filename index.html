@@ -858,7 +858,7 @@
 
         const encodedPayload = encodeURIComponent(JSON.stringify(data || {}));
         const separator = WEBAPP_URL.includes('?') ? '&' : '?';
-        script.src = WEBAPP_URL + separator + 'action=' + encodeURIComponent(action) + '&payload=' + encodedPayload + '&callback=' + callbackName + ';
+        script.src = WEBAPP_URL + separator + 'action=' + encodeURIComponent(action) + '&payload=' + encodedPayload + '&callback=' + callbackName;
         
         document.head.appendChild(script);
         setTimeout(function() {
