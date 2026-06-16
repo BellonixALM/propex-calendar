@@ -837,6 +837,7 @@
               if (errD) { errD.textContent = "Помилка: " + (result.message || "Unknown"); errD.style.display = 'block'; }
             }
           } else {
+            uiLog('JSONP CALLBACK EXECUTED FOR: ' + action);
             if (successCb) {
               successCb(result);
             }
@@ -846,6 +847,7 @@
         const script = document.createElement('script');
         script.id = callbackName;
         script.onerror = function() {
+          uiLog('script.onerror FIRED FOR: ' + action);
           delete window[callbackName];
           script.remove();
           if (failureCb) {
@@ -863,7 +865,7 @@
         document.head.appendChild(script);
         setTimeout(function() {
           if (window[callbackName]) {
-            alert('JSONP ЗАВИС! Таймаут для: ' + action);
+            uiLog('JSONP ЗАВИС: ' + action);
             if (self.failureHandler) self.failureHandler(new Error('JSONP timeout for ' + action));
             delete window[callbackName];
             script.remove();
@@ -1077,7 +1079,7 @@
       const label = document.getElementById('date-label');
       label.textContent = "⏱️ Завантаження доставок...";
       propexApi
-        .withFailureHandler(function(err) {
+        .withFailureHandler(function(err) { uiLog('ПОМИЛКА доставки: ' + (err.message || err));
           dataLoadedSuccessfully = true;
           console.error("Failed to load deliveries from Sheets:", err);
           label.textContent = "❌ Помилка доставок: " + (err.message || err).substring(0, 50);
@@ -1085,7 +1087,7 @@
           buildKnowledgeBase();
           renderCalendar();
         })
-        .withSuccessHandler(function(response) {
+        .withSuccessHandler(function(response) { uiLog('УСПІХ доставки: ' + (response.data ? response.data.length : '0'));
           dataLoadedSuccessfully = true;
           state.deliveries = (response && response.status === 'success') ? response.data : (response || []);
           window.debugLoadedText = '';
@@ -1099,28 +1101,28 @@
         .getDeliveries();
     }
     function loadData() {
-      alert('ПОЧАТОК loadData!');
+      uiLog('ПОЧАТОК loadData!');
       const label = document.getElementById('date-label');
       
         label.textContent = "⏱️ Завантаження даних...";
         propexApi
-          .withSuccessHandler(function(response) {
+          .withSuccessHandler(function(response) { uiLog('УСПІХ доставки: ' + (response.data ? response.data.length : '0'));
             state.dailyCrews = (response && response.status === 'success') ? response.data : (response || []);
           })
-          .withFailureHandler(function(err) {
+          .withFailureHandler(function(err) { uiLog('ПОМИЛКА доставки: ' + (err.message || err));
             console.error("Failed to load daily shifts:", err);
             state.dailyCrews = [];
           })
           .getDailyCrews();
           
         propexApi
-          .withSuccessHandler(function(response) {
-            alert('УСПІХ! Отримано клієнтів: ' + (response.data ? response.data.length : 'невідомо') + '. Сирий статус: ' + response.status);
+          .withSuccessHandler(function(response) { uiLog('УСПІХ доставки: ' + (response.data ? response.data.length : '0'));
+            uiLog('УСПІХ клієнти: ' + (response.data ? response.data.length : '0'));
             state.clients = (response && response.status === 'success') ? response.data : (response || []);
             renderClients();
           })
-          .withFailureHandler(function(err) {
-            alert('ПОМИЛКА завантаження клієнтів: ' + err.message);
+          .withFailureHandler(function(err) { uiLog('ПОМИЛКА доставки: ' + (err.message || err));
+            uiLog('ПОМИЛКА клієнти: ' + (err.message || err));
             console.error("Failed to load clients:", err);
             state.clients = [];
             renderClients();
@@ -1128,18 +1130,18 @@
           .get_clients();
 
         propexApi
-          .withSuccessHandler(function(response) {
+          .withSuccessHandler(function(response) { uiLog('УСПІХ доставки: ' + (response.data ? response.data.length : '0'));
             state.employees = (response && response.status === 'success') ? response.data : (response || []);
             renderEmployees();
           })
-          .withFailureHandler(function(err) {
+          .withFailureHandler(function(err) { uiLog('ПОМИЛКА доставки: ' + (err.message || err));
             console.error("Failed to load employees:", err);
             state.employees = [];
           })
           .get_employees();
 
         propexApi
-          .withFailureHandler(function(err) {
+          .withFailureHandler(function(err) { uiLog('ПОМИЛКА доставки: ' + (err.message || err));
             dataLoadedSuccessfully = true;
             console.error("Failed to load drivers from Sheets:", err);
             label.textContent = "⏱️ Водіїв не знайдено, вантажимо доставки...";
@@ -1147,7 +1149,7 @@
             renderDriversHeader();
             loadDeliveriesSafely();
           })
-          .withSuccessHandler(function(response) {
+          .withSuccessHandler(function(response) { uiLog('УСПІХ доставки: ' + (response.data ? response.data.length : '0'));
             state.drivers = (response && response.status === 'success') ? response.data : (response || []);
             renderDriversHeader();
             loadDeliveriesSafely();
@@ -1273,7 +1275,7 @@
         errorMsg.style.display = 'none';
         if (typeof propexApi !== 'undefined') {
           propexApi
-            .withSuccessHandler(function(response) {
+            .withSuccessHandler(function(response) { uiLog('УСПІХ доставки: ' + (response.data ? response.data.length : '0'));
               try {
                 submitBtn.disabled = false;
                 submitBtn.textContent = "Увійти в систему";
@@ -1290,7 +1292,7 @@
                 errorMsg.style.display = 'block';
               }
             })
-            .withFailureHandler(function(err) {
+            .withFailureHandler(function(err) { uiLog('ПОМИЛКА доставки: ' + (err.message || err));
               try {
                 submitBtn.disabled = false;
                 submitBtn.textContent = "Увійти в систему";
@@ -2421,7 +2423,7 @@
       
       if (typeof propexApi !== 'undefined') {
         propexApi
-          .withSuccessHandler(function(response) {
+          .withSuccessHandler(function(response) { uiLog('УСПІХ доставки: ' + (response.data ? response.data.length : '0'));
             document.getElementById('cancel-delivery-btn').disabled = false;
             document.getElementById('cancel-delivery-btn').textContent = "🚫 Анулювати";
             if (response && response.status === 'success') {
@@ -2455,14 +2457,14 @@
       document.getElementById('update-status-btn').textContent = "Оновлення...";
       
         propexApi
-          .withSuccessHandler(function(response) {
+          .withSuccessHandler(function(response) { uiLog('УСПІХ доставки: ' + (response.data ? response.data.length : '0'));
             document.getElementById('update-status-btn').disabled = false;
             document.getElementById('update-status-btn').textContent = "Оновити";
             closeModal('details-modal');
             loadData();
             alert("Статус доставки успішно оновлено!");
           })
-          .withFailureHandler(function(err) {
+          .withFailureHandler(function(err) { uiLog('ПОМИЛКА доставки: ' + (err.message || err));
             document.getElementById('update-status-btn').disabled = false;
             document.getElementById('update-status-btn').textContent = "Оновити";
             alert("Помилка оновлення статусу: " + (err.message || err));
@@ -2686,7 +2688,7 @@
       
         propexApi
           .withSuccessHandler(function(res) { console.log('Delivery moved successfully', res); })
-          .withFailureHandler(function(err) {
+          .withFailureHandler(function(err) { uiLog('ПОМИЛКА доставки: ' + (err.message || err));
             alert("Помилка перетягування: " + (err.message || err));
             del['Час'] = oldTime;
             del['ID_Авто'] = oldCar;
@@ -3227,5 +3229,17 @@ function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe) {
 }
 
 </script>
+
+  <div id="ui-debug-log" style="position:fixed; bottom:0; left:0; right:0; height:150px; background:rgba(0,0,0,0.9); color:#0f0; font-family:monospace; padding:10px; overflow-y:auto; z-index:999999; font-size:12px;">
+    <div>UI DEBUG LOG:</div>
+  </div>
+  <script>
+    window.uiLog = function(msg) {
+      const d = document.getElementById('ui-debug-log');
+      if (d) { d.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + msg + '</div>'; d.scrollTop = d.scrollHeight; }
+      console.log('UI_LOG:', msg);
+    };
+  </script>
+
 </body>
 </html>
