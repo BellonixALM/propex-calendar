@@ -23,7 +23,7 @@ function getSpreadsheet() {
   return ss;
 }
 
-function sendTelegramMessage(chatId, text) {
+function sendTelegramMessage(chatId, text, replyMarkup) {
   if (!BOT_TOKEN || !chatId) return;
   try {
     var url = "https://api.telegram.org/bot" + BOT_TOKEN + "/sendMessage";
@@ -32,6 +32,10 @@ function sendTelegramMessage(chatId, text) {
       "text": text,
       "parse_mode": "HTML"
     };
+    
+    if (replyMarkup) {
+      payload.reply_markup = replyMarkup;
+    }
     
     UrlFetchApp.fetch(url, {
       "method": "post",
@@ -131,6 +135,14 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'update_delivery_details') {
       var result = updateDeliveryDetails(data.data.id, data.data.deliveryData, data.data.userRole);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'assign_warehouse_worker') {
+      var result = assignWarehouseWorker(data.data.deliveryId, data.data.workerId);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'update_warehouse_status') {
+      var result = updateWarehouseStatus(data.data.deliveryId, data.data.status);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'update_driver_photo') {
@@ -347,8 +359,21 @@ function addDelivery(deliveryData) {
   
   var headers = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0];
   if (headers.length === 1 && headers[0] === "") {
-    sheet.appendRow(['ID', 'ID_Авто', 'Дата', 'Час', 'Адреса', 'Номер_замовлення', 'Статус_оплати', 'Статус', 'Коментар', 'Ім\'я_одержувача', 'Телефон_одержувача', 'ID_Менеджера']);
+    sheet.appendRow(['ID', 'ID_Авто', 'Дата', 'Час', 'Адреса', 'Номер_замовлення', 'Статус_оплати', 'Статус', 'Коментар', 'Ім\'я_одержувача', 'Телефон_одержувача', 'ID_Менеджера', 'ID_Комірника', 'Статус_збору']);
     headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  } else {
+    // Add missing columns if they don't exist
+    var hasWorker = headers.indexOf('ID_Комірника') !== -1;
+    var hasGatherStatus = headers.indexOf('Статус_збору') !== -1;
+    
+    if (!hasWorker) {
+      sheet.getRange(1, headers.length + 1).setValue('ID_Комірника');
+      headers.push('ID_Комірника');
+    }
+    if (!hasGatherStatus) {
+      sheet.getRange(1, headers.length + 1).setValue('Статус_збору');
+      headers.push('Статус_збору');
+    }
   }
   
   var newRow = new Array(headers.length).fill('');
@@ -370,8 +395,39 @@ function addDelivery(deliveryData) {
   setVal('Ім\'я_одержувача', deliveryData.receiver_name || '');
   setVal('Телефон_одержувача', deliveryData.receiver_phone || '');
   setVal('ID_Менеджера', deliveryData.manager_chat_id || '');
+  setVal('ID_Комірника', '');
+  setVal('Статус_збору', 'Очікує');
 
   sheet.appendRow(newRow);
+  
+  // Notify Head Warehouse Workers
+  var whData = getWarehouseWorkers();
+  var heads = whData.heads;
+  var workers = whData.workers;
+  
+  if (heads.length > 0) {
+    var text = "📦 <b>Нове замовлення створено!</b>\n" +
+               "Замовлення №" + (deliveryData.order_num || "Б/Н") + "\n" +
+               "📅 " + deliveryData.date + " " + deliveryData.time + "\n" +
+               "Кому: " + (deliveryData.receiver_name || "Не вказано") + "\n\n" +
+               "Будь ласка, призначте комірника на збірку:";
+               
+    var kb = { "inline_keyboard": [] };
+    
+    // Add Head workers as assignees
+    heads.forEach(function(h) {
+      kb.inline_keyboard.push([{"text": "🧑‍💼 На себе (" + h.name + ")", "callback_data": "assign_wh_" + id + "_" + h.id}]);
+    });
+    
+    // Add regular workers
+    workers.forEach(function(w) {
+      kb.inline_keyboard.push([{"text": "👷 Призначити: " + w.name, "callback_data": "assign_wh_" + id + "_" + w.id}]);
+    });
+    
+    heads.forEach(function(head) {
+      sendTelegramMessage(head.telegram_id, text, kb);
+    });
+  }
   
   return { status: 'success', id: id };
 }
@@ -470,6 +526,151 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
   }
   
   return { status: 'error', message: 'Замовлення з вказаним ID не знайдено' };
+}
+
+function assignWarehouseWorker(deliveryId, workerId) {
+  var ss = getSpreadsheet();
+  if (!ss) return { status: 'error', message: 'Відсутній зв’язок із таблицею' };
+  var sheet = ss.getSheetByName('Доставки');
+  if (!sheet) return { status: 'error', message: 'Лист Доставки не знайдено' };
+  
+  var range = sheet.getDataRange();
+  var data = range.getDisplayValues();
+  var headers = data[0];
+  
+  var idCol = headers.indexOf('ID');
+  var workerCol = headers.indexOf('ID_Комірника');
+  var gatherCol = headers.indexOf('Статус_збору');
+  var orderCol = headers.indexOf('Номер_замовлення');
+  
+  if (idCol === -1) return { status: 'error', message: 'Колонку ID не знайдено' };
+  
+  // Якщо немає колонок комірників, додамо їх
+  if (workerCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('ID_Комірника');
+    workerCol = headers.length;
+    headers.push('ID_Комірника');
+  }
+  if (gatherCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Статус_збору');
+    gatherCol = headers.length;
+    headers.push('Статус_збору');
+  }
+  
+  var orderNum = "Б/Н";
+  
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][idCol] == deliveryId) {
+      sheet.getRange(i + 1, workerCol + 1).setValue(workerId);
+      sheet.getRange(i + 1, gatherCol + 1).setValue('В процесі збору');
+      if (orderCol !== -1) orderNum = data[i][orderCol];
+      
+      // Get the worker telegram ID to send them a notification
+      var whData = getWarehouseWorkers();
+      var assignedWorker = null;
+      for (var j = 0; j < whData.heads.length; j++) { if (whData.heads[j].id == workerId) assignedWorker = whData.heads[j]; }
+      for (var k = 0; k < whData.workers.length; k++) { if (whData.workers[k].id == workerId) assignedWorker = whData.workers[k]; }
+      
+      if (assignedWorker && assignedWorker.telegram_id) {
+        var text = "📦 <b>Вам призначено збірку замовлення №" + orderNum + "</b>\n\n" +
+                   "Натисніть 'Підтвердити', коли воно буде готове, або 'Проблема', якщо щось пішло не так.";
+        var kb = {
+          "inline_keyboard": [
+            [{"text": "✅ Підтвердити (Зібрано)", "callback_data": "wh_confirm_" + deliveryId}],
+            [{"text": "⚠️ Проблема зі збіркою", "callback_data": "wh_problem_" + deliveryId}]
+          ]
+        };
+        sendTelegramMessage(assignedWorker.telegram_id, text, kb);
+      }
+      return { status: 'success' };
+    }
+  }
+  return { status: 'error', message: 'Замовлення не знайдено' };
+}
+
+function updateWarehouseStatus(deliveryId, statusStr) {
+  var ss = getSpreadsheet();
+  if (!ss) return { status: 'error' };
+  var sheet = ss.getSheetByName('Доставки');
+  if (!sheet) return { status: 'error' };
+  
+  var range = sheet.getDataRange();
+  var data = range.getDisplayValues();
+  var headers = data[0];
+  
+  var idCol = headers.indexOf('ID');
+  var gatherCol = headers.indexOf('Статус_збору');
+  var orderCol = headers.indexOf('Номер_замовлення');
+  var workerCol = headers.indexOf('ID_Комірника');
+  
+  if (idCol === -1 || gatherCol === -1) return { status: 'error' };
+  
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][idCol] == deliveryId) {
+      sheet.getRange(i + 1, gatherCol + 1).setValue(statusStr);
+      var orderNum = orderCol !== -1 ? data[i][orderCol] : "Б/Н";
+      var workerId = workerCol !== -1 ? data[i][workerCol] : "";
+      
+      // If it's a problem, notify Heads
+      if (statusStr === 'Проблема') {
+        var whData = getWarehouseWorkers();
+        var workerName = "Комірник";
+        
+        var assignedWorker = null;
+        for (var j = 0; j < whData.heads.length; j++) { if (whData.heads[j].id == workerId) assignedWorker = whData.heads[j]; }
+        for (var k = 0; k < whData.workers.length; k++) { if (whData.workers[k].id == workerId) assignedWorker = whData.workers[k]; }
+        
+        if (assignedWorker) workerName = assignedWorker.name;
+        
+        var alertText = "🚨 <b>УВАГА: Проблема зі збіркою!</b>\n\n" +
+                        "📦 Замовлення №" + orderNum + "\n" +
+                        "🧑‍🔧 Комірник: " + workerName + " повідомив про проблему.\n" +
+                        "Будь ласка, розберіться в ситуації.";
+                        
+        whData.heads.forEach(function(h) {
+          sendTelegramMessage(h.telegram_id, alertText);
+        });
+      }
+      return { status: 'success', order_num: orderNum };
+    }
+  }
+  return { status: 'error' };
+}
+  var ss = getSpreadsheet();
+  if (!ss) return { heads: [], workers: [] };
+  
+  var sheet = ss.getSheetByName('Користувачі');
+  if (!sheet) return { heads: [], workers: [] };
+  
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return { heads: [], workers: [] };
+  
+  var headers = data[0];
+  var roleIdx = headers.indexOf('Роль');
+  var nameIdx = headers.indexOf('Ім\'я');
+  var tgIdx = headers.indexOf('Telegram_ID');
+  var idIdx = headers.indexOf('ID'); // ID користувача у базі
+  
+  if (roleIdx === -1 || tgIdx === -1) return { heads: [], workers: [] };
+  
+  var heads = [];
+  var workers = [];
+  
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var r = (row[roleIdx] || '').toString().toLowerCase().replace(/_/g, ' ');
+    var tgid = row[tgIdx];
+    var name = nameIdx !== -1 ? row[nameIdx] : ('Користувач ' + i);
+    var uId = idIdx !== -1 ? row[idIdx] : tgid;
+    
+    if (r.includes('головний комірник') || r === 'головний_комірник') {
+      heads.push({ telegram_id: tgid, name: name, id: uId });
+    } else if (r === 'комірник') {
+      workers.push({ telegram_id: tgid, name: name, id: uId });
+    }
+  }
+  
+  return { heads: heads, workers: workers };
 }
 
 function authenticateUser(login, password) {

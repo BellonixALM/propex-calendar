@@ -136,6 +136,28 @@
 .sidebar-toggle-btn:hover { color: white !important; background: rgba(255,255,255,0.1) !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .delivery-card.warehouse-problem {
+      border-left-color: var(--status-problem) !important;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, #1c1f26 100%) !important;
+      border: 1px solid rgba(239, 68, 68, 0.25) !important;
+      border-left: 4px solid var(--status-problem) !important;
+      animation: problemCardPulse 2s infinite ease-in-out !important;
+    }
+    .delivery-card.warehouse-ready {
+      border-left-color: #10b981 !important;
+    }
+    .month-mini-card.warehouse-problem {
+      border-left-color: var(--status-problem) !important;
+    }
+    .month-mini-card.warehouse-ready {
+      border-left-color: #10b981 !important;
+    }
+    .list-badge-status.warehouse-ready {
+      color: #10b981 !important;
+      border-color: #10b981 !important;
+    }
+  </style>
 </head>
 <body>
   
@@ -793,6 +815,10 @@
           <div class="detail-item full-width">
             <div class="detail-label">Статус доставки</div>
             <div class="detail-value" id="det-status">-</div>
+          </div>
+          <div class="detail-item full-width" id="det-warehouse-row" style="background-color: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; margin-top: 4px;">
+            <div class="detail-label" style="color: var(--accent-blue);">Статус зборки на складі</div>
+            <div class="detail-value" id="det-warehouse-status" style="font-weight: 800;">-</div>
           </div>
           <div class="detail-item full-width" style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 8px;">
             <div class="detail-label">Змінити статус доставки</div>
@@ -2020,7 +2046,15 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
               isIncidentAffected = true;
             }
           }
-          miniCard.className = `month-mini-card ${statusClass} ${isIncidentAffected ? 'incident-affected' : ''}`;
+          
+          let warehouseClass = '';
+          if (del['Статус_збору'] === 'Проблема') {
+            warehouseClass = 'warehouse-problem';
+          } else if (del['Статус_збору'] === 'Зібрано') {
+            warehouseClass = 'warehouse-ready';
+          }
+          
+          miniCard.className = `month-mini-card ${statusClass} ${isIncidentAffected ? 'incident-affected' : ''} ${warehouseClass}`;
           const prefix = isIncidentAffected ? '⚠️ ' : (statusClass === 'problem' ? '🚨 ' : '');
           miniCard.textContent = `${prefix}${del['Час']} [🚗${del['ID_Авто']}] ${del['Адреса'].split(',')[0]}`;
           cell.appendChild(miniCard);
@@ -2095,8 +2129,18 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
           if (del['Статус_оплати'] === 'Оплачено') payClass = 'pay-full';
           else if (del['Статус_оплати'] === 'Оплачено частково') payClass = 'pay-part';
           else if (del['Статус_оплати'] === 'Не оплачено') payClass = 'pay-none';
+          
+          let warehouseClass = '';
+          let warehouseStatusBadge = '';
+          if (del['Статус_збору'] === 'Проблема') {
+            warehouseClass = 'warehouse-problem';
+            warehouseStatusBadge = `<div class="list-badge-status problem" style="margin-top:4px;">📦 Проблема зборки</div>`;
+          } else if (del['Статус_збору'] === 'Зібрано') {
+            warehouseClass = 'warehouse-ready';
+            warehouseStatusBadge = `<div class="list-badge-status warehouse-ready" style="margin-top:4px;">📦 Зібрано</div>`;
+          }
 
-          row.className = `list-row-card ${isIncidentAffected ? 'incident-affected' : ''}`;
+          row.className = `list-row-card ${isIncidentAffected ? 'incident-affected' : ''} ${warehouseClass}`;
           row.innerHTML = `
             <div class="list-time">${del['Час']}</div>
             <div class="list-car-info">
@@ -2111,7 +2155,10 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
               <div style="font-size: 11px; color: var(--text-muted);">Оплата:</div>
               <div style="font-size: 12px; font-weight: 700;">${del['Статус_оплати'] || 'Невідомо'}</div>
             </div>
-            <div class="list-badge-status ${statusClass}">${del['Статус']}</div>
+            <div>
+              <div class="list-badge-status ${statusClass}">${del['Статус']}</div>
+              ${warehouseStatusBadge}
+            </div>
           `;
           row.addEventListener('click', () => showDetails(del));
           groupDiv.appendChild(row);
@@ -2132,8 +2179,16 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
           isIncidentAffected = true;
         }
       }
-      card.className = `delivery-card ${statusClass} ${isIncidentAffected ? 'incident-affected' : ''}`;
-      const isProblem = del['Статус'] === 'Аварія на дорозі';
+      
+      let warehouseClass = '';
+      if (del['Статус_збору'] === 'Проблема') {
+        warehouseClass = 'warehouse-problem';
+      } else if (del['Статус_збору'] === 'Зібрано') {
+        warehouseClass = 'warehouse-ready';
+      }
+      
+      card.className = `delivery-card ${statusClass} ${isIncidentAffected ? 'incident-affected' : ''} ${warehouseClass}`;
+      const isProblem = del['Статус'] === 'Аварія на дорозі' || del['Статус_збору'] === 'Проблема';
       const companyName = del['Ім\'я_одержувача'] ? del['Ім\'я_одержувача'].trim() : '';
       const addressShort = del['Адреса'] ? del['Адреса'].split(',')[0] : '';
       const mainText = companyName ? companyName : addressShort;
@@ -2245,6 +2300,24 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
       document.getElementById('det-status').textContent = del['Статус'] || 'Заплановано';
       document.getElementById('det-comment').textContent = del['Коментар'] || 'Немає коментарів';
       document.getElementById('det-status-select').value = del['Статус'] || 'Заплановано';
+      
+      const whStatus = del['Статус_збору'] || 'Очікує';
+      const whRow = document.getElementById('det-warehouse-row');
+      const whEl = document.getElementById('det-warehouse-status');
+      
+      if (whStatus === 'Проблема') {
+        whEl.innerHTML = '<span style="color: var(--status-problem);">🚨 Проблема</span>';
+        whRow.style.display = 'block';
+      } else if (whStatus === 'Зібрано') {
+        whEl.innerHTML = '<span style="color: #10b981;">✅ Готово до відвантаження</span>';
+        whRow.style.display = 'block';
+      } else if (whStatus === 'В процесі збору') {
+        whEl.innerHTML = '<span style="color: var(--accent-blue);">📦 В процесі зборки комірником</span>';
+        whRow.style.display = 'block';
+      } else {
+        whEl.textContent = 'Очікує';
+        whRow.style.display = 'block';
+      }
       
       // Control Cancel Button Visibility
       const cancelBtn = document.getElementById('cancel-delivery-btn');
