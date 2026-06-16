@@ -779,6 +779,20 @@
   </div>
 
   <script>
+
+    window.addEventListener('error', function(e) {
+      const errDiv = document.createElement('div');
+      errDiv.style = 'position:fixed;top:0;left:0;width:100%;background:red;color:white;z-index:99999;padding:20px;font-size:20px;';
+      errDiv.innerHTML = 'GLOBAL ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
+      document.body.appendChild(errDiv);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      const errDiv = document.createElement('div');
+      errDiv.style = 'position:fixed;top:0;left:0;width:100%;background:red;color:white;z-index:99999;padding:20px;font-size:20px;';
+      errDiv.innerHTML = 'PROMISE ERROR: ' + e.reason;
+      document.body.appendChild(errDiv);
+    });
+
 (function() {
       let scriptUrlTemplate = "<?= scriptUrl ?>";
       let WEBAPP_URL = scriptUrlTemplate.includes("?=") 
@@ -2715,6 +2729,20 @@
   </div>
 
 <script>
+
+    window.addEventListener('error', function(e) {
+      const errDiv = document.createElement('div');
+      errDiv.style = 'position:fixed;top:0;left:0;width:100%;background:red;color:white;z-index:99999;padding:20px;font-size:20px;';
+      errDiv.innerHTML = 'GLOBAL ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
+      document.body.appendChild(errDiv);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      const errDiv = document.createElement('div');
+      errDiv.style = 'position:fixed;top:0;left:0;width:100%;background:red;color:white;z-index:99999;padding:20px;font-size:20px;';
+      errDiv.innerHTML = 'PROMISE ERROR: ' + e.reason;
+      document.body.appendChild(errDiv);
+    });
+
     function safeCreateIcons() {
       try {
         if (typeof lucide !== 'undefined') lucide.createIcons();
