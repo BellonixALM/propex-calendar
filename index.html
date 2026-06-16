@@ -3248,6 +3248,10 @@ window.switchMainTab = function(tabId) {
         renderAnalytics();
     } else if (tabId === 'tracking') {
         renderCalendar();
+    } else if (tabId === 'clients') {
+        renderClients();
+    } else if (tabId === 'employees') {
+        renderEmployees();
     } else if (tabId === 'settings') {
         // Заповнити профіль користувача
         const u = state.currentUser;
