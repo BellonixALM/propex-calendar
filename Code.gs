@@ -179,8 +179,10 @@ function getDeliveries() {
       // Standardize delivery keys
       if (h === 'id' || h === 'код') {
         obj['ID'] = val;
-      } else if (h === 'id_авто' || h === 'id_автомобіля' || h === 'автомобіль' || h === 'id_водія' || h === 'авто' || h === 'id_automobile') {
+      } else if (h === 'id_авто' || h === 'id_автомобіля' || h === 'автомобіль' || h === 'авто' || h === 'id_automobile') {
         obj['ID_Авто'] = val;
+      } else if (h === 'водій' || h === 'id_водія' || h === 'водія' || h === 'піб_водія' || h === 'ім\'я водія' || h === 'прізвище') {
+        obj['Водій'] = val;
       } else if (h === 'дата' || h === 'день') {
         obj['Дата'] = val;
       } else if (h === 'час' || h === 'година') {
@@ -299,7 +301,7 @@ function getDrivers() {
       var h = header.toString().trim().toLowerCase();
       
       // Standardize driver keys
-      if (h === 'id_авто' || h === 'id' || h === 'id_водія' || h === 'водій_id' || h === 'код' || h === 'номер') {
+      if (h === 'id_авто' || h === 'id' || h === 'водій_id' || h === 'код' || h === 'номер') {
         obj['ID_Авто'] = val;
       } else if (h === 'ім\'я' || h === 'піб' || h === 'водій' || h === 'ім’я' || h === 'фіо') {
         obj['Ім\'я'] = val;
@@ -658,7 +660,7 @@ function updateDriverPhoto(carId, photoBase64) {
   
   headers.forEach(function(header, idx) {
     var h = header.toString().trim().toLowerCase();
-    if (h === 'id_авто' || h === 'id' || h === 'id_водія' || h === 'водій_id' || h === 'код' || h === 'номер') {
+    if (h === 'id_авто' || h === 'id' || h === 'водій_id' || h === 'код' || h === 'номер') {
       carCol = idx;
     } else if (h === 'фото' || h === 'аватар' || h === 'зображення') {
       photoCol = idx;
@@ -1111,7 +1113,7 @@ function register_driver(data) {
     var id = Utilities.getUuid();
     var login = "driver_" + telegram_id;
     var password = "driver_" + Math.floor(1000 + Math.random() * 9000); // e.g. driver_4521
-    var role = "driver";
+    var role = data.role || "driver";
     
     // Columns: Логін, Пароль, Роль, Ім'я, Telegram_ID, ID
     // Check actual column positions just in case, but assume standard appendRow

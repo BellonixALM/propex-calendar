@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <script src="https://unpkg.com/lucide@latest"></script>
-  <style>:root{--sidebar-bg:#1c1c1e;--bg-color:#252528;--card-bg:#2c2c2e;--card-hover:#333335;--border-color:rgba(255,255,255,0.08);--border-focus:#3b82f6;--text-color:#ffffff;--text-muted:#a1a1aa;--text-dark:#71717a;--primary:#10b981;--primary-hover:#059669;--accent-blue:#3b82f6;--accent-purple:#8b5cf6;--danger:#ef4444;--status-planned:#71717a;--status-in-progress:#3b82f6;--status-completed:#10b981;--status-problem:#ef4444;--font-title:'Outfit', 'Inter', sans-serif;--font-body:'Inter', sans-serif;--transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:var(--font-body);background-color:var(--bg-color);color:var(--text-color);line-height:1.5;overflow-x:hidden;height:100vh;}.header-top{display:flex;justify-content:space-between;align-items:center;}.logo-container{display:flex;align-items:baseline;font-family:var(--font-title);text-decoration:none;cursor:pointer;}.logo-pro{color:#ef4444;font-weight:800;font-size:32px;letter-spacing:-1px;}.logo-pex{color:#0284c7;font-weight:800;font-size:32px;letter-spacing:-1px;}.logo-sub{color:var(--text-muted);font-size:10px;margin-left:6px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}.header-actions{display:flex;gap:12px;align-items:center;}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background-color:rgba(16, 185, 129, 0.15);color:#10b981;border:none;padding:10px 20px;border-radius:8px;font-family:var(--font-title);font-weight:600;font-size:14px;cursor:pointer;transition:var(--transition);box-shadow:none;}.btn:hover{background-color:rgba(16, 185, 129, 0.25);transform:none;box-shadow:none;}.btn:active{transform:translateY(0);}.btn-secondary{background-color:rgba(255, 255, 255, 0.05);border:1px solid rgba(255, 255, 255, 0.05);color:var(--text-muted);box-shadow:none;}.btn-secondary:hover{background-color:var(--card-hover);border-color:var(--text-muted);box-shadow:none;}.btn-icon{width:38px;height:38px;padding:0;border-radius:8px;}.control-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;background-color:var(--card-bg);padding:12px 16px;border-radius:12px;border:1px solid var(--border-color);}.date-navigation{display:flex;align-items:center;gap:8px;}.date-display{font-family:var(--font-title);font-size:16px;font-weight:700;min-width:180px;text-align:center;cursor:pointer;padding:6px 12px;border-radius:6px;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:6px;}.date-display:hover{background-color:var(--border-color);}.datepicker-input{position:absolute;opacity:0;pointer-events:none;width:0;height:0;}.view-selector{display:flex;background-color:var(--bg-color);padding:4px;border-radius:8px;border:1px solid var(--border-color);}.view-btn{background:none;border:none;color:var(--text-muted);padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:6px;}.view-btn.active{background-color:var(--card-bg);color:var(--text-color);box-shadow:0 2px 8px rgba(0,0,0,0.4);}.view-btn:hover:not(.active){color:var(--text-color);}.car-filter-container{display:flex;align-items:center;gap:8px;}.car-filter-container label{font-size:12px;color:var(--text-muted);font-weight:500;}.select-custom{background-color:var(--bg-color);color:var(--text-color);border:1px solid var(--border-color);padding:6px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;outline:none;transition:var(--transition);}.select-custom:focus{border-color:var(--border-focus);}.calendar-body{flex-grow:1;position:relative;min-height:500px;}.view-panel{display:none;height:100%;animation:fadeIn 0.25s ease-out;}.view-panel.active{display:block;}@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}.day-grid{display:grid;grid-template-columns:80px repeat(4, 1fr);background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:auto;height:100%;max-height:calc(100vh - 200px);overflow-y:auto;}.grid-header{position:sticky;top:0;z-index:100;background-color:var(--card-bg);padding:12px;text-align:center;font-weight:700;font-family:var(--font-title);border-bottom:2px solid var(--border-color);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}.driver-photo-container{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.3);}.driver-name{font-size:11px;color:var(--text-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}.time-col{background-color:var(--card-bg);padding:10px;text-align:center;font-weight:700;color:var(--text-muted);font-size:12px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border-color);}.grid-cell{background-color:var(--bg-color);padding:6px;min-height:48px;transition:var(--transition);position:relative;}.grid-cell:hover{background-color:var(--card-hover);}.delivery-card{background:linear-gradient(135deg, #1c1f26 0%, #252a34 100%);border-left:4px solid var(--status-planned);border-radius:6px;padding:8px 10px;font-size:12px;margin-bottom:4px;cursor:pointer;box-shadow:0 4px 10px rgba(0, 0, 0, 0.2);transition:var(--transition);position:relative;z-index:5;}.delivery-card:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 8px 16px rgba(0, 0, 0, 0.4);z-index:10;}.delivery-card.planned{border-left-color:var(--status-planned);}.delivery-card.in-progress{border-left-color:var(--status-in-progress);}.delivery-card.completed{border-left-color:var(--status-completed);}.delivery-card.problem{border-left-color:var(--status-problem);background:linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, #1c1f26 100%);border:1px solid rgba(239, 68, 68, 0.25);border-left:4px solid var(--status-problem);animation:problemCardPulse 2s infinite ease-in-out;}@keyframes problemCardPulse{0%{box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.25);}50%{box-shadow:0 4px 20px rgba(239, 68, 68, 0.45), 0 0 10px rgba(239, 68, 68, 0.2);border-color:rgba(239, 68, 68, 0.6);}100%{box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.25);}}.delivery-card.buffer{background:repeating-linear-gradient( 45deg, #14161a, #14161a 10px, #1c1f26 10px, #1c1f26 20px );border-left:4px dashed var(--text-dark);opacity:0.55;cursor:not-allowed;box-shadow:none;}.delivery-card.buffer:hover{transform:none;box-shadow:none;}.card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}.card-time{font-weight:800;color:#ffffff;font-size:11px;}.card-order-badge{background-color:var(--border-color);color:var(--accent-blue);padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;}.card-order-badge.cash{color:#eab308;}.card-address{font-weight:500;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}.card-footer{display:flex;justify-content:space-between;color:var(--text-muted);font-size:10px;}.card-car-badge{background-color:rgba(2, 132, 199, 0.15);color:var(--accent-blue);padding:0px 4px;border-radius:3px;font-weight:800;}.week-grid{display:grid;grid-template-columns:80px repeat(7, minmax(0, 1fr));background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:auto;height:100%;max-height:calc(100vh - 200px);overflow-y:auto;}.grid-header.week-day{border-bottom:2px solid var(--border-color);}.week-day-title{font-size:13px;font-weight:700;}.week-day-date{font-size:18px;font-weight:800;color:var(--accent-blue);font-family:var(--font-title);}.week-day.today .week-day-date{background-color:var(--accent-blue);color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}.month-grid{display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:auto;height:100%;}.month-header-cell{background-color:var(--card-bg);padding:10px;text-align:center;font-weight:700;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border-color);}.month-day-cell{background-color:var(--bg-color);min-height:100px;padding:8px;border-right:1px solid var(--border-color);border-bottom:1px solid var(--border-color);cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;gap:4px;}.month-day-cell:hover{background-color:var(--card-hover);}.month-day-cell.other-month{background-color:#08090a;opacity:0.4;}.month-day-number{font-family:var(--font-title);font-weight:800;font-size:14px;align-self:flex-end;color:var(--text-muted);}.month-day-cell.today .month-day-number{color:#ffffff;background-color:var(--accent-blue);width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;}.month-mini-card{font-size:10px;padding:2px 6px;border-radius:4px;background-color:var(--card-bg);border-left:3px solid var(--status-planned);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-color);font-weight:500;}.month-mini-card.planned{border-left-color:var(--status-planned);}.month-mini-card.in-progress{border-left-color:var(--status-in-progress);}.month-mini-card.completed{border-left-color:var(--status-completed);}.month-mini-card.problem{border-left-color:var(--status-problem);}.list-container{display:flex;flex-direction:column;gap:16px;}.list-search-bar{display:flex;gap:12px;background-color:var(--card-bg);padding:12px 16px;border-radius:12px;border:1px solid var(--border-color);}.search-input-wrapper{position:relative;flex-grow:1;}.search-input-wrapper i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);width:18px;height:18px;}.input-search{width:100%;background-color:var(--bg-color);border:1px solid var(--border-color);color:var(--text-color);padding:10px 10px 10px 40px;border-radius:8px;outline:none;font-size:14px;transition:var(--transition);}.input-search:focus{border-color:var(--border-focus);}.list-results{display:flex;flex-direction:column;gap:16px;max-height:calc(100vh - 260px);overflow-y:auto;padding-right:4px;}.list-group{display:flex;flex-direction:column;gap:8px;}.list-group-title{font-family:var(--font-title);font-size:14px;font-weight:700;color:var(--accent-blue);border-left:3px solid var(--accent-blue);padding-left:8px;margin-bottom:4px;}.list-row-card{background-color:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:16px;display:grid;grid-template-columns:80px 120px 1fr 100px 100px;align-items:center;gap:16px;cursor:pointer;transition:var(--transition);}.list-row-card:hover{background-color:var(--card-hover);border-color:var(--text-muted);transform:translateX(4px);}.list-time{font-family:var(--font-title);font-weight:800;font-size:16px;}.list-car-info{display:flex;align-items:center;gap:8px;}.list-address-info{font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.list-address-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}.list-badge-status{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:700;background-color:rgba(255,255,255,0.05);width:fit-content;}.list-badge-status.planned{color:var(--text-muted);border:1px solid var(--status-planned);}.list-badge-status.in-progress{color:var(--status-in-progress);border:1px solid var(--status-in-progress);}.list-badge-status.completed{color:var(--status-completed);border:1px solid var(--status-completed);}.list-badge-status.problem{color:var(--status-problem);border:1px solid var(--status-problem);}.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(6, 7, 9, 0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);justify-content:center;align-items:center;z-index:1000;opacity:0;transition:opacity 0.25s ease-out;}.modal.show{display:flex;opacity:1;}.modal-content{background-color:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;width:520px;max-width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.6);transform:scale(0.95);transition:transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);}.modal.show .modal-content{transform:scale(1);}.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border-color);}.modal-header h2{font-family:var(--font-title);font-size:20px;font-weight:800;}.modal-close-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:50%;transition:var(--transition);}.modal-close-btn:hover{background-color:var(--border-color);color:#fff;}.modal-body{padding:24px;}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.form-group{margin-bottom:18px;position:relative;}.form-group.full-width{grid-column:span 2;}.form-group label{display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--text-muted);}.form-control{width:100%;background-color:var(--bg-color);border:1px solid var(--border-color);color:var(--text-color);padding:10px 12px;border-radius:8px;font-family:var(--font-body);font-size:14px;outline:none;transition:var(--transition);}.form-control:focus{border-color:var(--border-focus);box-shadow:0 0 0 2px rgba(59, 130, 246, 0.15);}.autocomplete-items{position:absolute;border:1px solid var(--border-color);z-index:120;top:100%;left:0;right:0;background-color:var(--card-bg);max-height:180px;overflow-y:auto;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);margin-top:4px;}.autocomplete-items div{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border-color);font-size:13px;transition:var(--transition);}.autocomplete-items div:hover{background-color:var(--border-color);color:#ffffff;}.modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid var(--border-color);}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.detail-item{border-bottom:1px solid var(--border-color);padding-bottom:8px;}.detail-item.full-width{grid-column:span 2;}.detail-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}.detail-value{font-size:14px;font-weight:600;color:#ffffff;}@media (max-width:1024px){.list-row-card{grid-template-columns:80px 1fr 100px;}.list-car-info{display:none;}}@media (max-width:768px){.control-bar{flex-direction:column;align-items:stretch;}.date-navigation{justify-content:space-between;}.view-selector{justify-content:space-between;}.list-row-card{grid-template-columns:1fr;gap:8px;}.form-grid{grid-template-columns:1fr;}.form-group.full-width{grid-column:span 1;}}.delivery-card.incident-affected{border:1px dashed rgba(249, 115, 22, 0.45);border-left:4px dashed #f97316 !important;background:linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, #16181d 100%) !important;animation:incidentAffectedPulse 2.5s infinite ease-in-out;}.delivery-card.incident-affected .card-time{color:#f97316 !important;font-weight:700;}@keyframes incidentAffectedPulse{0%{box-shadow:0 4px 8px rgba(249, 115, 22, 0.05);border-color:rgba(249, 115, 22, 0.3);}50%{box-shadow:0 4px 15px rgba(249, 115, 22, 0.25), 0 0 8px rgba(249, 115, 22, 0.1);border-color:rgba(249, 115, 22, 0.6);}100%{box-shadow:0 4px 8px rgba(249, 115, 22, 0.05);border-color:rgba(249, 115, 22, 0.3);}}.month-mini-card.incident-affected{border-left:3px dashed #f97316 !important;background-color:rgba(249, 115, 22, 0.15) !important;color:#ff9d5c !important;}.list-row-card.incident-affected{border:1px dashed rgba(249, 115, 22, 0.35) !important;background:linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, #14161a 100%) !important;animation:listIncidentPulse 3s infinite ease-in-out;}.incident-alert-text{color:#f97316;font-size:11px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px;}@keyframes listIncidentPulse{0%{border-color:rgba(249, 115, 22, 0.2);}50%{border-color:rgba(249, 115, 22, 0.45);}100%{border-color:rgba(249, 115, 22, 0.2);}}.login-screen-container{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center, #111317 0%, #07080a 100%);display:flex;align-items:center;justify-content:center;z-index:99999;font-family:var(--font-body);}.login-card{width:100%;max-width:420px;padding:40px;background:rgba(20, 22, 26, 0.7);border:1px solid rgba(255, 255, 255, 0.05);border-radius:16px;box-shadow:0 20px 50px rgba(0, 0, 0, 0.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);text-align:center;animation:loginFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);}@keyframes loginFadeIn{from{opacity:0;transform:scale(0.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}.login-logo{font-family:var(--font-title);font-size:28px;font-weight:800;background:linear-gradient(135deg, #10b981 0%, #0284c7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;letter-spacing:-0.5px;}.login-subtitle{color:var(--text-muted);font-size:14px;margin-bottom:30px;}.login-form-group{text-align:left;margin-bottom:20px;position:relative;}.login-form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}.login-input{width:100%;padding:12px 16px;background:rgba(11, 12, 14, 0.6);border:1px solid rgba(255, 255, 255, 0.08);border-radius:8px;color:var(--text-color);font-size:14px;font-family:var(--font-body);transition:var(--transition);}.login-input:focus{outline:none;border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(2, 132, 199, 0.15);background:rgba(11, 12, 14, 0.9);}.password-toggle-btn{position:absolute;right:12px;top:35px;background:none;border:none;color:var(--text-dark);cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}.password-toggle-btn:hover{color:var(--text-muted);}.login-error{color:var(--danger);font-size:13px;font-weight:500;margin-bottom:15px;display:none;padding:8px 12px;background:rgba(239, 68, 68, 0.1);border-radius:6px;border:1px solid rgba(239, 68, 68, 0.15);text-align:left;}.login-btn{width:100%;padding:12px;background:rgba(16, 185, 129, 0.15);border:none;border-radius:8px;color:#10b981;font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);box-shadow:none;}.login-btn:hover{background:rgba(16, 185, 129, 0.25);transform:none;box-shadow:none;}.login-btn:active{transform:translateY(0);}.login-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}@media (max-width:600px){.login-screen-container{padding:10px;}.login-card{max-width:94%;padding:36px 20px;border-radius:20px;box-shadow:0 15px 40px rgba(0, 0, 0, 0.6);}.login-logo{font-size:34px !important;margin-bottom:12px;}.login-subtitle{font-size:16px !important;margin-bottom:35px;}.login-form-group{margin-bottom:24px;}.login-form-group label{font-size:14px !important;margin-bottom:10px;}.login-input{padding:16px 20px !important;font-size:18px !important;border-radius:10px;}.password-toggle-btn{top:40px !important;right:16px !important;transform:scale(1.2);}.login-btn{width:100%;padding:12px;background:rgba(16, 185, 129, 0.15);border:none;border-radius:8px;color:#10b981;font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);box-shadow:none;}.login-logo-container svg{width:80px !important;height:80px !important;margin-bottom:16px !important;}}.header-profile-info{display:flex;align-items:center;gap:12px;margin-left:15px;padding-left:15px;border-left:1px solid var(--border-color);}.profile-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:white;}.profile-details{display:flex;flex-direction:column;text-align:left;}.profile-name{font-size:12px;font-weight:700;color:var(--text-color);}.profile-role{font-size:10px;color:var(--text-muted);font-weight:500;}.logout-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}.logout-btn:hover{background:rgba(239, 68, 68, 0.1);color:var(--danger);}.director-banner{width:100%;background:linear-gradient(90deg, rgba(217, 119, 6, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%);border-bottom:1px solid rgba(217, 119, 6, 0.25);padding:8px 20px;font-size:12px;color:#f59e0b;font-weight:600;display:flex;align-items:center;gap:8px;}.delivery-card[draggable="true"]{cursor:grab;user-select:none;}.delivery-card.dragging{opacity:0.35;transform:scale(0.97);border:2px dashed var(--accent-blue) !important;box-shadow:0 4px 12px rgba(0, 0, 0, 0.3) !important;z-index:1000 !important;}.grid-cell.drag-hover{background-color:rgba(2, 132, 199, 0.12) !important;outline:2px dashed var(--border-focus) !important;outline-offset:-2px;transition:var(--transition);box-shadow:inset 0 0 10px rgba(59, 130, 246, 0.15);}.driver-photo-container{position:relative;cursor:default;}.driver-photo-container.admin-editable{cursor:pointer;}.avatar-edit-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0, 0, 0, 0.6);display:flex;align-items:center;justify-content:center;opacity:0;transition:var(--transition);border-radius:50%;}.driver-photo-container.admin-editable:hover .avatar-edit-overlay{opacity:1;}.card-driver-info{display:flex;align-items:center;gap:6px;}.card-driver-avatar{width:18px;height:18px;border-radius:50%;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1px solid rgba(255, 255, 255, 0.15);}.card-driver-avatar-initial{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1px solid rgba(255, 255, 255, 0.15);}
+  <style>:root{--sidebar-bg:#1c1c1e;--bg-color:#252528;--card-bg:#2c2c2e;--card-hover:#333335;--border-color:rgba(255,255,255,0.08);--border-focus:#3b82f6;--text-color:#ffffff;--text-muted:#a1a1aa;--text-dark:#71717a;--primary:#10b981;--primary-hover:#059669;--accent-blue:#3b82f6;--accent-purple:#8b5cf6;--danger:#ef4444;--status-planned:#71717a;--status-in-progress:#3b82f6;--status-completed:#10b981;--status-problem:#ef4444;--font-title:'Outfit', 'Inter', sans-serif;--font-body:'Inter', sans-serif;--transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:var(--font-body);background-color:var(--bg-color);color:var(--text-color);line-height:1.5;overflow-x:hidden;height:100vh;}.header-top{display:flex;justify-content:space-between;align-items:center;}.logo-container{display:flex;align-items:baseline;font-family:var(--font-title);text-decoration:none;cursor:pointer;}.logo-pro{color:#ef4444;font-weight:800;font-size:32px;letter-spacing:-1px;}.logo-pex{color:#0284c7;font-weight:800;font-size:32px;letter-spacing:-1px;}.logo-sub{color:var(--text-muted);font-size:10px;margin-left:6px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}.header-actions{display:flex;gap:12px;align-items:center;}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background-color:rgba(16, 185, 129, 0.15);color:#10b981;border:none;padding:10px 20px;border-radius:8px;font-family:var(--font-title);font-weight:600;font-size:14px;cursor:pointer;transition:var(--transition);box-shadow:none;}.btn:hover{background-color:rgba(16, 185, 129, 0.25);transform:none;box-shadow:none;}.btn:active{transform:translateY(0);}.btn-secondary{background-color:rgba(255, 255, 255, 0.05);border:1px solid rgba(255, 255, 255, 0.05);color:var(--text-muted);box-shadow:none;}.btn-secondary:hover{background-color:var(--card-hover);border-color:var(--text-muted);box-shadow:none;}.btn-icon{width:38px;height:38px;padding:0;border-radius:8px;}.control-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;background-color:var(--card-bg);padding:12px 16px;border-radius:12px;border:1px solid var(--border-color);}.date-navigation{display:flex;align-items:center;gap:8px;}.date-display{font-family:var(--font-title);font-size:16px;font-weight:700;min-width:180px;text-align:center;cursor:pointer;padding:6px 12px;border-radius:6px;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:6px;}.date-display:hover{background-color:var(--border-color);}.datepicker-input{position:absolute;opacity:0;pointer-events:none;width:0;height:0;}.view-selector{display:flex;background-color:var(--bg-color);padding:4px;border-radius:8px;border:1px solid var(--border-color);}.view-btn{background:none;border:none;color:var(--text-muted);padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:6px;}.view-btn.active{background-color:var(--card-bg);color:var(--text-color);box-shadow:0 2px 8px rgba(0,0,0,0.4);}.view-btn:hover:not(.active){color:var(--text-color);}.car-filter-container{display:flex;align-items:center;gap:8px;}.car-filter-container label{font-size:12px;color:var(--text-muted);font-weight:500;}.select-custom{background-color:var(--bg-color);color:var(--text-color);border:1px solid var(--border-color);padding:6px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;outline:none;transition:var(--transition);}.select-custom:focus{border-color:var(--border-focus);}.calendar-body{flex-grow:1;position:relative;min-height:500px;}.view-panel{display:none;height:100%;animation:fadeIn 0.25s ease-out;}.view-panel.active{display:block;}@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}.day-grid{display:grid;grid-template-columns:80px repeat(4, 1fr);background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:auto;height:100%;max-height:calc(100vh - 200px);overflow-y:auto;}.grid-header{position:sticky;top:0;z-index:100;background-color:var(--card-bg);padding:12px;text-align:center;font-weight:700;font-family:var(--font-title);border-bottom:2px solid var(--border-color);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}.driver-photo-container{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.3);}.driver-name{font-size:11px;color:var(--text-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}.time-col{background-color:var(--card-bg);padding:10px;text-align:center;font-weight:700;color:var(--text-muted);font-size:12px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border-color);}.grid-cell{background-color:var(--bg-color);padding:6px;min-height:48px;transition:var(--transition);position:relative;}.grid-cell:hover{background-color:var(--card-hover);}.delivery-card{background:linear-gradient(135deg, #1c1f26 0%, #252a34 100%);border-left:4px solid var(--status-planned);border-radius:6px;padding:8px 10px;font-size:12px;margin-bottom:4px;cursor:pointer;box-shadow:0 4px 10px rgba(0, 0, 0, 0.2);transition:var(--transition);position:relative;z-index:5;}.delivery-card:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 8px 16px rgba(0, 0, 0, 0.4);z-index:10;}.delivery-card.planned{border-left-color:var(--status-planned);}.delivery-card.in-progress{border-left-color:var(--status-in-progress);}.delivery-card.completed{border-left-color:var(--status-completed);}.delivery-card.problem{border-left-color:var(--status-problem);background:linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, #1c1f26 100%);border:1px solid rgba(239, 68, 68, 0.25);border-left:4px solid var(--status-problem);animation:problemCardPulse 2s infinite ease-in-out;}.delivery-card.pickup{border-left-color: #facc15 !important;}.month-mini-card.pickup{border-left-color: #facc15 !important;}@keyframes problemCardPulse{0%{box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.25);}50%{box-shadow:0 4px 20px rgba(239, 68, 68, 0.45), 0 0 10px rgba(239, 68, 68, 0.2);border-color:rgba(239, 68, 68, 0.6);}100%{box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.25);}}.delivery-card.buffer{background:repeating-linear-gradient( 45deg, #14161a, #14161a 10px, #1c1f26 10px, #1c1f26 20px );border-left:4px dashed var(--text-dark);opacity:0.55;cursor:not-allowed;box-shadow:none;}.delivery-card.buffer:hover{transform:none;box-shadow:none;}.card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}.card-time{font-weight:800;color:#ffffff;font-size:11px;}.card-order-badge{background-color:var(--border-color);color:var(--accent-blue);padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;}.card-order-badge.cash{color:#eab308;}.card-address{font-weight:500;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}.card-footer{display:flex;justify-content:space-between;color:var(--text-muted);font-size:10px;}.card-car-badge{background-color:rgba(2, 132, 199, 0.15);color:var(--accent-blue);padding:0px 4px;border-radius:3px;font-weight:800;}.week-grid{display:grid;grid-template-columns:80px repeat(7, minmax(0, 1fr));background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:auto;height:100%;max-height:calc(100vh - 200px);overflow-y:auto;}.grid-header.week-day{border-bottom:2px solid var(--border-color);}.week-day-title{font-size:13px;font-weight:700;}.week-day-date{font-size:18px;font-weight:800;color:var(--accent-blue);font-family:var(--font-title);}.week-day.today .week-day-date{background-color:var(--accent-blue);color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}.month-grid{display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:auto;height:100%;}.month-header-cell{background-color:var(--card-bg);padding:10px;text-align:center;font-weight:700;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border-color);}.month-day-cell{background-color:var(--bg-color);min-height:100px;padding:8px;border-right:1px solid var(--border-color);border-bottom:1px solid var(--border-color);cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;gap:4px;}.month-day-cell:hover{background-color:var(--card-hover);}.month-day-cell.other-month{background-color:#08090a;opacity:0.4;}.month-day-number{font-family:var(--font-title);font-weight:800;font-size:14px;align-self:flex-end;color:var(--text-muted);}.month-day-cell.today .month-day-number{color:#ffffff;background-color:var(--accent-blue);width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;}.month-mini-card{font-size:10px;padding:2px 6px;border-radius:4px;background-color:var(--card-bg);border-left:3px solid var(--status-planned);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-color);font-weight:500;}.month-mini-card.planned{border-left-color:var(--status-planned);}.month-mini-card.in-progress{border-left-color:var(--status-in-progress);}.month-mini-card.completed{border-left-color:var(--status-completed);}.month-mini-card.problem{border-left-color:var(--status-problem);}.list-container{display:flex;flex-direction:column;gap:16px;}.list-search-bar{display:flex;gap:12px;background-color:var(--card-bg);padding:12px 16px;border-radius:12px;border:1px solid var(--border-color);}.search-input-wrapper{position:relative;flex-grow:1;}.search-input-wrapper i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);width:18px;height:18px;}.input-search{width:100%;background-color:var(--bg-color);border:1px solid var(--border-color);color:var(--text-color);padding:10px 10px 10px 40px;border-radius:8px;outline:none;font-size:14px;transition:var(--transition);}.input-search:focus{border-color:var(--border-focus);}.list-results{display:flex;flex-direction:column;gap:16px;max-height:calc(100vh - 260px);overflow-y:auto;padding-right:4px;}.list-group{display:flex;flex-direction:column;gap:8px;}.list-group-title{font-family:var(--font-title);font-size:14px;font-weight:700;color:var(--accent-blue);border-left:3px solid var(--accent-blue);padding-left:8px;margin-bottom:4px;}.list-row-card{background-color:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:16px;display:grid;grid-template-columns:80px 120px 1fr 100px 100px;align-items:center;gap:16px;cursor:pointer;transition:var(--transition);}.list-row-card:hover{background-color:var(--card-hover);border-color:var(--text-muted);transform:translateX(4px);}.list-time{font-family:var(--font-title);font-weight:800;font-size:16px;}.list-car-info{display:flex;align-items:center;gap:8px;}.list-address-info{font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.list-address-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}.list-badge-status{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:700;background-color:rgba(255,255,255,0.05);width:fit-content;}.list-badge-status.planned{color:var(--text-muted);border:1px solid var(--status-planned);}.list-badge-status.in-progress{color:var(--status-in-progress);border:1px solid var(--status-in-progress);}.list-badge-status.completed{color:var(--status-completed);border:1px solid var(--status-completed);}.list-badge-status.problem{color:var(--status-problem);border:1px solid var(--status-problem);}.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(6, 7, 9, 0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);justify-content:center;align-items:center;z-index:1000;opacity:0;transition:opacity 0.25s ease-out;}.modal.show{display:flex;opacity:1;}.modal-content{background-color:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;width:520px;max-width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.6);transform:scale(0.95);transition:transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);}.modal.show .modal-content{transform:scale(1);}.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border-color);}.modal-header h2{font-family:var(--font-title);font-size:20px;font-weight:800;}.modal-close-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:50%;transition:var(--transition);}.modal-close-btn:hover{background-color:var(--border-color);color:#fff;}.modal-body{padding:24px;}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.form-group{margin-bottom:18px;position:relative;}.form-group.full-width{grid-column:span 2;}.form-group label{display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--text-muted);}.form-control{width:100%;background-color:var(--bg-color);border:1px solid var(--border-color);color:var(--text-color);padding:10px 12px;border-radius:8px;font-family:var(--font-body);font-size:14px;outline:none;transition:var(--transition);}.form-control:focus{border-color:var(--border-focus);box-shadow:0 0 0 2px rgba(59, 130, 246, 0.15);}.autocomplete-items{position:absolute;border:1px solid var(--border-color);z-index:120;top:100%;left:0;right:0;background-color:var(--card-bg);max-height:180px;overflow-y:auto;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);margin-top:4px;}.autocomplete-items div{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border-color);font-size:13px;transition:var(--transition);}.autocomplete-items div:hover{background-color:var(--border-color);color:#ffffff;}.modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid var(--border-color);}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.detail-item{border-bottom:1px solid var(--border-color);padding-bottom:8px;}.detail-item.full-width{grid-column:span 2;}.detail-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}.detail-value{font-size:14px;font-weight:600;color:#ffffff;}@media (max-width:1024px){.list-row-card{grid-template-columns:80px 1fr 100px;}.list-car-info{display:none;}}@media (max-width:768px){.control-bar{flex-direction:column;align-items:stretch;}.date-navigation{justify-content:space-between;}.view-selector{justify-content:space-between;}.list-row-card{grid-template-columns:1fr;gap:8px;}.form-grid{grid-template-columns:1fr;}.form-group.full-width{grid-column:span 1;}}.delivery-card.incident-affected{border:1px dashed rgba(249, 115, 22, 0.45);border-left:4px dashed #f97316 !important;background:linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, #16181d 100%) !important;animation:incidentAffectedPulse 2.5s infinite ease-in-out;}.delivery-card.incident-affected .card-time{color:#f97316 !important;font-weight:700;}@keyframes incidentAffectedPulse{0%{box-shadow:0 4px 8px rgba(249, 115, 22, 0.05);border-color:rgba(249, 115, 22, 0.3);}50%{box-shadow:0 4px 15px rgba(249, 115, 22, 0.25), 0 0 8px rgba(249, 115, 22, 0.1);border-color:rgba(249, 115, 22, 0.6);}100%{box-shadow:0 4px 8px rgba(249, 115, 22, 0.05);border-color:rgba(249, 115, 22, 0.3);}}.month-mini-card.incident-affected{border-left:3px dashed #f97316 !important;background-color:rgba(249, 115, 22, 0.15) !important;color:#ff9d5c !important;}.list-row-card.incident-affected{border:1px dashed rgba(249, 115, 22, 0.35) !important;background:linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, #14161a 100%) !important;animation:listIncidentPulse 3s infinite ease-in-out;}.incident-alert-text{color:#f97316;font-size:11px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px;}@keyframes listIncidentPulse{0%{border-color:rgba(249, 115, 22, 0.2);}50%{border-color:rgba(249, 115, 22, 0.45);}100%{border-color:rgba(249, 115, 22, 0.2);}}.login-screen-container{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center, #111317 0%, #07080a 100%);display:flex;align-items:center;justify-content:center;z-index:99999;font-family:var(--font-body);}.login-card{width:100%;max-width:420px;padding:40px;background:rgba(20, 22, 26, 0.7);border:1px solid rgba(255, 255, 255, 0.05);border-radius:16px;box-shadow:0 20px 50px rgba(0, 0, 0, 0.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);text-align:center;animation:loginFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);}@keyframes loginFadeIn{from{opacity:0;transform:scale(0.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}.login-logo{font-family:var(--font-title);font-size:28px;font-weight:800;background:linear-gradient(135deg, #10b981 0%, #0284c7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;letter-spacing:-0.5px;}.login-subtitle{color:var(--text-muted);font-size:14px;margin-bottom:30px;}.login-form-group{text-align:left;margin-bottom:20px;position:relative;}.login-form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}.login-input{width:100%;padding:12px 16px;background:rgba(11, 12, 14, 0.6);border:1px solid rgba(255, 255, 255, 0.08);border-radius:8px;color:var(--text-color);font-size:14px;font-family:var(--font-body);transition:var(--transition);}.login-input:focus{outline:none;border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(2, 132, 199, 0.15);background:rgba(11, 12, 14, 0.9);}.password-toggle-btn{position:absolute;right:12px;top:35px;background:none;border:none;color:var(--text-dark);cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}.password-toggle-btn:hover{color:var(--text-muted);}.login-error{color:var(--danger);font-size:13px;font-weight:500;margin-bottom:15px;display:none;padding:8px 12px;background:rgba(239, 68, 68, 0.1);border-radius:6px;border:1px solid rgba(239, 68, 68, 0.15);text-align:left;}.login-btn{width:100%;padding:12px;background:rgba(16, 185, 129, 0.15);border:none;border-radius:8px;color:#10b981;font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);box-shadow:none;}.login-btn:hover{background:rgba(16, 185, 129, 0.25);transform:none;box-shadow:none;}.login-btn:active{transform:translateY(0);}.login-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}@media (max-width:600px){.login-screen-container{padding:10px;}.login-card{max-width:94%;padding:36px 20px;border-radius:20px;box-shadow:0 15px 40px rgba(0, 0, 0, 0.6);}.login-logo{font-size:34px !important;margin-bottom:12px;}.login-subtitle{font-size:16px !important;margin-bottom:35px;}.login-form-group{margin-bottom:24px;}.login-form-group label{font-size:14px !important;margin-bottom:10px;}.login-input{padding:16px 20px !important;font-size:18px !important;border-radius:10px;}.password-toggle-btn{top:40px !important;right:16px !important;transform:scale(1.2);}.login-btn{width:100%;padding:12px;background:rgba(16, 185, 129, 0.15);border:none;border-radius:8px;color:#10b981;font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);box-shadow:none;}.login-logo-container svg{width:80px !important;height:80px !important;margin-bottom:16px !important;}}.header-profile-info{display:flex;align-items:center;gap:12px;margin-left:15px;padding-left:15px;border-left:1px solid var(--border-color);}.profile-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:white;}.profile-details{display:flex;flex-direction:column;text-align:left;}.profile-name{font-size:12px;font-weight:700;color:var(--text-color);}.profile-role{font-size:10px;color:var(--text-muted);font-weight:500;}.logout-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}.logout-btn:hover{background:rgba(239, 68, 68, 0.1);color:var(--danger);}.director-banner{width:100%;background:linear-gradient(90deg, rgba(217, 119, 6, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%);border-bottom:1px solid rgba(217, 119, 6, 0.25);padding:8px 20px;font-size:12px;color:#f59e0b;font-weight:600;display:flex;align-items:center;gap:8px;}.delivery-card[draggable="true"]{cursor:grab;user-select:none;}.delivery-card.dragging{opacity:0.35;transform:scale(0.97);border:2px dashed var(--accent-blue) !important;box-shadow:0 4px 12px rgba(0, 0, 0, 0.3) !important;z-index:1000 !important;}.grid-cell.drag-hover{background-color:rgba(2, 132, 199, 0.12) !important;outline:2px dashed var(--border-focus) !important;outline-offset:-2px;transition:var(--transition);box-shadow:inset 0 0 10px rgba(59, 130, 246, 0.15);}.driver-photo-container{position:relative;cursor:default;}.driver-photo-container.admin-editable{cursor:pointer;}.avatar-edit-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0, 0, 0, 0.6);display:flex;align-items:center;justify-content:center;opacity:0;transition:var(--transition);border-radius:50%;}.driver-photo-container.admin-editable:hover .avatar-edit-overlay{opacity:1;}.card-driver-info{display:flex;align-items:center;gap:6px;}.card-driver-avatar{width:18px;height:18px;border-radius:50%;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1px solid rgba(255, 255, 255, 0.15);}.card-driver-avatar-initial{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1px solid rgba(255, 255, 255, 0.15);}
 .app-container{display:flex;height:100vh;width:100vw;max-width:none;margin:0;padding:0;overflow:hidden;}
 .sidebar{width:260px;background-color:var(--sidebar-bg);border-right:1px solid var(--border-color);display:flex;flex-direction:column;padding:24px 16px;z-index:100;}
 .sidebar-logo-container{display:flex;align-items:center;gap:12px;margin-bottom:30px;padding:0 12px;text-decoration:none;}
@@ -243,8 +243,7 @@
 
     
     <div class="content-area">
-      <div id="tracking-view" class="main-tab-view active">
-      <div class="control-bar" style="margin-bottom: 0;">
+      <div class="control-bar" id="main-control-bar" style="margin-bottom: 20px;">
         <div class="date-navigation">
           <button class="btn btn-secondary btn-icon" onclick="navigateDate(-1)" title="Попередній період">
             <i data-lucide="chevron-left" style="width:18px;height:18px;"></i>
@@ -273,7 +272,7 @@
         </div>
       </div>
 
-
+      <div id="tracking-view" class="main-tab-view active">
     
     <div class="calendar-body">
       
@@ -317,7 +316,9 @@
       
       <!-- Dashboard Tab -->
       <div id="dashboard-view" class="main-tab-view" style="padding-right: 10px;">
-        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">Дашборд</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+          <h2 style="font-size: 24px; font-weight: 700;">Дашборд</h2>
+        </div>
         
         <div class="dash-cards-grid">
           <div class="dash-card dash-purple">
@@ -348,7 +349,7 @@
         
         <div class="dash-charts-row">
           <div class="dash-panel" style="flex: 1;">
-            <h3 class="panel-title">Топ водіїв (місяць)</h3>
+            <h3 class="panel-title">Топ водіїв</h3>
             <div class="top-list" id="dash-top-drivers"></div>
           </div>
           <div class="dash-panel" style="flex: 1;">
@@ -378,35 +379,56 @@
       <div id="analytics-view" class="main-tab-view" style="padding-right: 10px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
           <h2 style="font-size: 24px; font-weight: 700;">Аналітика</h2>
-          <div class="analytics-filters">
-            <select id="analytics-period" class="select-custom" onchange="updateAnalyticsUI()">
-              <option value="week">За тиждень</option>
-              <option value="month" selected>За місяць</option>
-              <option value="custom">Довільний період</option>
-            </select>
-            <div id="analytics-custom-dates" style="display:none; gap: 10px; align-items:center;">
-              <input type="date" id="analytics-start" class="datepicker-input" onchange="updateAnalyticsUI()">
-              <span style="color:#6b7280;">-</span>
-              <input type="date" id="analytics-end" class="datepicker-input" onchange="updateAnalyticsUI()">
-            </div>
-          </div>
         </div>
         
-        <div class="dash-cards-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="dash-cards-grid" style="grid-template-columns: repeat(4, 1fr);">
           <div class="dash-card dash-dark">
-            <div class="dash-title">Найактивніше авто</div>
-            <div class="dash-value" id="analytics-top-car-name">-</div>
-            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-top-car-km">0 км / 0 доставок</div>
+            <div class="dash-title">Доставки (План / Факт)</div>
+            <div class="dash-value" id="analytics-deliveries-count" style="font-size:28px;">0 / 0</div>
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-success-rate">0% успішність</div>
+          </div>
+          <div class="dash-card dash-red">
+            <div class="dash-title">Скасовані доставки</div>
+            <div class="dash-value" id="analytics-cancelled-count" style="color:var(--danger); font-size:28px;">0</div>
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;">Відсоток скасувань: <span id="analytics-cancelled-rate">0%</span></div>
+          </div>
+          <div class="dash-card dash-dark">
+            <div class="dash-title">Прогноз (кількість)</div>
+            <div class="dash-value" id="analytics-forecast-count" style="font-size:28px; color:var(--accent-purple);">0</div>
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-forecast-subtitle">На кінець періоду</div>
           </div>
           <div class="dash-card dash-dark">
             <div class="dash-title">Менеджер періоду</div>
-            <div class="dash-value" id="analytics-top-manager-name">-</div>
+            <div class="dash-value" id="analytics-top-manager-name" style="font-size:24px;">-</div>
             <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-top-manager-count">0 доставок</div>
           </div>
-          <div class="dash-card dash-dark">
-            <div class="dash-title">Відсоток успішності (Success Rate)</div>
-            <div class="dash-value" id="analytics-success-rate">0%</div>
-            <div class="dash-trend" id="analytics-success-trend"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+        </div>
+
+        <div class="dash-charts-row" style="margin-top: 20px;">
+          <!-- Doughnut Chart: Статуси -->
+          <div class="dash-panel" style="flex: 1; min-width: 300px; display: flex; flex-direction: column;">
+            <h3 class="panel-title">Статуси доставок</h3>
+            <div class="chart-container" style="flex: 1; min-height: 250px; position: relative;">
+              <canvas id="analyticsStatusChart"></canvas>
+            </div>
+            <div class="chart-legend" id="analytics-status-legend" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; font-size:12px; color:#9ca3af;"></div>
+          </div>
+          
+          <!-- Doughnut Chart: Автомобілі -->
+          <div class="dash-panel" style="flex: 1; min-width: 300px; display: flex; flex-direction: column;">
+            <h3 class="panel-title">Завантаженість авто</h3>
+            <div class="chart-container" style="flex: 1; min-height: 250px; position: relative;">
+              <canvas id="analyticsCarChart"></canvas>
+            </div>
+            <div class="chart-legend" id="analytics-car-legend" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; font-size:12px; color:#9ca3af;"></div>
+          </div>
+        </div>
+
+        <!-- Bar Chart: Менеджери -->
+        <div class="dash-panel" style="margin-top: 20px;">
+          <h3 class="panel-title">Ефективність менеджерів</h3>
+          <div class="chart-container" style="height: 300px; position: relative; width: 100%;">
+            <canvas id="analyticsManagersChart"></canvas>
           </div>
         </div>
         
@@ -629,10 +651,10 @@
               <label for="form-emp-car">Закріплене авто (якщо водій)</label>
               <select id="form-emp-car" class="form-control">
                 <option value="">Немає</option>
-                <option value="1">Авто 1</option>
-                <option value="2">Авто 2</option>
-                <option value="3">Авто 3</option>
-                <option value="4">Авто 4</option>
+                <option value="1">Hyundai EX-8</option>
+                <option value="2">Renault D18</option>
+                <option value="3">Volkswagen Crafter</option>
+                <option value="4">Renault Dokker</option>
               </select>
             </div>
             <div class="form-group">
@@ -673,10 +695,10 @@
               <select id="form-car" class="form-control" required>
                 <option value="Не призначено">-- Обере логіст --</option>
                 <option value="Самовивіз">Самовивіз</option>
-                <option value="1">Авто 1</option>
-                <option value="2">Авто 2</option>
-                <option value="3">Авто 3</option>
-                <option value="4">Авто 4</option>
+                <option value="1">Hyundai EX-8</option>
+                <option value="2">Renault D18</option>
+                <option value="3">Volkswagen Crafter</option>
+                <option value="4">Renault Dokker</option>
               </select>
             </div>
             <div class="form-group">
@@ -978,7 +1000,15 @@
       '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', 
       '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'
     ];
-    const state = {
+    // Global car names
+    const carNamesMap = {
+        "1": "Hyundai EX-8",
+        "2": "Renault D18",
+        "3": "Volkswagen Crafter",
+        "4": "Renault Dokker"
+    };
+
+    let state = {
       currentDate: new Date(),
       currentView: 'day',
       selectedCar: 'all',
@@ -1208,8 +1238,16 @@
     }
     function renderDriversHeader() {
     }
+    function triggerActiveViewRender() {
+      const activeTab = document.querySelector('.main-tab-view.active');
+      const tabId = activeTab ? activeTab.id : 'tracking-view';
+      if (tabId === 'dashboard-view') renderDashboard();
+      else if (tabId === 'analytics-view') updateAnalyticsUI();
+      else renderCalendar();
+    }
+
     function navigateDate(direction) {
-      if (state.currentView === 'day') {
+      if (state.currentView === 'day' || state.currentView === 'list') {
         state.currentDate.setDate(state.currentDate.getDate() + direction);
       } else if (state.currentView === 'week') {
         state.currentDate.setDate(state.currentDate.getDate() + direction * 7);
@@ -1217,12 +1255,12 @@
         state.currentDate.setMonth(state.currentDate.getMonth() + direction);
       }
       updateDateLabel();
-      renderCalendar();
+      triggerActiveViewRender();
     }
     function resetToToday() {
       state.currentDate = new Date();
       updateDateLabel();
-      renderCalendar();
+      triggerActiveViewRender();
     }
     function triggerDatePicker() {
       const picker = document.getElementById('calendar-datepicker');
@@ -1234,21 +1272,27 @@
       const parts = isoValue.split('-');
       state.currentDate = new Date(parts[0], parts[1] - 1, parts[2]);
       updateDateLabel();
-      renderCalendar();
+      triggerActiveViewRender();
     }
     function onCarFilterChanged(value) {
       state.selectedCar = value;
-      renderCalendar();
+      triggerActiveViewRender();
     }
     function switchView(view) {
       state.currentView = view;
-      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('#main-control-bar .view-btn').forEach(btn => btn.classList.remove('active'));
       const btn = document.getElementById(`btn-view-${view}`);
       if (btn) btn.classList.add('active');
-      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
-      document.getElementById(`${view}-view-panel`).classList.add('active');
+      
+      const activeTab = document.querySelector('.main-tab-view.active');
+      if (activeTab && activeTab.id === 'tracking-view') {
+        document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+        const panel = document.getElementById(`${view}-view-panel`);
+        if (panel) panel.classList.add('active');
+      }
+      
       updateDateLabel();
-      renderCalendar();
+      triggerActiveViewRender();
     }
     function togglePasswordVisibility() {
       const passwordInput = document.getElementById('login-password');
@@ -1501,7 +1545,7 @@
         document.getElementById('form-date').value = `${parts[2]}-${parts[1]}-${parts[0]}`;
       }
       const timeSelect = document.getElementById('form-time');
-      timeSelect.innerHTML = '';
+      timeSelect.innerHTML = '<option value="На протязі дня">На протязі дня</option>';
       hours.forEach(h => {
         const opt = document.createElement('option');
         opt.value = h;
@@ -1509,6 +1553,9 @@
         if (h === currentDetailDelivery['Час']) opt.selected = true;
         timeSelect.appendChild(opt);
       });
+      if (currentDetailDelivery['Час'] === 'На протязі дня') {
+          timeSelect.value = 'На протязі дня';
+      }
       document.getElementById('form-order-num').value = currentDetailDelivery['Номер_замовлення'] || '';
       document.getElementById('form-payment').value = currentDetailDelivery['Статус_оплати'] || 'Не оплачено';
       document.getElementById('form-receiver-name').value = currentDetailDelivery["Ім'я_одержувача"] || '';
@@ -1532,7 +1579,7 @@
         }
       } else {
         document.getElementById('form-manager-id').disabled = false;
-        carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="1">Авто 1</option><option value="2">Авто 2</option><option value="3">Авто 3</option><option value="4">Авто 4</option>';
+        carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="1">Hyundai EX-8</option><option value="2">Renault D18</option><option value="3">Volkswagen Crafter</option><option value="4">Renault Dokker</option>';
         if (currentCar && !['Не призначено', 'Самовивіз', '1', '2', '3', '4'].includes(currentCar)) {
            carSelect.innerHTML += `<option value="${currentCar}">${currentCar}</option>`;
         }
@@ -1670,7 +1717,14 @@
           ? state.dailyCrews.find(c => String(c['ID_Авто']) === String(carId) && c['Дата'] === currentDateStr)
           : null;
         const driver = dynamicDriver || ((state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => d['ID_Авто'] == carId) : null);
-        const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає водія';
+        
+      const carNames = {
+        1: "Hyundai EX-8",
+        2: "Renault D18",
+        3: "Volkswagen Crafter",
+        4: "Renault Dokker"
+      };
+const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає водія';
         const initial = name ? name.charAt(0) : '?';
         const carHeader = document.createElement('div');
         carHeader.className = 'grid-header';
@@ -1679,7 +1733,7 @@
           <div class="driver-photo-container">
             ${driver && driver['Фото'] ? `<img src="${driver['Фото']}" style="width:100%;height:100%;object-fit:cover;">` : initial}
           </div>
-          <div style="font-weight: 700;">Авто ${carId}</div>
+          <div style="font-weight: 700; font-size: 14px;">${carNamesMap[carId] || 'Авто ' + carId}</div>
           <div class="driver-name">${name}</div>
         `;
         if (state.currentUser && state.currentUser.role === 'admin') {
@@ -1732,6 +1786,44 @@
       // Рядки з годинами
       const activeDeliveries = getFilteredDeliveries(state.currentDate);
       const samoDeliveries   = getSamoVyvizDeliveries(state.currentDate);
+
+      // Рядок "Увесь день" (На протязі дня)
+      const allDayLabel = document.createElement('div');
+      allDayLabel.className = 'time-col';
+      allDayLabel.textContent = 'Увесь день';
+      grid.appendChild(allDayLabel);
+
+      visibleCars.forEach(carId => {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.dataset.car = carId;
+        cell.dataset.time = 'На протязі дня';
+        cell.addEventListener('dragover', handleDragOver);
+        cell.addEventListener('dragleave', handleDragLeave);
+        cell.addEventListener('drop', handleDrop);
+        const delivery = activeDeliveries.find(del =>
+          (del['ID_Automobile'] === String(carId) || del['ID_Авто'] === String(carId)) && del['Час'] === 'На протязі дня'
+        );
+        if (delivery) {
+          const card = createDeliveryCard(delivery);
+          cell.appendChild(card);
+        }
+        grid.appendChild(cell);
+      });
+
+      const samoAllDayCell = document.createElement('div');
+      samoAllDayCell.className = 'grid-cell samo-col';
+      samoAllDayCell.dataset.car = 'Самовивіз';
+      samoAllDayCell.dataset.time = 'На протязі дня';
+      samoAllDayCell.addEventListener('dragover', handleDragOver);
+      samoAllDayCell.addEventListener('dragleave', handleDragLeave);
+      samoAllDayCell.addEventListener('drop', handleDrop);
+      const samoAllDayDeliveries = samoDeliveries.filter(d => d['Час'] === 'На протязі дня');
+      samoAllDayDeliveries.forEach(del => {
+        const card = createDeliveryCard(del);
+        samoAllDayCell.appendChild(card);
+      });
+      grid.appendChild(samoAllDayCell);
 
       hours.forEach(hour => {
         // Клітинка часу
@@ -1839,6 +1931,31 @@
           deliveries: getFilteredDeliveries(date)
         });
       });
+
+      
+      // Рядок "Увесь день" (На протязі дня)
+      const allDayLabel = document.createElement('div');
+      allDayLabel.className = 'time-col';
+      allDayLabel.textContent = 'Увесь день';
+      grid.appendChild(allDayLabel);
+      
+      weekDates.forEach((date, dIndex) => {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell samo-col';
+        cell.dataset.date = formatDateStr(date);
+        cell.dataset.time = 'На протязі дня';
+        cell.addEventListener('dragover', handleDragOver);
+        cell.addEventListener('dragleave', handleDragLeave);
+        cell.addEventListener('drop', handleDrop);
+        
+        const dayDels = weekDeliveries[dIndex].deliveries;
+        const allDayDeliveries = dayDels.filter(del => del['Час'] === 'На протязі дня');
+        allDayDeliveries.forEach(delivery => {
+          const card = createDeliveryCard(delivery, true);
+          cell.appendChild(card);
+        });
+        grid.appendChild(cell);
+      });
       hours.forEach(hour => {
         const timeCell = document.createElement('div');
         timeCell.className = 'time-col';
@@ -1893,7 +2010,8 @@
         dayDeliveries.slice(0, maxVisible).forEach(del => {
           const miniCard = document.createElement('div');
           let statusClass = 'planned';
-          if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
+          if (String(del['ID_Авто']) === 'Самовивіз') statusClass = 'pickup';
+          else if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
           else if (del['Статус'] === 'Виконано') statusClass = 'completed';
           else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
           let isIncidentAffected = false;
@@ -2004,7 +2122,8 @@
     function createDeliveryCard(del, showCarBadge = false) {
       const card = document.createElement('div');
       let statusClass = 'planned';
-      if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
+      if (String(del['ID_Авто']) === 'Самовивіз') statusClass = 'pickup';
+      else if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
       else if (del['Статус'] === 'Виконано') statusClass = 'completed';
       else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
       let isIncidentAffected = false;
@@ -2039,9 +2158,14 @@
       else if (del['Статус_оплати'] === 'Оплачено частково') payClass = 'pay-part';
       else if (del['Статус_оплати'] === 'Не оплачено') payClass = 'pay-none';
 
+      let timeText = del['Час'];
+      if (timeText === 'На протязі дня') {
+        timeText = 'на протязі дня';
+      }
+
       card.innerHTML = `
         <div class="card-meta">
-          <span class="card-time">${isProblem ? '⚠️ ' : ''}${del['Час']}</span>
+          <span class="card-time">${isProblem ? '⚠️ ' : ''}${timeText}</span>
           <span class="card-order-badge ${isProblem ? 'problem-badge' : payClass}">№${del['Номер_замовлення']}</span>
         </div>
         <div class="card-address" title="${del['Адреса']}">${addressDisplay}</div>
@@ -2087,18 +2211,18 @@
         document.getElementById('form-manager-id').value = user.telegramId || '';
         if (user.role === 'manager') {
           document.getElementById('form-manager-id').disabled = true;
-          carSelect.innerHTML = '<option value="Самовивіз">Самовивіз</option><option value="Не призначено">-- Обере логіст --</option><option value="1">Авто 1</option><option value="2">Авто 2</option><option value="3">Авто 3</option><option value="4">Авто 4</option>';
+          carSelect.innerHTML = '<option value="Самовивіз">Самовивіз</option><option value="Не призначено">-- Обере логіст --</option><option value="1">Hyundai EX-8</option><option value="2">Renault D18</option><option value="3">Volkswagen Crafter</option><option value="4">Renault Dokker</option>';
           carSelect.value = "Самовивіз";
           carSelect.disabled = false;
         } else {
           document.getElementById('form-manager-id').disabled = false;
-          carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="1">Авто 1</option><option value="2">Авто 2</option><option value="3">Авто 3</option><option value="4">Авто 4</option>';
+          carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="1">Hyundai EX-8</option><option value="2">Renault D18</option><option value="3">Volkswagen Crafter</option><option value="4">Renault Dokker</option>';
           carSelect.value = "Не призначено";
           carSelect.disabled = false;
         }
       }
       const timeSelect = document.getElementById('form-time');
-      timeSelect.innerHTML = '';
+      timeSelect.innerHTML = '<option value="На протязі дня">На протязі дня</option>';
       hours.forEach(h => {
         const opt = document.createElement('option');
         opt.value = h;
@@ -2296,7 +2420,7 @@
           }
           
           const card = document.createElement('div');
-          card.className = 'dash-card dash-dark';
+          card.className = 'dash-card';
           card.style.position = 'relative';
           card.style.cursor = 'pointer';
           card.style.padding = '20px';
@@ -2475,7 +2599,7 @@
           if (e['Телефон']) actionsHtml += `<a href="tel:${e['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
           
           const card = document.createElement('div');
-          card.className = 'dash-card dash-dark';
+          card.className = 'dash-card';
           card.style.position = 'relative';
           card.style.cursor = 'pointer';
           card.onclick = () => openEmployeeModal(e);
@@ -2872,10 +2996,10 @@
         <div style="margin-bottom: 15px;">
           <label style="font-weight: bold; margin-bottom: 5px; display: block;">Автомобіль:</label>
           <div style="display: flex; flex-direction: column; gap: 5px;">
-            <label><input type="checkbox" class="filter-car-cb" value="1"> Авто 1</label>
-            <label><input type="checkbox" class="filter-car-cb" value="2"> Авто 2</label>
-            <label><input type="checkbox" class="filter-car-cb" value="3"> Авто 3</label>
-            <label><input type="checkbox" class="filter-car-cb" value="4"> Авто 4</label>
+            <label><input type="checkbox" class="filter-car-cb" value="1"> Hyundai EX-8</label>
+            <label><input type="checkbox" class="filter-car-cb" value="2"> Renault D18</label>
+            <label><input type="checkbox" class="filter-car-cb" value="3"> Volkswagen Crafter</label>
+            <label><input type="checkbox" class="filter-car-cb" value="4"> Renault Dokker</label>
             <label><input type="checkbox" class="filter-car-cb" value="Не призначено"> Не призначено</label>
           </div>
         </div>
@@ -2966,6 +3090,9 @@
     }
 let statusChartInstance = null;
 let comparativeChartInstance = null;
+let analyticsStatusChartInstance = null;
+let analyticsCarChartInstance = null;
+let analyticsManagersChartInstance = null;
 
 window.headerCreateAction = function() {};
 
@@ -2986,6 +3113,24 @@ window.switchMainTab = function(tabId) {
     if (targetView) { targetView.style.display = 'flex'; targetView.classList.add('active'); }
     if (targetNav)  targetNav.classList.add('active');
 
+    // Управління верхнім баром з датами (показуємо для трекінгу, дашборду, аналітики)
+    const mainControlBar = document.getElementById('main-control-bar');
+    if (mainControlBar) {
+        if (['tracking', 'dashboard', 'analytics'].includes(tabId)) {
+            mainControlBar.style.display = 'flex';
+            const btnList = document.getElementById('btn-view-list');
+            if (btnList) {
+                btnList.style.display = (tabId === 'tracking') ? 'flex' : 'none';
+            }
+            // Якщо ми перейшли на дашборд/аналітику, а обраний 'list', скидаємо на 'day'
+            if (tabId !== 'tracking' && state.currentView === 'list') {
+                switchView('day');
+            }
+        } else {
+            mainControlBar.style.display = 'none';
+        }
+    }
+
     // Налаштування глобальної кнопки "Створити" в хедері
     const headerBtn = document.getElementById('header-create-btn');
     const headerBtnLabel = document.getElementById('header-create-btn-label');
@@ -2997,6 +3142,10 @@ window.switchMainTab = function(tabId) {
             headerBtnLabel.textContent = 'Додати';
             window.headerCreateAction = openNewDeliveryModal;
             
+            filterBtn.style.display = 'flex';
+            window.headerFilterAction = openAdvancedFilters;
+        } else if (tabId === 'analytics') {
+            headerBtn.style.display = 'none';
             filterBtn.style.display = 'flex';
             window.headerFilterAction = openAdvancedFilters;
         } else if (tabId === 'clients') {
@@ -3062,42 +3211,35 @@ function filterDeliveriesByDateRange(deliveries, startStr, endStr) {
     });
 }
 
-function getRanges(periodStr) {
-    const now = new Date();
+function getRanges() {
+    const baseDate = new Date(state.currentDate);
+    const view = state.currentView;
     let currStart, currEnd, prevStart, prevEnd;
     
-    if (periodStr === 'week') {
-        // Current week (Monday to Sunday)
-        const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
-        currStart = new Date(now.setDate(diff));
+    if (view === 'day' || view === 'list') {
+        currStart = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+        currEnd = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), 23, 59, 59);
+        prevStart = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() - 1);
+        prevEnd = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() - 1, 23, 59, 59);
+    } else if (view === 'week') {
+        const day = baseDate.getDay();
+        const diff = baseDate.getDate() - day + (day === 0 ? -6 : 1); 
+        currStart = new Date(baseDate.setHours(0,0,0,0));
+        currStart.setDate(diff);
         currEnd = new Date(currStart);
         currEnd.setDate(currEnd.getDate() + 6);
+        currEnd.setHours(23, 59, 59);
         
         prevStart = new Date(currStart);
         prevStart.setDate(prevStart.getDate() - 7);
         prevEnd = new Date(currEnd);
         prevEnd.setDate(prevEnd.getDate() - 7);
+    } else if (view === 'month') {
+        currStart = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+        currEnd = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0, 23, 59, 59);
         
-    } else if (periodStr === 'month') {
-        currStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        currEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        currEnd.setDate(currEnd.getDate() - 1); // fix last day of month bug
-        
-        prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        prevEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-    } else {
-        // Custom dates
-        const s = document.getElementById('analytics-start').value;
-        const e = document.getElementById('analytics-end').value;
-        currStart = new Date(s);
-        currEnd = new Date(e);
-        
-        // Prev period of same length
-        const msDiff = currEnd - currStart;
-        prevEnd = new Date(currStart);
-        prevEnd.setDate(prevEnd.getDate() - 1);
-        prevStart = new Date(prevEnd.getTime() - msDiff);
+        prevStart = new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 1);
+        prevEnd = new Date(baseDate.getFullYear(), baseDate.getMonth(), 0, 23, 59, 59);
     }
     
     return {
@@ -3109,7 +3251,8 @@ function getRanges(periodStr) {
 function renderDashboard() {
     if (!state || !state.deliveries) return;
     
-    const ranges = getRanges('month');
+    const ranges = getRanges();
+    
     const currDels = filterDeliveriesByDateRange(state.deliveries, ranges.curr.start, ranges.curr.end);
     const prevDels = filterDeliveriesByDateRange(state.deliveries, ranges.prev.start, ranges.prev.end);
     
@@ -3127,14 +3270,19 @@ function renderDashboard() {
     document.getElementById('dash-delivered').innerText = deliveredCurr;
     document.getElementById('dash-issues').innerText = issuesCurr;
     
-    setTrend('dash-total-trend', totalCurr, totalPrev);
-    setTrend('dash-delivered-trend', deliveredCurr, deliveredPrev);
-    setTrend('dash-issues-trend', issuesCurr, issuesPrev);
+    let trendText = 'з попереднього періоду';
+    if (state.currentView === 'day' || state.currentView === 'list') trendText = 'з вчора';
+    else if (state.currentView === 'week') trendText = 'з минулого тижня';
+    else if (state.currentView === 'month') trendText = 'з минулого місяця';
     
-    // Top Drivers (by month)
-    renderTopList('dash-top-drivers', currDels, 'ID_Авто', 'Авто ', ' поїздок');
+    setTrend('dash-total-trend', totalCurr, totalPrev, trendText);
+    setTrend('dash-delivered-trend', deliveredCurr, deliveredPrev, trendText);
+    setTrend('dash-issues-trend', issuesCurr, issuesPrev, trendText);
     
-    // Top Managers (by month)
+    // Top Drivers
+    renderTopList('dash-top-drivers', currDels, 'Водій', '', ' поїздок');
+    
+    // Top Managers
     renderTopList('dash-top-managers', currDels, 'ID_Менеджера', '', ' замовлень');
     
     // Recent Activities
@@ -3208,20 +3356,21 @@ function renderStatusChart(dels) {
     document.getElementById('status-chart-legend').innerHTML = legendHtml;
 }
 
-function setTrend(elementId, curr, prev) {
+function setTrend(elementId, curr, prev, trendText) {
     const el = document.getElementById(elementId);
     if (!el) return;
+    const text = trendText || 'з минулого періоду';
     if (prev === 0) {
         if (curr === 0) el.innerHTML = `<span style="color:#6b7280">Без змін</span>`;
-        else el.innerHTML = `<span class="trend-up">+100% &uarr;</span> з минулого періоду`;
+        else el.innerHTML = `<span class="trend-up">+100% &uarr;</span> ${text}`;
         return;
     }
     
     const pct = Math.round(((curr - prev) / prev) * 100);
     if (pct > 0) {
-        el.innerHTML = `<span class="trend-up">+${pct}% &uarr;</span> з минулого періоду`;
+        el.innerHTML = `<span class="trend-up">+${pct}% &uarr;</span> ${text}`;
     } else if (pct < 0) {
-        el.innerHTML = `<span class="trend-down">${pct}% &darr;</span> з минулого періоду`;
+        el.innerHTML = `<span class="trend-down">${pct}% &darr;</span> ${text}`;
     } else {
         el.innerHTML = `<span style="color:#6b7280">Без змін</span>`;
     }
@@ -3254,76 +3403,205 @@ function renderTopList(elementId, dels, groupByField, prefix, suffix) {
 }
 
 window.updateAnalyticsUI = function() {
-    const period = document.getElementById('analytics-period').value;
-    const customDiv = document.getElementById('analytics-custom-dates');
-    if (period === 'custom') {
-        customDiv.style.display = 'flex';
-        if (!document.getElementById('analytics-start').value) return; 
-        if (!document.getElementById('analytics-end').value) return;
-    } else {
-        customDiv.style.display = 'none';
-    }
-    
     renderAnalytics();
 };
+
+function getFilteredDeliveriesList(dels) {
+    if (!state.filters) return dels;
+    return dels.filter(del => passesFilters(del));
+}
 
 function renderAnalytics() {
     if (!state || !state.deliveries) return;
     
-    const period = document.getElementById('analytics-period').value;
+    const ranges = getRanges();
     
-    if (period === 'custom' && (!document.getElementById('analytics-start').value || !document.getElementById('analytics-end').value)) {
-        return; 
+    // Застосовуємо фільтри з розширеного пошуку
+    const baseDeliveries = getFilteredDeliveriesList(state.deliveries);
+    const currDels = filterDeliveriesByDateRange(baseDeliveries, ranges.curr.start, ranges.curr.end);
+    const prevDels = filterDeliveriesByDateRange(baseDeliveries, ranges.prev.start, ranges.prev.end);
+    
+    // 1. Доставки (План / Факт)
+    const totalCurr = currDels.length;
+    const factCurr = currDels.filter(d => d['Статус'] === 'Виконано').length;
+    document.getElementById('analytics-deliveries-count').innerText = `${totalCurr} / ${factCurr}`;
+    const successRate = totalCurr ? Math.round((factCurr / totalCurr) * 100) : 0;
+    document.getElementById('analytics-success-rate').innerText = `${successRate}% успішність`;
+
+    // 2. Скасовані доставки
+    const cancelledCurr = currDels.filter(d => {
+        const s = (d['Статус'] || '').toLowerCase();
+        return s.includes('скасовано') || s.includes('скасован') || s.includes('аварія') || s.includes('проблем');
+    }).length;
+    document.getElementById('analytics-cancelled-count').innerText = cancelledCurr;
+    const cancelRate = totalCurr ? Math.round((cancelledCurr / totalCurr) * 100) : 0;
+    document.getElementById('analytics-cancelled-rate').innerText = `${cancelRate}%`;
+
+    // 3. Прогноз
+    let daysPassed = 1;
+    let totalDays = 1;
+    if (ranges.curr.start && ranges.curr.end) {
+        totalDays = Math.round((ranges.curr.end - ranges.curr.start) / (1000 * 60 * 60 * 24)) + 1;
+        const now = new Date();
+        if (now < ranges.curr.start) {
+            daysPassed = 1; // Future
+        } else if (now > ranges.curr.end) {
+            daysPassed = totalDays; // Past
+        } else {
+            daysPassed = Math.round((now - ranges.curr.start) / (1000 * 60 * 60 * 24)) + 1;
+        }
     }
+    const forecastCount = Math.round((totalCurr / Math.max(1, daysPassed)) * totalDays);
+    document.getElementById('analytics-forecast-count').innerText = forecastCount;
+
+    // 4. Менеджери
+    const mgrStats = {};
+    currDels.forEach(d => {
+        const key = d['ID_Менеджера'] || 'Невідомий';
+        if (!mgrStats[key]) mgrStats[key] = { total: 0, fact: 0, cancelled: 0 };
+        mgrStats[key].total++;
+        if (d['Статус'] === 'Виконано') mgrStats[key].fact++;
+        const s = (d['Статус'] || '').toLowerCase();
+        if (s.includes('скасовано') || s.includes('скасован') || s.includes('аварія') || s.includes('проблем')) {
+            mgrStats[key].cancelled++;
+        }
+    });
     
-    const ranges = getRanges(period);
-    const currDels = filterDeliveriesByDateRange(state.deliveries, ranges.curr.start, ranges.curr.end);
-    const prevDels = filterDeliveriesByDateRange(state.deliveries, ranges.prev.start, ranges.prev.end);
+    const sortedMgrs = Object.keys(mgrStats).map(k => ({ name: k, ...mgrStats[k] })).sort((a,b) => b.total - a.total);
     
-    // Top Car (Mock mileage)
+    if (sortedMgrs.length > 0) {
+        document.getElementById('analytics-top-manager-name').innerText = sortedMgrs[0].name;
+        document.getElementById('analytics-top-manager-count').innerText = `${sortedMgrs[0].total} доставок`;
+    } else {
+        document.getElementById('analytics-top-manager-name').innerText = '-';
+        document.getElementById('analytics-top-manager-count').innerText = '0 доставок';
+    }
+
+    // Doughnut Chart: Статуси
+    const statuses = { 'Заплановано': 0, 'В процесі': 0, 'Виконано': 0, 'Скасовано': 0 };
+    currDels.forEach(d => {
+        const s = (d['Статус'] || '').trim();
+        if (s === 'Виконано') statuses['Виконано']++;
+        else if (s === 'В процесі') statuses['В процесі']++;
+        else if (s.toLowerCase().includes('скасован') || s.toLowerCase().includes('проблем') || s.toLowerCase().includes('аварі')) statuses['Скасовано']++;
+        else statuses['Заплановано']++;
+    });
+    
+    if (analyticsStatusChartInstance) analyticsStatusChartInstance.destroy();
+    const ctxStatus = document.getElementById('analyticsStatusChart');
+    if (ctxStatus) {
+        analyticsStatusChartInstance = new Chart(ctxStatus.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Заплановано', 'В процесі', 'Виконано', 'Скасовано'],
+                datasets: [{
+                    data: [statuses['Заплановано'], statuses['В процесі'], statuses['Виконано'], statuses['Скасовано']],
+                    backgroundColor: ['#71717a', '#3b82f6', '#10b981', '#ef4444'],
+                    borderWidth: 0,
+                    cutout: '75%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+        
+        // Legend for Status
+        const statusLegendHtml = ['Заплановано', 'В процесі', 'Виконано', 'Скасовано'].map((lbl, i) => {
+            const colors = ['#71717a', '#3b82f6', '#10b981', '#ef4444'];
+            return `<div style="display:flex; align-items:center; gap:4px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:${colors[i]}"></div>
+                <span>${lbl} <strong style="color:#fff;">(${statuses[lbl]})</strong></span>
+            </div>`;
+        }).join('');
+        document.getElementById('analytics-status-legend').innerHTML = statusLegendHtml;
+    }
+
+    // Doughnut Chart: Автомобілі
     const carCounts = {};
     currDels.forEach(d => {
         const key = d['ID_Авто'] || 'Невідомий';
         carCounts[key] = (carCounts[key] || 0) + 1;
     });
     const sortedCars = Object.keys(carCounts).map(k => ({ name: k, count: carCounts[k] })).sort((a,b) => b.count - a.count);
-    if (sortedCars.length > 0) {
-        document.getElementById('analytics-top-car-name').innerText = 'Авто ' + sortedCars[0].name;
-        const mockKm = sortedCars[0].count * 15;
-        document.getElementById('analytics-top-car-km').innerText = `${mockKm} км / ${sortedCars[0].count} доставок`;
-    } else {
-        document.getElementById('analytics-top-car-name').innerText = '-';
-        document.getElementById('analytics-top-car-km').innerText = '0 км / 0 доставок';
+    
+    if (analyticsCarChartInstance) analyticsCarChartInstance.destroy();
+    const ctxCar = document.getElementById('analyticsCarChart');
+    if (ctxCar) {
+        const carColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e', '#64748b', '#d946ef'];
+        analyticsCarChartInstance = new Chart(ctxCar.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: sortedCars.map(c => c.name),
+                datasets: [{
+                    data: sortedCars.map(c => c.count),
+                    backgroundColor: carColors.slice(0, sortedCars.length),
+                    borderWidth: 0,
+                    cutout: '75%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+        
+        // Legend for Cars
+        const carLegendHtml = sortedCars.map((c, i) => {
+            return `<div style="display:flex; align-items:center; gap:4px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:${carColors[i % carColors.length]}"></div>
+                <span>${c.name} <strong style="color:#fff;">(${c.count})</strong></span>
+            </div>`;
+        }).join('');
+        document.getElementById('analytics-car-legend').innerHTML = carLegendHtml;
     }
-    
-    // Top Manager
-    const mgrCounts = {};
-    currDels.forEach(d => {
-        const key = d['ID_Менеджера'] || 'Невідомий';
-        mgrCounts[key] = (mgrCounts[key] || 0) + 1;
-    });
-    const sortedMgrs = Object.keys(mgrCounts).map(k => ({ name: k, count: mgrCounts[k] })).sort((a,b) => b.count - a.count);
-    if (sortedMgrs.length > 0) {
-        document.getElementById('analytics-top-manager-name').innerText = sortedMgrs[0].name;
-        document.getElementById('analytics-top-manager-count').innerText = `${sortedMgrs[0].count} доставок`;
-    } else {
-        document.getElementById('analytics-top-manager-name').innerText = '-';
-        document.getElementById('analytics-top-manager-count').innerText = '0 доставок';
+
+    // Bar Chart: Менеджери
+    if (analyticsManagersChartInstance) analyticsManagersChartInstance.destroy();
+    const ctxMgrs = document.getElementById('analyticsManagersChart');
+    if (ctxMgrs) {
+        analyticsManagersChartInstance = new Chart(ctxMgrs.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: sortedMgrs.map(m => m.name),
+                datasets: [
+                    {
+                        label: 'Виконано',
+                        data: sortedMgrs.map(m => m.fact),
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'В процесі / Заплановано',
+                        data: sortedMgrs.map(m => m.total - m.fact - m.cancelled),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Скасовано',
+                        data: sortedMgrs.map(m => m.cancelled),
+                        backgroundColor: '#ef4444',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af', stepSize: 1 } }
+                },
+                plugins: {
+                    legend: { position: 'top', labels: { color: '#9ca3af', usePointStyle: true, boxWidth: 8 } },
+                    tooltip: { mode: 'index', intersect: false }
+                }
+            }
+        });
     }
-    
-    // Success Rate
-    const deliveredCurr = currDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
-    const deliveredPrev = prevDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
-    const currRate = currDels.length ? Math.round((deliveredCurr / currDels.length) * 100) : 0;
-    const prevRate = prevDels.length ? Math.round((deliveredPrev / prevDels.length) * 100) : 0;
-    
-    document.getElementById('analytics-success-rate').innerText = currRate + '%';
-    
-    const diff = currRate - prevRate;
-    const tr = document.getElementById('analytics-success-trend');
-    if (diff > 0) tr.innerHTML = `<span class="trend-up">+${diff}% &uarr;</span> з минулого періоду`;
-    else if (diff < 0) tr.innerHTML = `<span class="trend-down">${diff}% &darr;</span> з минулого періоду`;
-    else tr.innerHTML = `<span style="color:#6b7280">Без змін</span>`;
     
     // Comparative Chart (Daily grouped)
     renderComparativeChart(currDels, prevDels, ranges.curr.start, ranges.curr.end, ranges.prev.start, ranges.prev.end);
