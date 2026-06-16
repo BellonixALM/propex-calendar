@@ -858,7 +858,7 @@
 
         const encodedPayload = encodeURIComponent(JSON.stringify(data || {}));
         const separator = WEBAPP_URL.includes('?') ? '&' : '?';
-        script.src = WEBAPP_URL + separator + 'action=' + encodeURIComponent(action) + '&payload=' + encodedPayload + '&callback=' + callbackName + '&_t=' + Date.now();
+        script.src = WEBAPP_URL + separator + 'action=' + encodeURIComponent(action) + '&payload=' + encodedPayload + '&callback=' + callbackName + ';
         
         document.head.appendChild(script);
         setTimeout(function() {
@@ -1099,6 +1099,7 @@
         .getDeliveries();
     }
     function loadData() {
+      alert('ПОЧАТОК loadData!');
       const label = document.getElementById('date-label');
       
         label.textContent = "⏱️ Завантаження даних...";
