@@ -2470,8 +2470,7 @@
           card.className = 'dash-card dash-dark';
           card.style.position = 'relative';
           card.style.cursor = 'pointer';
-          
-          card.style.cursor = 'pointer';
+          card.onclick = () => openEmployeeModal(e);
           card.ondblclick = () => openEmployeeModal(e);
           
           // Delete button for Admin/Director
