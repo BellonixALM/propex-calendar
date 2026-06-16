@@ -867,7 +867,7 @@
         return this;
       };
       ScriptRunBridge.prototype.getDeliveries = function() {
-        this._callAPI('get_deliveries', {});
+        this._callAPI('getDeliveries', {});
         return this;
       };
       ScriptRunBridge.prototype.getDailyCrews = function() {
@@ -1106,12 +1106,15 @@
           
         propexApi
           .withSuccessHandler(function(response) {
+            alert('УСПІХ! Отримано клієнтів: ' + (response.data ? response.data.length : 'невідомо') + '. Сирий статус: ' + response.status);
             state.clients = (response && response.status === 'success') ? response.data : (response || []);
             renderClients();
           })
           .withFailureHandler(function(err) {
+            alert('ПОМИЛКА завантаження клієнтів: ' + err.message);
             console.error("Failed to load clients:", err);
             state.clients = [];
+            renderClients();
           })
           .get_clients();
 
