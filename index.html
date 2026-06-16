@@ -2278,6 +2278,23 @@
           if (c['Телефон']) actionsHtml += `<a href="tel:${c['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
           if (c['Email']) actionsHtml += `<a href="mailto:${c['Email']}" class="contact-btn" title="Написати Email">📧</a>`;
           
+          let extraContactsHtml = '';
+          if (isCompany && c['Додаткові_Контакти']) {
+            try {
+              const extras = JSON.parse(c['Додаткові_Контакти']);
+              if (Array.isArray(extras) && extras.length > 0) {
+                extraContactsHtml += `<div style="margin-top:12px; padding-top:12px; border-top:1px dashed rgba(255,255,255,0.1);">
+                  <div style="font-size:11px; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Додаткові співробітники:</div>`;
+                extras.forEach(ext => {
+                  let extPhone = ext.phone ? ` <a href="tel:${ext.phone}" style="color:var(--accent-blue); text-decoration:none;">${ext.phone}</a>` : '';
+                  let extRole = ext.role ? ` <span style="color:#6b7280; font-size:11px;">(${ext.role})</span>` : '';
+                  extraContactsHtml += `<div style="font-size:13px; margin-bottom:4px;">👤 <b>${ext.name}</b>${extRole}${extPhone}</div>`;
+                });
+                extraContactsHtml += `</div>`;
+              }
+            } catch(e) {}
+          }
+          
           const card = document.createElement('div');
           card.className = 'dash-card dash-dark';
           card.style.position = 'relative';
@@ -2302,6 +2319,7 @@
             <div style="margin-top: 15px; display: flex; gap: 8px;">
               ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
             </div>
+            ${extraContactsHtml}
           `;
           container.appendChild(card);
         });
@@ -2410,6 +2428,23 @@
           if (e['Telegram']) actionsHtml += `<a href="https://t.me/${String(e['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
           if (e['Телефон']) actionsHtml += `<a href="tel:${e['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
           
+          let extraContactsHtml = '';
+          if (isCompany && c['Додаткові_Контакти']) {
+            try {
+              const extras = JSON.parse(c['Додаткові_Контакти']);
+              if (Array.isArray(extras) && extras.length > 0) {
+                extraContactsHtml += `<div style="margin-top:12px; padding-top:12px; border-top:1px dashed rgba(255,255,255,0.1);">
+                  <div style="font-size:11px; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Додаткові співробітники:</div>`;
+                extras.forEach(ext => {
+                  let extPhone = ext.phone ? ` <a href="tel:${ext.phone}" style="color:var(--accent-blue); text-decoration:none;">${ext.phone}</a>` : '';
+                  let extRole = ext.role ? ` <span style="color:#6b7280; font-size:11px;">(${ext.role})</span>` : '';
+                  extraContactsHtml += `<div style="font-size:13px; margin-bottom:4px;">👤 <b>${ext.name}</b>${extRole}${extPhone}</div>`;
+                });
+                extraContactsHtml += `</div>`;
+              }
+            } catch(e) {}
+          }
+          
           const card = document.createElement('div');
           card.className = 'dash-card dash-dark';
           card.style.position = 'relative';
@@ -2432,6 +2467,7 @@
             <div style="margin-top: 15px; display: flex; gap: 8px;">
               ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
             </div>
+            ${extraContactsHtml}
           `;
           container.appendChild(card);
         });
