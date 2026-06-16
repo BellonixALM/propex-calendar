@@ -138,8 +138,12 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'save_daily_crew') {
-      var result = saveDailyCrew(data.data.dateStr, data.data.crews);
+      // The bot sends {date, car_id, telegram_id, name}
+      var result = saveDailyCrew(data.data.date, data.data.car_id, data.data.telegram_id, data.data.name);
       return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'get_daily_crews') {
+      return ContentService.createTextOutput(JSON.stringify(get_daily_crews()))
         .setMimeType(ContentService.MimeType.JSON);
     }
     
@@ -1117,4 +1121,29 @@ function register_driver(data) {
   } catch (e) {
     return { status: 'error', message: e.toString() };
   }
+}
+
+function get_daily_crews() {
+  var ss = getSpreadsheet();
+  if (!ss) return { status: 'error', message: 'No spreadsheet connection' };
+  
+  var sheet = ss.getSheetByName('Чергування');
+  if (!sheet) return { status: 'success', data: [] }; // No shifts assigned yet
+  
+  var data = sheet.getDataRange().getDisplayValues();
+  if (data.length <= 1) return { status: 'success', data: [] };
+  
+  var headers = data[0];
+  var results = [];
+  
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var obj = {};
+    for (var j = 0; j < headers.length; j++) {
+      obj[headers[j]] = row[j];
+    }
+    results.push(obj);
+  }
+  
+  return { status: 'success', data: results };
 }
