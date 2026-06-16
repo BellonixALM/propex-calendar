@@ -72,7 +72,10 @@ function doGet(e) {
         result = saveDailyCrew(payload.dateStr, payload.crews);
       } else if (action === 'get_clients') {
         result = get_clients();
-      } else if (action === 'get_employees') {
+      } else if (action === 'register_driver') {
+      return ContentService.createTextOutput(JSON.stringify(register_driver(data.data)))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'get_employees') {
         result = get_employees();
       } else if (action === 'saveClient') {
         result = saveClient(payload);
@@ -108,6 +111,9 @@ function doPost(e) {
     
     if (action === 'add_delivery') {
       return ContentService.createTextOutput(JSON.stringify(addDelivery(data.data)))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'register_driver') {
+      return ContentService.createTextOutput(JSON.stringify(register_driver(data.data)))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'get_employees') {
       return ContentService.createTextOutput(JSON.stringify(get_employees()))
@@ -1084,4 +1090,31 @@ function deleteEmployee(id) {
     }
   }
   return { status: 'error', message: 'Співробітника не знайдено' };
+}
+
+function register_driver(data) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return { status: 'error', message: 'No spreadsheet connection' };
+    
+    var sheet = ss.getSheetByName('Користувачі');
+    if (!sheet) return { status: 'error', message: 'Sheet Користувачі not found' };
+    
+    var name = data.name || "Невідомий Водій";
+    var telegram_id = data.telegram_id || "";
+    
+    // Generate unique ID and logic
+    var id = Utilities.getUuid();
+    var login = "driver_" + telegram_id;
+    var password = "driver_" + Math.floor(1000 + Math.random() * 9000); // e.g. driver_4521
+    var role = "driver";
+    
+    // Columns: Логін, Пароль, Роль, Ім'я, Telegram_ID, ID
+    // Check actual column positions just in case, but assume standard appendRow
+    sheet.appendRow([login, password, role, name, telegram_id, id]);
+    
+    return { status: 'success', message: 'Driver registered' };
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  }
 }
