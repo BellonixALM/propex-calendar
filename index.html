@@ -2223,7 +2223,7 @@
          <input type="text" class="form-control extra-contact-name" placeholder="ПІБ (напр. Іван)" value="${contactObj ? (contactObj.name || '') : ''}">
          <input type="text" class="form-control extra-contact-phone" placeholder="Телефон" value="${contactObj ? (contactObj.phone || '') : ''}">
          <input type="text" class="form-control extra-contact-role" placeholder="Посада (напр. Директор)" value="${contactObj ? (contactObj.role || '') : ''}">
-         <button type="button" class="action-icon-btn" style="color:var(--danger);" onclick="this.parentElement.remove()" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>
+         ${(contactObj && state.currentUser && state.currentUser.role && !['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) ? '' : `<button type="button" class="action-icon-btn" style="color:var(--danger);" onclick="this.parentElement.remove()" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`}
        `;
        list.appendChild(div);
        if (window.lucide) window.lucide.createIcons();
