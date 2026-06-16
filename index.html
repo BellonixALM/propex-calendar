@@ -2319,7 +2319,7 @@
           
           // Action Links
           let messageLink = '';
-          if (c['Telegram']) messageLink = `https://t.me/${String(c['Telegram']).replace('@', '')}`;
+          if (c['Telegram']) messageLink = `tg://resolve?domain=${String(c['Telegram']).replace('@', '')}`;
           else if (c['Viber']) messageLink = `viber://chat?number=${String(c['Viber']).replace('+', '')}`;
           else if (c['WhatsApp']) messageLink = `https://wa.me/${String(c['WhatsApp']).replace('+', '')}`;
           
@@ -2463,7 +2463,7 @@
           if (roleLabel === 'driver') { roleIcon = '🚗'; roleLabel = 'Водій'; }
           
           let actionsHtml = '';
-          if (e['Telegram']) actionsHtml += `<a href="https://t.me/${String(e['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
+          if (e['Telegram']) actionsHtml += `<a href="tg://resolve?domain=${String(e['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
           if (e['Телефон']) actionsHtml += `<a href="tel:${e['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
           
           const card = document.createElement('div');
