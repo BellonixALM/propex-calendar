@@ -2278,17 +2278,17 @@
           if (c['Телефон']) actionsHtml += `<a href="tel:${c['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
           if (c['Email']) actionsHtml += `<a href="mailto:${c['Email']}" class="contact-btn" title="Написати Email">📧</a>`;
           
-          let extraContactsHtml = '';
+                    let extraContactsHtml = '';
           if (isCompany && c['Додаткові_Контакти']) {
             try {
               const extras = JSON.parse(c['Додаткові_Контакти']);
               if (Array.isArray(extras) && extras.length > 0) {
-                extraContactsHtml += `<div style="margin-top:12px; padding-top:12px; border-top:1px dashed rgba(255,255,255,0.1);">
+                extraContactsHtml += `<div style="margin-top:12px; margin-bottom: 20px; padding-top:12px; border-top:1px dashed rgba(255,255,255,0.1);">
                   <div style="font-size:11px; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Додаткові співробітники:</div>`;
                 extras.forEach(ext => {
-                  let extPhone = ext.phone ? ` <a href="tel:${ext.phone}" style="color:var(--accent-blue); text-decoration:none;">${ext.phone}</a>` : '';
+                  let extPhone = ext.phone ? ` <a href="tel:${ext.phone}" style="color:var(--accent-blue); text-decoration:none;" onclick="event.stopPropagation()">${ext.phone}</a>` : '';
                   let extRole = ext.role ? ` <span style="color:#6b7280; font-size:11px;">(${ext.role})</span>` : '';
-                  extraContactsHtml += `<div style="font-size:13px; margin-bottom:4px;">👤 <b>${ext.name}</b>${extRole}${extPhone}</div>`;
+                  extraContactsHtml += `<div style="font-size:13px; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="user" style="width:12px;height:12px;color:#9ca3af;"></i> <span style="color:#e5e7eb;">${ext.name}</span>${extRole}${extPhone}</div>`;
                 });
                 extraContactsHtml += `</div>`;
               }
@@ -2299,29 +2299,65 @@
           card.className = 'dash-card dash-dark';
           card.style.position = 'relative';
           card.style.cursor = 'pointer';
-          card.onclick = () => openEmployeeModal(e);
-          card.style.cursor = 'pointer';
+          card.style.padding = '20px';
+          card.style.borderRadius = '16px';
+          card.style.display = 'flex';
+          card.style.flexDirection = 'column';
           card.onclick = () => openClientModal(c);
           
           // Delete button for Admin/Director
           let deleteBtn = '';
           if (state.currentUser && state.currentUser.role && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
-            deleteBtn = `<button class="action-icon-btn" style="position:absolute; top:10px; right:10px; color:var(--danger);" onclick="deleteClient('${c['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
+            deleteBtn = `<button class="action-icon-btn" style="color:var(--text-muted); padding:4px;" onclick="event.stopPropagation(); deleteClient('${c['ID']}')" title="Видалити"><i data-lucide="more-horizontal" style="width:18px;height:18px;"></i></button>`;
           }
           
+          // Avatar Color Generator
+          const colors = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#06b6d4', '#eab308'];
+          const charCode = c['Назва'] ? c['Назва'].charCodeAt(0) : 0;
+          const avatarColor = colors[charCode % colors.length];
+          const avatarChar = c['Назва'] ? c['Назва'].charAt(0).toUpperCase() : (isCompany ? 'C' : 'P');
+          
+          // Action Links
+          let messageLink = '';
+          if (c['Telegram']) messageLink = `https://t.me/${String(c['Telegram']).replace('@', '')}`;
+          else if (c['Viber']) messageLink = `viber://chat?number=${String(c['Viber']).replace('+', '')}`;
+          else if (c['WhatsApp']) messageLink = `https://wa.me/${String(c['WhatsApp']).replace('+', '')}`;
+          
+          let callLink = c['Телефон'] ? `tel:${c['Телефон']}` : '';
+          
           card.innerHTML = `
-            ${deleteBtn}
-            <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${icon} ${typeLabel}</div>
-            <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${c['Назва'] || '-'}</h3>
-            ${isCompany && c['Контакт'] ? `<div style="font-size: 14px; margin-bottom: 5px;">👤 ${c['Контакт']}</div>` : ''}
-            ${c['Телефон'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📱 ${c['Телефон']}</div>` : ''}
-            ${c['Адреса'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📍 ${c['Адреса']}</div>` : ''}
-            ${c['Примітки'] ? `<div style="font-size: 12px; color: #6b7280; margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">📝 ${c['Примітки']}</div>` : ''}
-            
-            <div style="margin-top: 15px; display: flex; gap: 8px;">
-              ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 42px; height: 42px; border-radius: 50%; background: ${avatarColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                  ${avatarChar}
+                </div>
+                <div>
+                  <h3 style="margin: 0; font-size: 16px; color: #fff; font-weight: 600; letter-spacing: 0.3px;">${c['Назва'] || 'Невідомо'}</h3>
+                  <div style="font-size: 12px; color: #9ca3af; margin-top: 2px;">${typeLabel}</div>
+                </div>
+              </div>
+              ${deleteBtn}
             </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; flex: 1;">
+              ${c['Адреса'] ? `<div style="display: flex; align-items: flex-start; gap: 10px; color: #9ca3af; font-size: 13px; line-height: 1.4;"><i data-lucide="map-pin" style="width:16px;height:16px; min-width:16px; margin-top:1px;"></i> <span>${c['Адреса']}</span></div>` : ''}
+              ${c['Телефон'] ? `<div style="display: flex; align-items: center; gap: 10px; color: #9ca3af; font-size: 13px;"><i data-lucide="phone" style="width:16px;height:16px;"></i> <span>${c['Телефон']}</span></div>` : ''}
+              ${c['Email'] ? `<div style="display: flex; align-items: center; gap: 10px; color: #9ca3af; font-size: 13px;"><i data-lucide="link" style="width:16px;height:16px;"></i> <a href="mailto:${c['Email']}" style="color:#3b82f6; text-decoration:none;" onclick="event.stopPropagation()">${c['Email']}</a></div>` : ''}
+            </div>
+
             ${extraContactsHtml}
+            
+            <div style="display: flex; gap: 12px; margin-top: auto;">
+              ${messageLink ? `
+              <a href="${messageLink}" target="_blank" onclick="event.stopPropagation()" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 10px 0; border-radius: 24px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;" onmouseover="this.style.background='rgba(16, 185, 129, 0.15)'" onmouseout="this.style.background='rgba(16, 185, 129, 0.1)'">
+                <div style="background: #10b981; color: #fff; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;"><i data-lucide="message-circle" style="width:14px;height:14px;"></i></div> Message
+              </a>` : '<div style="flex:1;"></div>'}
+              
+              ${callLink ? `
+              <a href="${callLink}" onclick="event.stopPropagation()" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; padding: 10px 0; border-radius: 24px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;" onmouseover="this.style.background='rgba(139, 92, 246, 0.15)'" onmouseout="this.style.background='rgba(139, 92, 246, 0.1)'">
+                <div style="background: #8b5cf6; color: #fff; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;"><i data-lucide="phone" style="width:14px;height:14px;"></i></div> Call
+              </a>` : '<div style="flex:1;"></div>'}
+            </div>
           `;
           container.appendChild(card);
         });
@@ -2434,7 +2470,7 @@
           card.className = 'dash-card dash-dark';
           card.style.position = 'relative';
           card.style.cursor = 'pointer';
-          card.onclick = () => openEmployeeModal(e);
+          
           card.style.cursor = 'pointer';
           card.ondblclick = () => openEmployeeModal(e);
           
