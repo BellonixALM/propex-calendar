@@ -2299,6 +2299,8 @@
           card.className = 'dash-card dash-dark';
           card.style.position = 'relative';
           card.style.cursor = 'pointer';
+          card.onclick = () => openEmployeeModal(e);
+          card.style.cursor = 'pointer';
           card.onclick = () => openClientModal(c);
           
           // Delete button for Admin/Director
@@ -2449,6 +2451,8 @@
           card.className = 'dash-card dash-dark';
           card.style.position = 'relative';
           card.style.cursor = 'pointer';
+          card.onclick = () => openEmployeeModal(e);
+          card.style.cursor = 'pointer';
           card.ondblclick = () => openEmployeeModal(e);
           
           // Delete button for Admin/Director
@@ -2477,6 +2481,20 @@
       }
     }
     
+    
+    function openEmployeeModal(emp = null) {
+      document.getElementById('form-emp-id').value = emp ? emp['Логін'] : '';
+      document.getElementById('form-emp-name').value = emp ? emp['ПІБ'] : '';
+      document.getElementById('form-emp-role').value = emp ? emp['Роль'] : 'driver';
+      document.getElementById('form-emp-car').value = emp ? emp['Авто'] : '';
+      document.getElementById('form-emp-phone').value = emp ? emp['Телефон'] : '';
+      document.getElementById('form-emp-telegram').value = emp ? emp['Telegram'] : '';
+      
+      // We don't load password, user can just enter a new one to change it, or leave blank to keep old (logic needed in backend, but for now we just show placeholder)
+      
+      document.getElementById('employee-modal').style.display = 'flex';
+    }
+
     function saveEmployee() {
       const btn = document.querySelector('#employee-modal .btn:not(.btn-secondary)');
       const originalText = btn.textContent;
