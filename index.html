@@ -121,6 +121,19 @@
 .card-order-badge.pay-full { background-color: rgba(16, 185, 129, 0.15) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.3); }
 .card-order-badge.pay-part { background-color: rgba(234, 179, 8, 0.15) !important; color: #eab308 !important; border: 1px solid rgba(234, 179, 8, 0.3); }
 .card-order-badge.pay-none { background-color: rgba(239, 68, 68, 0.15) !important; color: #ef4444 !important; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+.sidebar { transition: width 0.3s ease, padding 0.3s ease; }
+.sidebar.collapsed { width: 80px; padding: 24px 8px; }
+.sidebar.collapsed .sidebar-brand-text { display: none; }
+.sidebar.collapsed .sidebar-header-wrapper { justify-content: center; padding: 0; }
+.sidebar.collapsed .sidebar-toggle-btn { display: none; }
+.sidebar.collapsed .sidebar-logo-container { margin-right: 0; }
+.sidebar.collapsed .nav-group-title { display: none; }
+.sidebar.collapsed .nav-item-text { display: none; }
+.sidebar.collapsed .nav-item { justify-content: center; padding: 10px; }
+.sidebar.collapsed .nav-item i { margin-right: 0; }
+
+.sidebar-toggle-btn:hover { color: white !important; background: rgba(255,255,255,0.1) !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -172,22 +185,27 @@
   <div class="app-container" id="app-wrapper" style="display:none;">
     
   <aside class="sidebar" id="main-sidebar">
-    <a class="sidebar-logo-container" onclick="resetToToday()" style="cursor:pointer;">
-      <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 30px; padding: 0 12px;" class="sidebar-header-wrapper">
+      <a class="sidebar-logo-container" onclick="resetToToday()" style="cursor:pointer; margin-bottom:0; padding:0;">
+        <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 8H36C45.9411 8 54 16.0589 54 26C54 35.9411 45.9411 44 36 44H24V56H12V8Z" fill="#10b981" />
           <circle cx="44" cy="44" r="8" fill="#0284c7" />
       </svg>
-      <span style="font-family: var(--font-title); font-size: 22px; font-weight: 800; color: white;">Propex</span>
-    </a>
+      <span class="sidebar-brand-text" style="font-family: var(--font-title); font-size: 22px; font-weight: 800; color: white;">Propex</span>
+      </a>
+      <button onclick="toggleSidebar()" class="sidebar-toggle-btn" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:6px;" title="Згорнути панель">
+        <i data-lucide="panel-left-close" style="width:20px;height:20px;"></i>
+      </button>
+    </div>
     
     <div class="nav-group-title">General</div>
     <nav class="sidebar-nav">
-      <a class="nav-item" id="nav-dashboard" onclick="switchMainTab('dashboard')"><i data-lucide="layout-dashboard"></i> Дашборд</a>
-      <a class="nav-item" id="nav-analytics" onclick="switchMainTab('analytics')"><i data-lucide="bar-chart-2"></i> Аналітика</a>
-      <a class="nav-item active" id="nav-tracking" onclick="switchMainTab('tracking')"><i data-lucide="map"></i> Трекінг</a>
-      <a class="nav-item" id="nav-clients" onclick="switchMainTab('clients')"><i data-lucide="users"></i> Клієнти</a>
-      <a class="nav-item" id="nav-employees" onclick="switchMainTab('employees')"><i data-lucide="contact"></i> Співробітники</a>
-      <a class="nav-item" id="nav-settings" onclick="switchMainTab('settings')"><i data-lucide="settings"></i> Налаштування</a>
+      <a class="nav-item" id="nav-dashboard" onclick="switchMainTab('dashboard')" title="Дашборд"><i data-lucide="layout-dashboard"></i> <span class="nav-item-text">Дашборд</span></a>
+      <a class="nav-item" id="nav-analytics" onclick="switchMainTab('analytics')" title="Аналітика"><i data-lucide="bar-chart-2"></i> <span class="nav-item-text">Аналітика</span></a>
+      <a class="nav-item active" id="nav-tracking" onclick="switchMainTab('tracking')" title="Трекінг"><i data-lucide="map"></i> <span class="nav-item-text">Трекінг</span></a>
+      <a class="nav-item" id="nav-clients" onclick="switchMainTab('clients')" title="Клієнти"><i data-lucide="users"></i> <span class="nav-item-text">Клієнти</span></a>
+      <a class="nav-item" id="nav-employees" onclick="switchMainTab('employees')" title="Співробітники"><i data-lucide="contact"></i> <span class="nav-item-text">Співробітники</span></a>
+      <a class="nav-item" id="nav-settings" onclick="switchMainTab('settings')" title="Налаштування"><i data-lucide="settings"></i> <span class="nav-item-text">Налаштування</span></a>
     </nav>
   </aside>
   
@@ -1100,6 +1118,33 @@
         })
         .getDeliveries();
     }
+    
+    function toggleSidebar() {
+      const sidebar = document.getElementById('main-sidebar');
+      sidebar.classList.toggle('collapsed');
+      if (sidebar.classList.contains('collapsed')) {
+        localStorage.setItem('propex_sidebar_collapsed', 'true');
+      } else {
+        localStorage.removeItem('propex_sidebar_collapsed');
+      }
+    }
+    
+    // Add logic to topbar to toggle sidebar if collapsed
+    function injectTopbarToggle() {
+       const searchCont = document.querySelector('.search-container');
+       if (!document.getElementById('topbar-sidebar-toggle') && searchCont) {
+         const btn = document.createElement('button');
+         btn.id = 'topbar-sidebar-toggle';
+         btn.className = 'btn btn-secondary btn-icon';
+         btn.style.marginRight = '12px';
+         btn.style.display = 'none'; // Only show when collapsed
+         btn.innerHTML = '<i data-lucide="panel-left-open" style="width:18px;height:18px;"></i>';
+         btn.onclick = toggleSidebar;
+         btn.title = "Розгорнути панель";
+         searchCont.parentNode.insertBefore(btn, searchCont);
+       }
+    }
+
     function loadData() {
       uiLog('ПОЧАТОК loadData!');
       const label = document.getElementById('date-label');
@@ -2759,6 +2804,32 @@
     function safeCreateIcons() {
       try {
         if (typeof lucide !== 'undefined') lucide.createIcons();
+
+      if (localStorage.getItem('propex_sidebar_collapsed') === 'true') {
+        document.getElementById('main-sidebar').classList.add('collapsed');
+      }
+      injectTopbarToggle();
+      
+      // We need to update the topbar toggle button visibility
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((m) => {
+          if (m.attributeName === 'class') {
+            const isCollapsed = document.getElementById('main-sidebar').classList.contains('collapsed');
+            const topbarBtn = document.getElementById('topbar-sidebar-toggle');
+            if (topbarBtn) {
+              topbarBtn.style.display = isCollapsed ? 'flex' : 'none';
+            }
+          }
+        });
+      });
+      observer.observe(document.getElementById('main-sidebar'), { attributes: true });
+      
+      // initial check
+      const topbarBtn = document.getElementById('topbar-sidebar-toggle');
+      if (topbarBtn && document.getElementById('main-sidebar').classList.contains('collapsed')) {
+        topbarBtn.style.display = 'flex';
+      }
+
       } catch (e) {
         console.error("Lucide failed to initialize:", e);
       }
