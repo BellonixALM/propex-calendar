@@ -142,7 +142,7 @@ function doPost(e) {
       var result = saveDailyCrew(data.data.date, data.data.car_id, data.data.telegram_id, data.data.name);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
-    } else if (action === 'get_daily_crews') {
+    } else if (action === 'getDailyCrews') {
       return ContentService.createTextOutput(JSON.stringify(get_daily_crews()))
         .setMimeType(ContentService.MimeType.JSON);
     }
