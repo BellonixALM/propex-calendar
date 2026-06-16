@@ -2305,7 +2305,7 @@
           card.style.flexDirection = 'column';
           card.onclick = () => openClientModal(c);
           
-          let actionButtons = `<button class="action-icon-btn" style="color:var(--text-muted); padding:4px;" onclick="event.stopPropagation(); openClientModal(c)" title="Редагувати"><i data-lucide="more-horizontal" style="width:18px;height:18px;"></i></button>`;
+          let actionButtons = `<button class="action-icon-btn" style="color:var(--text-muted); padding:4px;" onclick="event.stopPropagation(); openClientModalById('${c['ID']}')" title="Редагувати"><i data-lucide="more-horizontal" style="width:18px;height:18px;"></i></button>`;
           
           // Delete button only for Admin/Director
           if (state.currentUser && state.currentUser.role && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
