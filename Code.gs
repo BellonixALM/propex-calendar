@@ -893,11 +893,17 @@ function saveClient(payload) {
   var sheet = ss.getSheetByName('Клієнти');
   if (!sheet) {
     sheet = ss.insertSheet('Клієнти');
-    sheet.appendRow(['ID', 'Тип', 'Назва', 'Контакт', 'Телефон', 'Email', 'Telegram', 'Viber', 'WhatsApp', 'Примітки']);
+    sheet.appendRow(['ID', 'Тип', 'Назва', 'Контакт', 'Телефон', 'Email', 'Telegram', 'Viber', 'WhatsApp', 'Примітки', 'Додаткові_Контакти']);
   }
   
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
+  
+  // Ensure Додаткові_Контакти column exists
+  if (headers.indexOf('Додаткові_Контакти') === -1) {
+    headers.push('Додаткові_Контакти');
+    sheet.getRange(1, headers.length).setValue('Додаткові_Контакти');
+  }
   var idIndex = -1;
   for (var k = 0; k < headers.length; k++) {
     var key = headers[k].toString().trim();
@@ -923,6 +929,7 @@ function saveClient(payload) {
       if (key === 'Viber') return payload.viber;
       if (key === 'WhatsApp') return payload.whatsapp;
       if (key === 'Примітки') return payload.notes;
+      if (key === 'Додаткові_Контакти') return payload.extra_contacts || '';
       return '';
     });
     sheet.appendRow(newRow);
@@ -950,7 +957,10 @@ function saveClient(payload) {
         if (key === 'Viber') val = payload.viber;
         if (key === 'WhatsApp') val = payload.whatsapp;
         if (key === 'Примітки') val = payload.notes;
-        if (val !== '') {
+        if (key === 'Додаткові_Контакти') val = payload.extra_contacts || '';
+        
+        // We allow overwriting with empty string for extra_contacts to clear them
+        if (val !== '' || key === 'Додаткові_Контакти') {
           sheet.getRange(rowIndex, idx + 1).setValue(val);
         }
       });
