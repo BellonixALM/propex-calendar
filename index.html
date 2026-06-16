@@ -1364,8 +1364,8 @@
       const navDashboard = document.getElementById('nav-dashboard');
       const navAnalytics = document.getElementById('nav-analytics');
       
-      navDashboard.style.display = 'block';
-      navAnalytics.style.display = 'block';
+      if (navDashboard) navDashboard.style.display = 'block';
+      if (navAnalytics) navAnalytics.style.display = 'block';
       
       if (user.role === 'director') {
         banner.style.display = 'block';
@@ -1374,10 +1374,10 @@
         banner.style.borderBottom = '1px solid rgba(217, 119, 6, 0.25)';
         banner.style.color = '#f59e0b';
         document.getElementById('director-banner-text').innerHTML = `👑 <b>Режим директора:</b> ${user.name} — перегляд та редагування дозволено`;
-        addBtn.style.display = 'inline-flex';
-        document.getElementById('det-status-select').disabled = false;
-        document.getElementById('update-status-btn').style.display = 'inline-block';
-        document.getElementById('edit-delivery-btn').style.display = 'inline-block';
+        if (addBtn) addBtn.style.display = 'inline-flex';
+        if (document.getElementById('det-status-select')) document.getElementById('det-status-select').disabled = false;
+        if (document.getElementById('update-status-btn')) document.getElementById('update-status-btn').style.display = 'inline-block';
+        if (document.getElementById('edit-delivery-btn')) document.getElementById('edit-delivery-btn').style.display = 'inline-block';
       } else if (user.role === 'logist') {
         banner.style.display = 'block';
         banner.className = 'director-banner';
@@ -1385,12 +1385,12 @@
         banner.style.borderBottom = '1px solid rgba(59, 130, 246, 0.25)';
         banner.style.color = '#3b82f6';
         document.getElementById('director-banner-text').innerHTML = `⚙️ <b>Режим логістики:</b> ${user.name} — повний контроль розкладу`;
-        addBtn.style.display = 'inline-flex';
-        document.getElementById('det-status-select').disabled = false;
-        document.getElementById('update-status-btn').style.display = 'inline-block';
-        document.getElementById('edit-delivery-btn').style.display = 'inline-block';
-        navDashboard.style.display = 'none';
-        navAnalytics.style.display = 'none';
+        if (addBtn) addBtn.style.display = 'inline-flex';
+        if (document.getElementById('det-status-select')) document.getElementById('det-status-select').disabled = false;
+        if (document.getElementById('update-status-btn')) document.getElementById('update-status-btn').style.display = 'inline-block';
+        if (document.getElementById('edit-delivery-btn')) document.getElementById('edit-delivery-btn').style.display = 'inline-block';
+        if (navDashboard) navDashboard.style.display = 'none';
+        if (navAnalytics) navAnalytics.style.display = 'none';
       } else if (user.role === 'admin') {
         banner.style.display = 'block';
         banner.className = 'director-banner';
@@ -1398,15 +1398,15 @@
         banner.style.borderBottom = '1px solid rgba(16, 185, 129, 0.25)';
         banner.style.color = '#10b981';
         document.getElementById('director-banner-text').innerHTML = `🛡️ <b>Режим розробника:</b> ${user.name} — адміністрування системи`;
-        addBtn.style.display = 'inline-flex';
-        document.getElementById('det-status-select').disabled = false;
-        document.getElementById('update-status-btn').style.display = 'inline-block';
-        document.getElementById('edit-delivery-btn').style.display = 'inline-block';
+        if (addBtn) addBtn.style.display = 'inline-flex';
+        if (document.getElementById('det-status-select')) document.getElementById('det-status-select').disabled = false;
+        if (document.getElementById('update-status-btn')) document.getElementById('update-status-btn').style.display = 'inline-block';
+        if (document.getElementById('edit-delivery-btn')) document.getElementById('edit-delivery-btn').style.display = 'inline-block';
       } else if (user.role === 'manager') {
         banner.style.display = 'none';
-        addBtn.style.display = 'inline-flex';
-        navDashboard.style.display = 'none';
-        navAnalytics.style.display = 'none';
+        if (addBtn) addBtn.style.display = 'inline-flex';
+        if (navDashboard) navDashboard.style.display = 'none';
+        if (navAnalytics) navAnalytics.style.display = 'none';
       }
     }
     function hasCarIncidentOnDate(carId, dateStr) {
