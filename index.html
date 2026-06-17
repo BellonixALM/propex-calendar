@@ -2659,55 +2659,86 @@ function renderClients() {
           container.style.gridTemplateColumns = '1fr';
         } else {
           container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
-
-        const debugDiv = document.createElement('div');
-        debugDiv.style.padding = '10px';
-        debugDiv.style.background = '#facc15';
-        debugDiv.style.color = '#000';
-        debugDiv.style.marginBottom = '20px';
-        debugDiv.style.borderRadius = '8px';
-        debugDiv.innerHTML = "<b>DEBUG:</b> Клієнтів завантажено: " + clients.length + ". Query: '" + query + "'";
-        container.appendChild(debugDiv);
-
         }
         
         clients.forEach(c => {
           const isCompany = c['Тип'] === 'company';
-          const icon = isCompany ? '🏢' : '👤';
           const typeLabel = isCompany ? 'Компанія' : 'Приватна особа';
+          const name = c['Назва'] || '-';
+          const firstLetter = name.charAt(0).toUpperCase();
           
-          let actionsHtml = '';
-          if (c['Telegram']) actionsHtml += `<a href="https://t.me/${String(c['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
-          if (c['Viber']) actionsHtml += `<a href="viber://chat?number=${String(c['Viber']).replace('+', '')}" class="contact-btn" title="Viber">💜</a>`;
-          if (c['WhatsApp']) actionsHtml += `<a href="https://wa.me/${String(c['WhatsApp']).replace('+', '')}" target="_blank" class="contact-btn" title="WhatsApp">💬</a>`;
-          if (c['Телефон']) actionsHtml += `<a href="tel:${c['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
-          if (c['Email']) actionsHtml += `<a href="mailto:${c['Email']}" class="contact-btn" title="Написати Email">📧</a>`;
+          const colors = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
+          const colorIndex = firstLetter.charCodeAt(0) % colors.length;
+          const avatarColor = colors[colorIndex];
           
-          const card = document.createElement('div');
-          card.className = 'dash-card dash-dark';
-          card.style.position = 'relative';
-          card.style.cursor = 'pointer';
-          card.ondblclick = () => openClientModal(c);
+          let infoHtml = '';
+          if (c['Контакт'] && isCompany) infoHtml += `<div style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-muted);"><i data-lucide="user" style="width:16px;height:16px;"></i> ${c['Контакт']}</div>`;
+          if (c['Телефон']) infoHtml += `<div style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-muted);"><i data-lucide="phone" style="width:16px;height:16px;"></i> ${c['Телефон']}</div>`;
+          if (c['Email']) infoHtml += `<div style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #3b82f6;"><i data-lucide="link" style="width:16px;height:16px;"></i> <a href="mailto:${c['Email']}" style="color: inherit; text-decoration: none;">${c['Email']}</a></div>`;
+          if (c['Адреса']) infoHtml += `<div style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-muted);"><i data-lucide="map-pin" style="width:16px;height:16px;"></i> ${c['Адреса']}</div>`;
+          if (c['Примітки']) infoHtml += `<div style="font-size: 13px; color: var(--text-muted); margin-top: 8px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);"><i data-lucide="file-text" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></i> ${c['Примітки']}</div>`;
           
-          // Delete button for Admin/Director
-          let deleteBtn = '';
-          if (state.currentUser && state.currentUser.role && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
-            deleteBtn = `<button class="action-icon-btn" style="position:absolute; top:10px; right:10px; color:var(--danger);" onclick="deleteClient('${c['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
+          let callBtnHtml = '';
+          if (c['Телефон']) {
+            callBtnHtml = `<a href="tel:${c['Телефон']}" style="flex: 1; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: none; padding: 10px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: all 0.2s;"><i data-lucide="phone" style="width:18px;height:18px;"></i> Call</a>`;
+          } else {
+            callBtnHtml = `<div style="flex: 1; background: rgba(139, 92, 246, 0.05); color: rgba(139, 92, 246, 0.5); border: none; padding: 10px; border-radius: 20px; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px;"><i data-lucide="phone" style="width:18px;height:18px;"></i> Call</div>`;
+          }
+
+          let msgBtnHtml = '';
+          if (c['Telegram'] || c['Viber'] || c['WhatsApp']) {
+            let msgLink = '#';
+            if (c['WhatsApp']) msgLink = `https://wa.me/${String(c['WhatsApp']).replace('+', '')}`;
+            else if (c['Telegram']) msgLink = `https://t.me/${String(c['Telegram']).replace('@', '')}`;
+            else if (c['Viber']) msgLink = `viber://chat?number=${String(c['Viber']).replace('+', '')}`;
+            msgBtnHtml = `<a href="${msgLink}" target="_blank" style="flex: 1; background: rgba(16, 185, 129, 0.1); color: #10b981; border: none; padding: 10px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: all 0.2s;"><i data-lucide="message-circle" style="width:18px;height:18px;"></i> Message</a>`;
+          } else {
+            msgBtnHtml = `<div style="flex: 1; background: rgba(16, 185, 129, 0.05); color: rgba(16, 185, 129, 0.5); border: none; padding: 10px; border-radius: 20px; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px;"><i data-lucide="message-circle" style="width:18px;height:18px;"></i> Message</div>`;
           }
           
-          card.innerHTML = `
-            ${deleteBtn}
-            <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${icon} ${typeLabel}</div>
-            <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${c['Назва'] || '-'}</h3>
-            ${isCompany && c['Контакт'] ? `<div style="font-size: 14px; margin-bottom: 5px;">👤 ${c['Контакт']}</div>` : ''}
-            ${c['Телефон'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📱 ${c['Телефон']}</div>` : ''}
-            ${c['Адреса'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📍 ${c['Адреса']}</div>` : ''}
-            ${c['Примітки'] ? `<div style="font-size: 12px; color: #6b7280; margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">📝 ${c['Примітки']}</div>` : ''}
-            
-            <div style="margin-top: 15px; display: flex; gap: 8px;">
-              ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
+          let deleteBtn = '';
+          if (state.currentUser && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
+            deleteBtn = `<button style="background: transparent; border: 1px solid var(--border-color); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: #ef4444; cursor: pointer; transition: all 0.2s;" onclick="event.stopPropagation(); deleteClient('${c['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
+          }
+
+          const card = document.createElement('div');
+          card.className = 'dash-card dash-dark client-card-hover';
+          card.style.padding = '20px';
+          card.style.borderRadius = '16px';
+          card.style.border = '1px solid var(--border-color)';
+          card.style.background = 'var(--card-bg)';
+          card.style.display = 'flex';
+          card.style.flexDirection = 'column';
+          card.style.cursor = 'pointer';
+          card.onclick = () => openClientModal(c);
+          
+          card.innerHTML = \`
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: \${avatarColor}; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0;">
+                  \${firstLetter}
+                </div>
+                <div>
+                  <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text-color);">\${name}</h3>
+                  <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">\${typeLabel}</div>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 8px;">
+                <button style="background: transparent; border: 1px solid var(--border-color); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: all 0.2s;" onclick="event.stopPropagation(); openClientModal(\${JSON.stringify(c).replace(/"/g, '&quot;')})"><i data-lucide="more-horizontal" style="width:16px;height:16px;"></i></button>
+                \${deleteBtn}
+              </div>
             </div>
-          `;
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; flex-grow: 1;">
+              \${infoHtml || '<div style="font-size: 14px; color: var(--text-muted);">Немає контактної інформації</div>'}
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: auto;" onclick="event.stopPropagation()">
+              \${msgBtnHtml}
+              \${callBtnHtml}
+            </div>
+          \`;
           container.appendChild(card);
         });
         safeCreateIcons();
