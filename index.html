@@ -865,7 +865,7 @@
 (function() {
       let scriptUrlTemplate = "<?= scriptUrl ?>";
       let WEBAPP_URL = scriptUrlTemplate.includes("?=") 
-          ? "https://script.google.com/macros/s/AKfycbyDumSq2APyjFhhw0ONMnzPeJ2wK-Tlzfi8sLRtjJBnG6x1xW7qPEjYCG1o5FVCm77r/exec" 
+          ? "https://script.google.com/macros/s/AKfycbyZstPa912Jmsvk1ApzuqirBf0XiLasvWBVkUGIoo2LMzDbGWiD0mdll9hlX2w6Hjte/exec" 
           : scriptUrlTemplate;
       
       const paramApi = new URLSearchParams(window.location.search).get('api');
@@ -2638,10 +2638,11 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
       container.innerHTML = '';
       
       const depts = [
-        { id: 'management', name: 'Керівництво', icon: '👑', roles: ['director', 'admin', 'керівник', 'адміністратор'] },
+        { id: 'management', name: 'Керівництво', icon: '👑', roles: ['director', 'керівник'] },
+        { id: 'administration', name: 'Адміністрація', icon: '🛡️', roles: ['admin', 'адміністратор'] },
         { id: 'sales', name: 'Відділ продажів', icon: '💼', roles: ['manager', 'менеджер'] },
         { id: 'logistics', name: 'Логістика', icon: '🚗', roles: ['logist', 'driver', 'логіст', 'водій'] },
-        { id: 'warehouse', name: 'Склад', icon: '📦', roles: ['warehouse', 'комірник', 'склад'] },
+        { id: 'warehouse', name: 'Склад', icon: '📦', roles: ['warehouse', 'комірник', 'склад', 'головний комірник'] },
         { id: 'other', name: 'Інші', icon: '👤', roles: [] }
       ];
 
@@ -2700,10 +2701,11 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
         
         // Filter by department
         const depts = {
-          'management': ['director', 'admin', 'керівник', 'адміністратор'],
+          'management': ['director', 'керівник'],
+          'administration': ['admin', 'адміністратор'],
           'sales': ['manager', 'менеджер'],
           'logistics': ['logist', 'driver', 'логіст', 'водій'],
-          'warehouse': ['warehouse', 'комірник', 'склад']
+          'warehouse': ['warehouse', 'комірник', 'склад', 'головний комірник']
         };
         
         employees = employees.filter(e => {

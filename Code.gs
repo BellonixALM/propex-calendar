@@ -636,6 +636,8 @@ function updateWarehouseStatus(deliveryId, statusStr) {
   }
   return { status: 'error' };
 }
+
+function getWarehouseWorkers() {
   var ss = getSpreadsheet();
   if (!ss) return { heads: [], workers: [] };
   
@@ -647,9 +649,9 @@ function updateWarehouseStatus(deliveryId, statusStr) {
   
   var headers = data[0];
   var roleIdx = headers.indexOf('Роль');
-  var nameIdx = headers.indexOf('Ім\'я');
-  var tgIdx = headers.indexOf('Telegram_ID');
-  var idIdx = headers.indexOf('ID'); // ID користувача у базі
+  var nameIdx = headers.indexOf('Ім\'я') !== -1 ? headers.indexOf('Ім\'я') : headers.indexOf('ПІБ');
+  var tgIdx = headers.indexOf('Telegram_ID') !== -1 ? headers.indexOf('Telegram_ID') : headers.indexOf('Telegram');
+  var idIdx = headers.indexOf('ID') !== -1 ? headers.indexOf('ID') : headers.indexOf('Логін');
   
   if (roleIdx === -1 || tgIdx === -1) return { heads: [], workers: [] };
   
@@ -680,7 +682,7 @@ function authenticateUser(login, password) {
   if (!sheet) {
     sheet = ss.insertSheet('Користувачі');
     sheet.appendRow(['Логін', 'Пароль', 'Роль', 'Ім\'я', 'Telegram_ID']);
-    sheet.appendRow(['admin', 'admin123', 'admin', 'Творець системи', '1931242904']);
+    sheet.appendRow(['admin', 'admin123', 'admin', 'Головний адміністратор', '1931242904']);
     sheet.appendRow(['logist1', 'logist123', 'logist', 'Диспетчер-Логіст', '1931242904']);
     sheet.appendRow(['director1', 'director123', 'director', 'Керівник підприємства', '1931242904']);
     sheet.appendRow(['manager1', 'manager123', 'manager', 'Менеджер з продажів 1', '1931242904']);
@@ -1316,9 +1318,28 @@ function register_driver(data) {
     var password = "driver_" + Math.floor(1000 + Math.random() * 9000); // e.g. driver_4521
     var role = data.role || "driver";
     
-    // Columns: Логін, Пароль, Роль, Ім'я, Telegram_ID, ID
-    // Check actual column positions just in case, but assume standard appendRow
-    sheet.appendRow([login, password, role, name, telegram_id, id]);
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var newRow = new Array(headers.length).fill('');
+    
+    var setVal = function(colNames, val) {
+      for (var i = 0; i < colNames.length; i++) {
+        var idx = headers.indexOf(colNames[i]);
+        if (idx !== -1) {
+          newRow[idx] = val;
+          return;
+        }
+      }
+    };
+    
+    setVal(['Логін'], login);
+    setVal(['Пароль'], password);
+    setVal(['Роль'], role);
+    setVal(['ПІБ', 'Ім\'я'], name);
+    setVal(['Telegram', 'Telegram_ID'], telegram_id);
+    setVal(['ID'], id);
+    if (data.phone) setVal(['Телефон'], data.phone);
+    
+    sheet.appendRow(newRow);
     
     return { status: 'success', message: 'Driver registered' };
   } catch (e) {
