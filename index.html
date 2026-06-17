@@ -2613,12 +2613,31 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
       try {
         container.innerHTML = '';
         
-        let employees = state.employees || [];
+        let employees = state.employees ? [...state.employees] : [];
         
         if (employees.length === 0) {
           container.innerHTML = '<div style="color:#9ca3af; padding: 20px;">Співробітників не знайдено.</div>';
           return;
         }
+        
+        const roleOrder = {
+          'director': 1,
+          'logist': 2,
+          'admin': 3,
+          'manager': 4,
+          'driver': 5
+        };
+        
+        employees.sort((a, b) => {
+          let roleA = (a['Роль'] || '').toLowerCase().trim();
+          let roleB = (b['Роль'] || '').toLowerCase().trim();
+          let orderA = roleOrder[roleA] || 99;
+          let orderB = roleOrder[roleB] || 99;
+          if (orderA !== orderB) return orderA - orderB;
+          let nameA = a['ПІБ'] || a['Ім\'я'] || a['Name'] || '';
+          let nameB = b['ПІБ'] || b['Ім\'я'] || b['Name'] || '';
+          return nameA.localeCompare(nameB);
+        });
         
         employees.forEach(e => {
           let roleIcon = '👤';
