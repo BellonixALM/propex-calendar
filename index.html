@@ -482,10 +482,16 @@
       <div id="employees-view" class="main-tab-view" style="display:none; padding-right: 10px;">
         <div style="position: sticky; top: 0; z-index: 10; background: var(--bg-color); padding: 16px 0 12px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border-color);">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="font-size: 24px; font-weight: 700; margin: 0;">Співробітники</h2>
+            <div style="display: flex; align-items: center; gap: 15px;">
+              <button id="employees-back-btn" class="action-icon-btn" style="display:none; color: var(--text-color); background: var(--bg-secondary); padding: 8px; border-radius: 8px;" onclick="showEmployeeDepartments()" title="Назад до відділів"><i data-lucide="arrow-left" style="width:20px;height:20px;"></i></button>
+              <h2 id="employees-view-title" style="font-size: 24px; font-weight: 700; margin: 0;">Співробітники (Відділи)</h2>
+            </div>
           </div>
         </div>
-        <div id="employees-container" class="dash-cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px;">
+        <div id="employees-departments-container" class="dash-cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px;">
+          <!-- Departments will be rendered here -->
+        </div>
+        <div id="employees-container" class="dash-cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; display:none;">
           <!-- Employees will be rendered here -->
         </div>
       </div>
@@ -2607,13 +2613,110 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
       }).deleteClient(id);
     }
     
+    let currentEmployeeDepartment = null;
+
+    function showEmployeeDepartments() {
+      currentEmployeeDepartment = null;
+      document.getElementById('employees-departments-container').style.display = 'grid';
+      document.getElementById('employees-container').style.display = 'none';
+      document.getElementById('employees-back-btn').style.display = 'none';
+      document.getElementById('employees-view-title').textContent = 'Співробітники (Відділи)';
+      renderEmployeeDepartments();
+    }
+
+    function showEmployeeDepartment(deptId, deptName) {
+      currentEmployeeDepartment = deptId;
+      document.getElementById('employees-departments-container').style.display = 'none';
+      document.getElementById('employees-container').style.display = 'grid';
+      document.getElementById('employees-back-btn').style.display = 'inline-flex';
+      document.getElementById('employees-view-title').textContent = deptName;
+      renderEmployees();
+    }
+
+    function renderEmployeeDepartments() {
+      const container = document.getElementById('employees-departments-container');
+      container.innerHTML = '';
+      
+      const depts = [
+        { id: 'management', name: 'Керівництво', icon: '👑', roles: ['director', 'admin', 'керівник', 'адміністратор'] },
+        { id: 'sales', name: 'Відділ продажів', icon: '💼', roles: ['manager', 'менеджер'] },
+        { id: 'logistics', name: 'Логістика', icon: '🚗', roles: ['logist', 'driver', 'логіст', 'водій'] },
+        { id: 'warehouse', name: 'Склад', icon: '📦', roles: ['warehouse', 'комірник', 'склад'] },
+        { id: 'other', name: 'Інші', icon: '👤', roles: [] }
+      ];
+
+      const counts = {};
+      depts.forEach(d => counts[d.id] = 0);
+      
+      (state.employees || []).forEach(e => {
+        let r = (e['Роль'] || '').toLowerCase().trim();
+        let found = false;
+        for (let d of depts) {
+          if (d.roles.includes(r)) {
+            counts[d.id]++;
+            found = true;
+            break;
+          }
+        }
+        if (!found) counts['other']++;
+      });
+
+      depts.forEach(d => {
+        if (d.id === 'other' && counts['other'] === 0) return;
+        
+        const card = document.createElement('div');
+        card.className = 'dash-card';
+        card.style.cursor = 'pointer';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+        card.style.justifyContent = 'center';
+        card.style.alignItems = 'center';
+        card.style.padding = '40px 20px';
+        card.onclick = () => showEmployeeDepartment(d.id, d.name);
+        
+        card.innerHTML = `
+          <div style="font-size: 48px; margin-bottom: 15px;">${d.icon}</div>
+          <h3 style="font-size: 20px; font-weight: 600; color: var(--text-color); margin: 0 0 10px 0;">${d.name}</h3>
+          <div style="font-size: 14px; color: var(--text-muted); background: var(--bg-secondary); padding: 4px 12px; border-radius: 12px;">
+            ${counts[d.id]} співробітників
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
     // --- Employees ---
     function renderEmployees() {
+      if (!currentEmployeeDepartment) {
+        renderEmployeeDepartments();
+        return;
+      }
+      
       const container = document.getElementById('employees-container');
       try {
         container.innerHTML = '';
         
         let employees = state.employees ? [...state.employees] : [];
+        
+        // Filter by department
+        const depts = {
+          'management': ['director', 'admin', 'керівник', 'адміністратор'],
+          'sales': ['manager', 'менеджер'],
+          'logistics': ['logist', 'driver', 'логіст', 'водій'],
+          'warehouse': ['warehouse', 'комірник', 'склад']
+        };
+        
+        employees = employees.filter(e => {
+          let r = (e['Роль'] || '').toLowerCase().trim();
+          if (currentEmployeeDepartment === 'other') {
+             let found = false;
+             for (let key in depts) {
+                if (depts[key].includes(r)) found = true;
+             }
+             return !found;
+          }
+          return depts[currentEmployeeDepartment] && depts[currentEmployeeDepartment].includes(r);
+        });
         
         if (employees.length === 0) {
           container.innerHTML = '<div style="color:#9ca3af; padding: 20px;">Співробітників не знайдено.</div>';
