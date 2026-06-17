@@ -3165,12 +3165,6 @@ function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe) {
 
 
 
-        });
-        safeCreateIcons();
-      } catch (err) {
-        container.innerHTML = '<div style="color:red; padding: 20px;">Помилка рендеру клієнтів: ' + err.toString() + '</div>';
-      }
-    }
 </script>
 
   <div class="modal-overlay" id="map-modal" onclick="if(event.target===this) closeMapModal()">
