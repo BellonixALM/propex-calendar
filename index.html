@@ -814,16 +814,19 @@ function renderClients() {
         </div>
       </div>
       
-      <div id="clients-view" class="main-tab-view" style="padding-right: 10px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-          <h2 style="font-size: 24px; font-weight: 700;">Покупці (Клієнти)</h2>
-          <div class="search-container" style="margin-right: auto; margin-left: 20px;">
-            <i data-lucide="search"></i>
-            <input type="text" id="clients-search-input" placeholder="Пошук клієнтів..." oninput="if(typeof renderClients==='function') renderClients();">
+      <div id="clients-view" class="main-tab-view" style="display:none; padding-right: 10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+          <h2 style="font-size: 24px; font-weight: 700; margin: 0;">Клієнти / Компанії</h2>
+          <div class="view-toggle" style="display: flex; background: var(--bg-secondary); border-radius: 8px; padding: 4px; border: 1px solid var(--border-color);">
+            <button onclick="setClientViewMode('grid')" id="client-view-grid-btn" style="background: var(--card-bg); color: var(--text-color); border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"><i data-lucide="layout-grid" style="width:16px;height:16px;"></i> Картки</button>
+            <button onclick="setClientViewMode('list')" id="client-view-list-btn" style="background: transparent; color: var(--text-muted); border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500;"><i data-lucide="list" style="width:16px;height:16px;"></i> Список</button>
           </div>
-
         </div>
-        <div id="clients-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;"></div>
+        <div class="search-container" style="margin-bottom: 24px; max-width: 400px; position: relative;">
+          <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; height: 18px;"></i>
+          <input type="text" id="clients-search-input" placeholder="Пошук клієнтів..." oninput="if(typeof renderClients==='function') renderClients();" style="width: 100%; padding: 10px 10px 10px 38px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color);">
+        </div>
+        <div id="clients-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;"></div>
       </div>
       
       <div id="settings-view" class="main-tab-view" style="padding-right: 10px;">
@@ -2600,6 +2603,36 @@ function renderClients() {
           .updateDeliveryDetails(delId, deliveryData, user.role);
     }
 
+
+    let clientViewMode = 'grid';
+    function setClientViewMode(mode) {
+      clientViewMode = mode;
+      
+      const gridBtn = document.getElementById('client-view-grid-btn');
+      const listBtn = document.getElementById('client-view-list-btn');
+      
+      if(gridBtn && listBtn) {
+          if (mode === 'grid') {
+            gridBtn.style.background = 'var(--card-bg)';
+            gridBtn.style.color = 'var(--text-color)';
+            gridBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            
+            listBtn.style.background = 'transparent';
+            listBtn.style.color = 'var(--text-muted)';
+            listBtn.style.boxShadow = 'none';
+          } else {
+            listBtn.style.background = 'var(--card-bg)';
+            listBtn.style.color = 'var(--text-color)';
+            listBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            
+            gridBtn.style.background = 'transparent';
+            gridBtn.style.color = 'var(--text-muted)';
+            gridBtn.style.boxShadow = 'none';
+          }
+      }
+      
+      if (typeof renderClients === 'function') renderClients();
+    }
 
 function renderClients() {
       const container = document.getElementById('clients-container');
