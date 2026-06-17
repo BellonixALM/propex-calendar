@@ -3118,6 +3118,14 @@ const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає в�
       safeCreateIcons();
       checkSession();
       updateDateLabel();
+      
+      // Автоматичне оновлення даних кожну годину (3600000 мс)
+      setInterval(() => {
+        if (state.currentUser) {
+          console.log("Auto-refreshing deliveries...");
+          loadDeliveriesSafely();
+        }
+      }, 60 * 60 * 1000);
     }
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       initApp();
