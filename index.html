@@ -1491,6 +1491,13 @@ body.light-theme .input-search {
       state.currentDate = new Date(parts[0], parts[1] - 1, parts[2]);
       updateDateLabel();
       renderCalendar();
+      // Hack to close native date picker on Safari/Mac
+      const picker = document.getElementById('calendar-datepicker');
+      if (picker) {
+        picker.blur();
+        picker.style.display = 'none';
+        setTimeout(() => picker.style.display = '', 50);
+      }
     }
     function onCarFilterChanged(value) {
       state.selectedCar = value;
@@ -3256,6 +3263,16 @@ window.updateAnalyticsUI = function() {
     }
     
     renderAnalytics();
+    
+    // Hack to close native date picker on Safari/Mac
+    ['analytics-start', 'analytics-end'].forEach(id => {
+        const p = document.getElementById(id);
+        if (p && document.activeElement === p) {
+            p.blur();
+            p.style.display = 'none';
+            setTimeout(() => p.style.display = '', 50);
+        }
+    });
 };
 
 function renderAnalytics() {
