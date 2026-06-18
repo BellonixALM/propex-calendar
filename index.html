@@ -2898,37 +2898,41 @@ function renderClients() {
         <h3 id="filters-modal-title">Фільтри</h3>
         <button class="close-btn-red" onclick="closeModal('advanced-filters-modal')">×</button>
       </div>
-      <div class="modal-body" style="padding: 20px;">
-        <div style="margin-bottom: 15px;">
-          <label style="font-weight: bold; margin-bottom: 5px; display: block;">Автомобіль:</label>
-          <div style="display: flex; flex-direction: column; gap: 5px;">
-            <label><input type="checkbox" class="filter-car-cb" value="1"> Hyundai</label>
-            <label><input type="checkbox" class="filter-car-cb" value="2"> MAN</label>
-            <label><input type="checkbox" class="filter-car-cb" value="3"> Volkswagen Crafter</label>
-            <label><input type="checkbox" class="filter-car-cb" value="4"> Renault Dokker</label>
-            <label><input type="checkbox" class="filter-car-cb" value="Не призначено"> Не призначено</label>
+      <div class="modal-body" style="padding: 15px 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div>
+            <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin-bottom: 8px; display: block;">Автомобіль</label>
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
+              <label><input type="checkbox" class="filter-car-cb" value="1"> Hyundai</label>
+              <label><input type="checkbox" class="filter-car-cb" value="2"> MAN</label>
+              <label><input type="checkbox" class="filter-car-cb" value="3"> VW Crafter</label>
+              <label><input type="checkbox" class="filter-car-cb" value="4"> Renault Dokker</label>
+              <label><input type="checkbox" class="filter-car-cb" value="Не призначено"> Не призначено</label>
+            </div>
           </div>
-        </div>
-        <div style="margin-bottom: 15px;">
-          <label style="font-weight: bold; margin-bottom: 5px; display: block;">Статус доставки:</label>
-          <div style="display: flex; flex-direction: column; gap: 5px;">
-            <label><input type="checkbox" class="filter-status-cb" value="Заплановано"> Заплановані</label>
-            <label><input type="checkbox" class="filter-status-cb" value="В процесі"> В процесі (в дорозі)</label>
-            <label><input type="checkbox" class="filter-status-cb" value="Виконано"> Виконані (Відвантажені)</label>
-            <label><input type="checkbox" class="filter-status-cb" value="Скасовано"> Анульовані (Скасовані)</label>
-            <label><input type="checkbox" class="filter-status-cb" value="Проблема"> Проблема / Аварія на дорозі</label>
-          </div>
-        </div>
-        <div style="margin-bottom: 15px;">
-          <label style="font-weight: bold; margin-bottom: 5px; display: block;">Статус оплати:</label>
-          <div style="display: flex; flex-direction: column; gap: 5px;">
-            <label><input type="checkbox" class="filter-payment-cb" value="Оплачено"> Оплачено</label>
-            <label><input type="checkbox" class="filter-payment-cb" value="Оплачено частково"> Оплачено частково</label>
-            <label><input type="checkbox" class="filter-payment-cb" value="Не оплачено"> Не оплачено</label>
+          <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div>
+              <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin-bottom: 8px; display: block;">Статус доставки</label>
+              <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
+                <label><input type="checkbox" class="filter-status-cb" value="Заплановано"> Заплановані</label>
+                <label><input type="checkbox" class="filter-status-cb" value="В процесі"> В дорозі</label>
+                <label><input type="checkbox" class="filter-status-cb" value="Виконано"> Відвантажені</label>
+                <label><input type="checkbox" class="filter-status-cb" value="Скасовано"> Скасовані</label>
+                <label><input type="checkbox" class="filter-status-cb" value="Проблема"> Проблема</label>
+              </div>
+            </div>
+            <div>
+              <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin-bottom: 8px; display: block;">Статус оплати</label>
+              <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
+                <label><input type="checkbox" class="filter-payment-cb" value="Оплачено"> Оплачено</label>
+                <label><input type="checkbox" class="filter-payment-cb" value="Оплачено частково"> Частково</label>
+                <label><input type="checkbox" class="filter-payment-cb" value="Не оплачено"> Не оплачено</label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="modal-footer" style="padding: 15px 20px; text-align: right; border-top: 1px solid var(--border-light);">
+      <div class="modal-footer" style="padding: 12px 20px; text-align: right; border-top: 1px solid var(--border-light);">
         <button class="btn btn-secondary" onclick="clearAdvancedFilters()" style="margin-right: 10px;">Скинути</button>
         <button class="btn" onclick="applyAdvancedFilters()">Застосувати</button>
       </div>
