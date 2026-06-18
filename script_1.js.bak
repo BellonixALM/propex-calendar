@@ -1,0 +1,415 @@
+
+    function safeCreateIcons() {
+      try {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      } catch (e) {
+        console.error("Lucide failed to initialize:", e);
+      }
+    }
+    function initApp() {
+      console.log("Initializing Propex Calendar App...");
+      safeCreateIcons();
+      checkSession();
+      updateDateLabel();
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initApp();
+    } else {
+      window.addEventListener('DOMContentLoaded', initApp);
+    }
+let statusChartInstance = null;
+let comparativeChartInstance = null;
+
+window.switchMainTab = function(tabId) {
+    // Hide all
+    document.getElementById('tracking-view').classList.remove('active');
+    document.getElementById('dashboard-view').classList.remove('active');
+    document.getElementById('analytics-view').classList.remove('active');
+    
+    // Deactivate nav
+    document.getElementById('nav-tracking').classList.remove('active');
+    document.getElementById('nav-dashboard').classList.remove('active');
+    document.getElementById('nav-analytics').classList.remove('active');
+    
+    // Show active
+    document.getElementById(tabId + '-view').classList.add('active');
+    document.getElementById('nav-' + tabId).classList.add('active');
+    
+    if (tabId === 'dashboard') {
+        renderDashboard();
+    } else if (tabId === 'analytics') {
+        renderAnalytics();
+    }
+};
+
+// Helpers for data
+function filterDeliveriesByDateRange(deliveries, startStr, endStr) {
+    const start = new Date(startStr + 'T00:00:00');
+    const end = new Date(endStr + 'T23:59:59');
+    return deliveries.filter(d => {
+        if (!d['Дата']) return false;
+        // Format of date might be DD.MM.YYYY or YYYY-MM-DD
+        let dStr = d['Дата'];
+        let parts = dStr.split('.');
+        if (parts.length === 3) dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        const date = new Date(dStr + 'T12:00:00');
+        return date >= start && date <= end;
+    });
+}
+
+function getRanges(periodStr) {
+    const now = new Date();
+    let currStart, currEnd, prevStart, prevEnd;
+    
+    if (periodStr === 'week') {
+        // Current week (Monday to Sunday)
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
+        currStart = new Date(now.setDate(diff));
+        currEnd = new Date(currStart);
+        currEnd.setDate(currEnd.getDate() + 6);
+        
+        prevStart = new Date(currStart);
+        prevStart.setDate(prevStart.getDate() - 7);
+        prevEnd = new Date(currEnd);
+        prevEnd.setDate(prevEnd.getDate() - 7);
+        
+    } else if (periodStr === 'month') {
+        currStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        currEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        currEnd.setDate(currEnd.getDate() - 1); // fix last day of month bug
+        
+        prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        prevEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else {
+        // Custom dates
+        const s = document.getElementById('analytics-start').value;
+        const e = document.getElementById('analytics-end').value;
+        currStart = new Date(s);
+        currEnd = new Date(e);
+        
+        // Prev period of same length
+        const msDiff = currEnd - currStart;
+        prevEnd = new Date(currStart);
+        prevEnd.setDate(prevEnd.getDate() - 1);
+        prevStart = new Date(prevEnd.getTime() - msDiff);
+    }
+    
+    return {
+        curr: { start: currStart.toISOString().split('T')[0], end: currEnd.toISOString().split('T')[0] },
+        prev: { start: prevStart.toISOString().split('T')[0], end: prevEnd.toISOString().split('T')[0] }
+    };
+}
+
+function renderDashboard() {
+    if (!state || !state.deliveries) return;
+    
+    const ranges = getRanges('month');
+    const currDels = filterDeliveriesByDateRange(state.deliveries, ranges.curr.start, ranges.curr.end);
+    const prevDels = filterDeliveriesByDateRange(state.deliveries, ranges.prev.start, ranges.prev.end);
+    
+    // Totals
+    const totalCurr = currDels.length;
+    const totalPrev = prevDels.length;
+    
+    const deliveredCurr = currDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
+    const deliveredPrev = prevDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
+    
+    const issuesCurr = currDels.filter(d => d['Статус_оплати'] === 'Анульовано' || d['Статус_оплати'] === 'Відмова').length;
+    const issuesPrev = prevDels.filter(d => d['Статус_оплати'] === 'Анульовано' || d['Статус_оплати'] === 'Відмова').length;
+    
+    document.getElementById('dash-total').innerText = totalCurr;
+    document.getElementById('dash-delivered').innerText = deliveredCurr;
+    document.getElementById('dash-issues').innerText = issuesCurr;
+    
+    setTrend('dash-total-trend', totalCurr, totalPrev);
+    setTrend('dash-delivered-trend', deliveredCurr, deliveredPrev);
+    setTrend('dash-issues-trend', issuesCurr, issuesPrev);
+    
+    // Top Drivers (by month)
+    renderTopList('dash-top-drivers', currDels, 'ID_Авто', 'Авто ', ' поїздок');
+    
+    // Top Managers (by month)
+    renderTopList('dash-top-managers', currDels, 'ID_Менеджера', '', ' замовлень');
+    
+    // Recent Activities
+    const sorted = [...state.deliveries].sort((a,b) => {
+        return -1; // Assuming array order represents creation/update time roughly
+    }).slice(0, 5);
+    
+    const recentHtml = sorted.map(d => `
+        <div class="dash-recent-item">
+            <div>
+                <div class="recent-id">№${d['Номер_замовлення'] || d['ID']}</div>
+                <div class="recent-manager">${d['ID_Менеджера'] || 'Невідомий'} -> Авто ${d['ID_Авто'] || '?'}</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="color:#fff; font-size:13px; font-weight:600; padding:4px 8px; border-radius:4px; background: rgba(255,255,255,0.1);">${d['Статус_оплати'] || 'В процесі'}</div>
+                <div class="recent-time" style="margin-top:4px;">${d['Дата']} ${d['Час'] || ''}</div>
+            </div>
+        </div>
+    `).join('');
+    document.getElementById('dash-recent-activity').innerHTML = recentHtml || '<div style="color:#6b7280; padding:10px;">Немає активності</div>';
+    
+    // Chart
+    renderStatusChart(currDels);
+}
+
+function renderStatusChart(dels) {
+    const statuses = {};
+    dels.forEach(d => {
+        const s = d['Статус_оплати'] || 'Не визначено';
+        statuses[s] = (statuses[s] || 0) + 1;
+    });
+    
+    const labels = Object.keys(statuses);
+    const data = Object.values(statuses);
+    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'];
+    
+    if (statusChartInstance) {
+        statusChartInstance.destroy();
+    }
+    
+    const canvas = document.getElementById('statusChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    statusChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 0,
+                cutout: '75%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+    
+    // Custom Legend
+    const legendHtml = labels.map((l, i) => `
+        <div style="display:flex; align-items:center; gap:4px;">
+            <div style="width:10px; height:10px; border-radius:50%; background:${colors[i]}"></div>
+            <span>${l} (${data[i]})</span>
+        </div>
+    `).join('');
+    document.getElementById('status-chart-legend').innerHTML = legendHtml;
+}
+
+function setTrend(elementId, curr, prev) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    if (prev === 0) {
+        if (curr === 0) el.innerHTML = `<span style="color:#6b7280">Без змін</span>`;
+        else el.innerHTML = `<span class="trend-up">+100% &uarr;</span> з минулого періоду`;
+        return;
+    }
+    
+    const pct = Math.round(((curr - prev) / prev) * 100);
+    if (pct > 0) {
+        el.innerHTML = `<span class="trend-up">+${pct}% &uarr;</span> з минулого періоду`;
+    } else if (pct < 0) {
+        el.innerHTML = `<span class="trend-down">${pct}% &darr;</span> з минулого періоду`;
+    } else {
+        el.innerHTML = `<span style="color:#6b7280">Без змін</span>`;
+    }
+}
+
+function renderTopList(elementId, dels, groupByField, prefix, suffix) {
+    const counts = {};
+    dels.forEach(d => {
+        const key = d[groupByField] || 'Невідомий';
+        counts[key] = (counts[key] || 0) + 1;
+    });
+    
+    const sorted = Object.keys(counts).map(k => ({ name: k, count: counts[k] })).sort((a,b) => b.count - a.count).slice(0, 5);
+    
+    if (sorted.length === 0) {
+        document.getElementById(elementId).innerHTML = `<div style="color:#6b7280; padding: 10px;">Немає даних за цей період</div>`;
+        return;
+    }
+    
+    const html = sorted.map(u => `
+        <div class="top-item">
+            <div class="top-user">
+                <div class="top-avatar">${u.name.substring(0,2).toUpperCase()}</div>
+                <div class="top-name">${prefix}${u.name}</div>
+            </div>
+            <div class="top-score">${u.count}${suffix}</div>
+        </div>
+    `).join('');
+    document.getElementById(elementId).innerHTML = html;
+}
+
+window.updateAnalyticsUI = function() {
+    const period = document.getElementById('analytics-period').value;
+    const customDiv = document.getElementById('analytics-custom-dates');
+    if (period === 'custom') {
+        customDiv.style.display = 'flex';
+        if (!document.getElementById('analytics-start').value) return; 
+        if (!document.getElementById('analytics-end').value) return;
+    } else {
+        customDiv.style.display = 'none';
+    }
+    
+    renderAnalytics();
+};
+
+function renderAnalytics() {
+    if (!state || !state.deliveries) return;
+    
+    const period = document.getElementById('analytics-period').value;
+    
+    if (period === 'custom' && (!document.getElementById('analytics-start').value || !document.getElementById('analytics-end').value)) {
+        return; 
+    }
+    
+    const ranges = getRanges(period);
+    const currDels = filterDeliveriesByDateRange(state.deliveries, ranges.curr.start, ranges.curr.end);
+    const prevDels = filterDeliveriesByDateRange(state.deliveries, ranges.prev.start, ranges.prev.end);
+    
+    // Top Car (Mock mileage)
+    const carCounts = {};
+    currDels.forEach(d => {
+        const key = d['ID_Авто'] || 'Невідомий';
+        carCounts[key] = (carCounts[key] || 0) + 1;
+    });
+    const sortedCars = Object.keys(carCounts).map(k => ({ name: k, count: carCounts[k] })).sort((a,b) => b.count - a.count);
+    if (sortedCars.length > 0) {
+        document.getElementById('analytics-top-car-name').innerText = 'Авто ' + sortedCars[0].name;
+        const mockKm = sortedCars[0].count * 15;
+        document.getElementById('analytics-top-car-km').innerText = `${mockKm} км / ${sortedCars[0].count} доставок`;
+    } else {
+        document.getElementById('analytics-top-car-name').innerText = '-';
+        document.getElementById('analytics-top-car-km').innerText = '0 км / 0 доставок';
+    }
+    
+    // Top Manager
+    const mgrCounts = {};
+    currDels.forEach(d => {
+        const key = d['ID_Менеджера'] || 'Невідомий';
+        mgrCounts[key] = (mgrCounts[key] || 0) + 1;
+    });
+    const sortedMgrs = Object.keys(mgrCounts).map(k => ({ name: k, count: mgrCounts[k] })).sort((a,b) => b.count - a.count);
+    if (sortedMgrs.length > 0) {
+        document.getElementById('analytics-top-manager-name').innerText = sortedMgrs[0].name;
+        document.getElementById('analytics-top-manager-count').innerText = `${sortedMgrs[0].count} доставок`;
+    } else {
+        document.getElementById('analytics-top-manager-name').innerText = '-';
+        document.getElementById('analytics-top-manager-count').innerText = '0 доставок';
+    }
+    
+    // Success Rate
+    const deliveredCurr = currDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
+    const deliveredPrev = prevDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
+    const currRate = currDels.length ? Math.round((deliveredCurr / currDels.length) * 100) : 0;
+    const prevRate = prevDels.length ? Math.round((deliveredPrev / prevDels.length) * 100) : 0;
+    
+    document.getElementById('analytics-success-rate').innerText = currRate + '%';
+    
+    const diff = currRate - prevRate;
+    const tr = document.getElementById('analytics-success-trend');
+    if (diff > 0) tr.innerHTML = `<span class="trend-up">+${diff}% &uarr;</span> з минулого періоду`;
+    else if (diff < 0) tr.innerHTML = `<span class="trend-down">${diff}% &darr;</span> з минулого періоду`;
+    else tr.innerHTML = `<span style="color:#6b7280">Без змін</span>`;
+    
+    // Comparative Chart (Daily grouped)
+    renderComparativeChart(currDels, prevDels, ranges.curr.start, ranges.curr.end, ranges.prev.start, ranges.prev.end);
+}
+
+function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe) {
+    const currDates = [];
+    let cur = new Date(cs);
+    const end = new Date(ce);
+    
+    // Limit to 31 days max to prevent memory crashes on huge ranges
+    let safety = 0;
+    while (cur <= end && safety < 31) {
+        currDates.push(cur.toISOString().split('T')[0]);
+        cur.setDate(cur.getDate() + 1);
+        safety++;
+    }
+    
+    const currCounts = currDates.map(d => {
+        return currDels.filter(del => {
+            let dStr = del['Дата'];
+            if (!dStr) return false;
+            let parts = dStr.split('.');
+            if (parts.length === 3) dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            return dStr === d;
+        }).length;
+    });
+    
+    const prevCounts = currDates.map((d, index) => {
+        const targetDate = new Date(ps);
+        targetDate.setDate(targetDate.getDate() + index);
+        const targetDateStr = targetDate.toISOString().split('T')[0];
+        
+        return prevDels.filter(del => {
+            let dStr = del['Дата'];
+            if (!dStr) return false;
+            let parts = dStr.split('.');
+            if (parts.length === 3) dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            return dStr === targetDateStr;
+        }).length;
+    });
+    
+    const labels = currDates.map(d => {
+        const parts = d.split('-');
+        return `${parts[2]}.${parts[1]}`;
+    });
+    
+    if (comparativeChartInstance) {
+        comparativeChartInstance.destroy();
+    }
+    
+    const canvas = document.getElementById('comparativeChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    comparativeChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Поточний період',
+                    data: currCounts,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Минулий період',
+                    data: prevCounts,
+                    borderColor: '#6b7280',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af', stepSize: 1 } },
+                x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+            },
+            plugins: {
+                legend: { labels: { color: '#fff' } }
+            }
+        }
+    });
+}
+

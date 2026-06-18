@@ -1,0 +1,17 @@
+const fs = require('fs');
+let content = fs.readFileSync('index.html', 'utf8');
+
+const debugCode = `
+        const debugDiv = document.createElement('div');
+        debugDiv.style.padding = '10px';
+        debugDiv.style.background = '#facc15';
+        debugDiv.style.color = '#000';
+        debugDiv.style.marginBottom = '20px';
+        debugDiv.style.borderRadius = '8px';
+        debugDiv.innerHTML = "<b>DEBUG:</b> Клієнтів завантажено: " + clients.length + ". Query: '" + query + "'";
+        container.appendChild(debugDiv);
+`;
+
+content = content.replace("container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';", "container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';\n" + debugCode);
+
+fs.writeFileSync('index.html', content);

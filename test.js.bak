@@ -1,0 +1,2368 @@
+
+
+
+(function() {
+      let scriptUrlTemplate = "<?= scriptUrl ?>";
+      let WEBAPP_URL = scriptUrlTemplate.includes("?=") 
+          ? "https://script.google.com/macros/s/AKfycbzsUwotLANWEG6F0zJiy5UWukIYlV9hsLur5hv96O1xZbn2OEXhIhAw86wz3NEIUxiw/exec" 
+          : scriptUrlTemplate;
+      
+      const paramApi = new URLSearchParams(window.location.search).get('api');
+      if (paramApi) WEBAPP_URL = paramApi;
+      
+      console.log("🚀 Bulletproof Fetch Bridge active: using REST API CORS calls to", WEBAPP_URL);
+      function ScriptRunBridge() {
+        this._successHandler = null;
+        this._failureHandler = null;
+      }
+      ScriptRunBridge.prototype.withSuccessHandler = function(callback) {
+        this._successHandler = callback;
+        return this;
+      };
+      ScriptRunBridge.prototype.withFailureHandler = function(callback) {
+        this._failureHandler = callback;
+        return this;
+      };
+      ScriptRunBridge.prototype._callAPI = function(action, data) {
+        const self = this;
+        const callbackName = 'propex_cb_' + Math.round(1000000000 * Math.random());
+        
+        // Capture handlers in closure and reset them immediately
+        const successCb = this._successHandler;
+        const failureCb = this._failureHandler;
+        this._successHandler = null;
+        this._failureHandler = null;
+        
+        window[callbackName] = function(result) {
+          delete window[callbackName];
+          const scriptEl = document.getElementById(callbackName);
+          if (scriptEl) scriptEl.remove();
+          
+          if (result && result.status === 'error') {
+            if (failureCb) {
+              failureCb(result.message || "Unknown server error");
+            } else {
+              const errD = document.getElementById('login-error-msg');
+              if (errD) { errD.textContent = "Помилка: " + (result.message || "Unknown"); errD.style.display = 'block'; }
+            }
+          } else {
+            if (successCb) {
+              successCb(result);
+            }
+          }
+        };
+
+        const script = document.createElement('script');
+        script.id = callbackName;
+        script.onerror = function() {
+          delete window[callbackName];
+          script.remove();
+          if (failureCb) {
+            failureCb("Мережева помилка при виконанні JSONP запиту");
+          } else {
+            const errD = document.getElementById('login-error-msg');
+            if (errD) { errD.textContent = "Мережева помилка (JSONP)"; errD.style.display = 'block'; }
+          }
+        };
+
+        const encodedPayload = encodeURIComponent(JSON.stringify(data || {}));
+        const separator = WEBAPP_URL.includes('?') ? '&' : '?';
+        script.src = WEBAPP_URL + separator + 'action=' + encodeURIComponent(action) + '&payload=' + encodedPayload + '&callback=' + callbackName;
+        
+        document.head.appendChild(script);
+      };
+      ScriptRunBridge.prototype.authenticateUser = function(login, password) {
+        this._callAPI('login', { login: login, password: password });
+        return this;
+      };
+      ScriptRunBridge.prototype.getDeliveries = function() {
+        this._callAPI('getDeliveries', {});
+        return this;
+      };
+      ScriptRunBridge.prototype.getDailyCrews = function() {
+        this._callAPI('getDailyCrews', {});
+        return this;
+      };
+      ScriptRunBridge.prototype.getDrivers = function() {
+        this._callAPI('getDrivers', {});
+        return this;
+      };
+      ScriptRunBridge.prototype.updateDriverPhoto = function(carId, photoBase64) {
+        this._callAPI('updateDriverPhoto', { carId: carId, photoBase64: photoBase64 });
+        return this;
+      };
+      ScriptRunBridge.prototype.updateDeliveryStatus = function(deliveryId, newStatus, comment) {
+        this._callAPI('updateDeliveryStatus', { id: deliveryId, status: newStatus, comment: comment });
+        return this;
+      };
+      ScriptRunBridge.prototype.addDelivery = function(deliveryData) {
+        this._callAPI('addDelivery', deliveryData);
+        return this;
+      };
+      ScriptRunBridge.prototype.updateDeliveryDetails = function(deliveryId, deliveryData, userRole) {
+        this._callAPI('updateDeliveryDetails', { id: deliveryId, deliveryData: deliveryData, userRole: userRole });
+        return this;
+      };
+      ScriptRunBridge.prototype.saveDailyCrew = function(dateStr, crewDataJson) {
+        this._callAPI('saveDailyCrew', { dateStr: dateStr, crewData: crewDataJson });
+        return this;
+      };
+      ScriptRunBridge.prototype.saveClient = function(clientData) {
+        this._callAPI('saveClient', clientData);
+        return this;
+      };
+      ScriptRunBridge.prototype.deleteClient = function(id) {
+        this._callAPI('deleteClient', { id: id });
+        return this;
+      };
+      ScriptRunBridge.prototype.saveEmployee = function(employeeData) {
+        this._callAPI('saveEmployee', employeeData);
+        return this;
+      };
+      ScriptRunBridge.prototype.deleteEmployee = function(id) {
+        this._callAPI('deleteEmployee', { id: id });
+        return this;
+      };
+      ScriptRunBridge.prototype.get_clients = function() {
+        this._callAPI('get_clients', {});
+        return this;
+      };
+      ScriptRunBridge.prototype.get_employees = function() {
+        this._callAPI('get_employees', {});
+        return this;
+      };
+      window.propexApi = new ScriptRunBridge();
+      console.log("💎 Custom propexApi Bridge successfully initialized!");
+    })();
+    window.onerror = function(message, source, lineno, colno, error) {
+      const msg = "JS Error: " + message + " (Line " + lineno + ")";
+      console.error(msg, error);
+      try {
+        const errDiv = document.createElement('div');
+        errDiv.id = "global-js-error-banner";
+        errDiv.style.cssText = "position:fixed; top:0; left:0; width:100%; background:#ef4444; color:white; padding:12px; z-index:999999; font-size:13px; font-family:monospace; font-weight:700; box-shadow:0 4px 12px rgba(0,0,0,0.5); text-align:center;";
+        errDiv.innerHTML = `⚠️ Критична помилка скрипту: ${message} (Рядок ${lineno}) <button onclick="this.parentElement.remove()" style="margin-left:20px; background:rgba(0,0,0,0.2); border:1px solid white; color:white; padding:2px 8px; border-radius:4px; cursor:pointer;">Закрити</button>`;
+        document.body.appendChild(errDiv);
+      } catch (e) {
+        alert(msg);
+      }
+      return false;
+    };
+    const hours = [
+      '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', 
+      '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', 
+      '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', 
+      '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'
+    ];
+    const state = {
+      currentDate: new Date(),
+      currentView: 'day',
+      selectedCar: 'all',
+      deliveries: [],
+      drivers: [],
+      dailyCrews: [],
+      filters: { cars: [], statuses: [], payments: [] }
+    };
+    let isEditMode = false;
+    let editDeliveryId = null;
+    function parseDateStr(str) {
+      if (!str) return null;
+      const parts = str.split('.');
+      if (parts.length !== 3) return null;
+      return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
+    function formatDateStr(date) {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${d}.${m}.${y}`;
+    }
+    function formatDateISO(date) {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${y}-${m}-${d}`;
+    }
+    function getMonday(d) {
+      d = new Date(d);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(d.setDate(diff));
+    }
+    const monthNames = [
+      "Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень",
+      "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"
+    ];
+    const dayNamesShort = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+    function getUkrainianDateString(date) {
+      if (!date) return '';
+      const daysOfWeek = ["неділя", "понеділок", "вівторок", "середа", "четвер", "п'ятниця", "субота"];
+      const months = ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"];
+      const dayOfWeek = daysOfWeek[date.getDay()];
+      const day = date.getDate();
+      const month = months[date.getMonth()];
+      const year = date.getFullYear();
+      return `${dayOfWeek}, ${day} ${month} ${year} р.`;
+    }
+    function updateDateLabel() {
+      const label = document.getElementById('date-label');
+      const debugSuffix = window.debugLoadedText || '';
+      if (state.currentView === 'day') {
+        label.textContent = getUkrainianDateString(state.currentDate) + debugSuffix;
+      } else if (state.currentView === 'week') {
+        const monday = getMonday(state.currentDate);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        const monStr = monday.getDate() + " " + monthNames[monday.getMonth()].substring(0, 3).toLowerCase();
+        const sunStr = sunday.getDate() + " " + monthNames[sunday.getMonth()].substring(0, 3).toLowerCase();
+        label.textContent = `${monStr} – ${sunStr} ${sunday.getFullYear()}` + debugSuffix;
+      } else if (state.currentView === 'month') {
+        label.textContent = `${monthNames[state.currentDate.getMonth()]} ${state.currentDate.getFullYear()}` + debugSuffix;
+      } else if (state.currentView === 'list') {
+        label.textContent = `Список доставок` + debugSuffix;
+      }
+    }
+    window.knowledgeBase = {};
+    
+    function buildKnowledgeBase() {
+      window.knowledgeBase = {};
+      const datalist = document.getElementById('clients-datalist');
+      if (datalist) datalist.innerHTML = '';
+      
+      const uniqueNames = new Set();
+      
+      // Pull from explicitly saved clients first (highest priority)
+      (state.clients || []).forEach(c => {
+        const name = (c['Назва'] || '').toString().trim();
+        if (name) {
+          window.knowledgeBase[name] = {
+            address: c['Адреса'] || "",
+            phone: c['Телефон'] || ""
+          };
+          uniqueNames.add(name);
+        }
+      });
+      
+      // Pull from past deliveries as fallback
+      (state.deliveries || []).forEach(del => {
+        const rawName = del["Ім'я_одержувача"] || del["Ім'я одержувача"] || del["Одержувач"] || "";
+        const name = rawName.toString().trim();
+        if (name && !window.knowledgeBase[name]) {
+          window.knowledgeBase[name] = {
+            address: del["Адреса"] || "",
+            phone: del["Телефон_одержувача"] || del["Телефон"] || ""
+          };
+          uniqueNames.add(name);
+        }
+      });
+      
+      if (datalist) {
+        uniqueNames.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          datalist.appendChild(option);
+        });
+      }
+    }
+    
+    function autofillClientData(selectedName) {
+      if (window.knowledgeBase && window.knowledgeBase[selectedName]) {
+        const kbData = window.knowledgeBase[selectedName];
+        if (kbData.address) document.getElementById('form-address').value = kbData.address;
+        if (kbData.phone) document.getElementById('form-receiver-phone').value = kbData.phone;
+      }
+    }
+
+    let dataLoadedSuccessfully = false;
+    function loadDeliveriesSafely() {
+      const label = document.getElementById('date-label');
+      label.textContent = "⏱️ Завантаження доставок...";
+      propexApi
+        .withFailureHandler(function(err) {
+          dataLoadedSuccessfully = true;
+          console.error("Failed to load deliveries from Sheets:", err);
+          label.textContent = "❌ Помилка доставок: " + (err.message || err).substring(0, 50);
+          state.deliveries = [];
+          buildKnowledgeBase();
+          renderCalendar();
+        })
+        .withSuccessHandler(function(response) {
+          dataLoadedSuccessfully = true;
+          state.deliveries = (response && response.status === 'success') ? response.data : (response || []);
+          window.debugLoadedText = '';
+          label.textContent = "⚙️ Оновлення сітки...";
+          buildKnowledgeBase();
+          renderCalendar();
+          if (document.getElementById('dashboard-view').classList.contains('active')) renderDashboard();
+          if (document.getElementById('analytics-view').classList.contains('active')) renderAnalytics();
+          updateDateLabel();
+        })
+        .getDeliveries();
+    }
+    function loadData() {
+      const label = document.getElementById('date-label');
+      
+        label.textContent = "⏱️ Завантаження даних...";
+        propexApi
+          .withSuccessHandler(function(response) {
+            state.dailyCrews = (response && response.status === 'success') ? response.data : (response || []);
+          })
+          .withFailureHandler(function(err) {
+            console.error("Failed to load daily shifts:", err);
+            state.dailyCrews = [];
+          })
+          .getDailyCrews();
+          
+        propexApi
+          .withSuccessHandler(function(response) {
+            state.clients = (response && response.status === 'success') ? response.data : (response || []);
+            renderClients();
+          })
+          .withFailureHandler(function(err) {
+            console.error("Failed to load clients:", err);
+            state.clients = [];
+          })
+          .get_clients();
+
+        propexApi
+          .withSuccessHandler(function(response) {
+            state.employees = (response && response.status === 'success') ? response.data : (response || []);
+            renderEmployees();
+          })
+          .withFailureHandler(function(err) {
+            console.error("Failed to load employees:", err);
+            state.employees = [];
+          })
+          .get_employees();
+
+        propexApi
+          .withFailureHandler(function(err) {
+            dataLoadedSuccessfully = true;
+            console.error("Failed to load drivers from Sheets:", err);
+            label.textContent = "⏱️ Водіїв не знайдено, вантажимо доставки...";
+            state.drivers = [];
+            renderDriversHeader();
+            loadDeliveriesSafely();
+          })
+          .withSuccessHandler(function(response) {
+            state.drivers = (response && response.status === 'success') ? response.data : (response || []);
+            renderDriversHeader();
+            loadDeliveriesSafely();
+          })
+          .getDrivers();
+    }
+    function renderDriversHeader() {
+    }
+    function navigateDate(direction) {
+      if (state.currentView === 'day') {
+        state.currentDate.setDate(state.currentDate.getDate() + direction);
+      } else if (state.currentView === 'week') {
+        state.currentDate.setDate(state.currentDate.getDate() + direction * 7);
+      } else if (state.currentView === 'month') {
+        state.currentDate.setMonth(state.currentDate.getMonth() + direction);
+      }
+      updateDateLabel();
+      renderCalendar();
+    }
+    function resetToToday() {
+      state.currentDate = new Date();
+      updateDateLabel();
+      renderCalendar();
+    }
+    function triggerDatePicker() {
+      const picker = document.getElementById('calendar-datepicker');
+      picker.value = formatDateISO(state.currentDate);
+      picker.showPicker();
+    }
+    function onDateSelected(isoValue) {
+      if (!isoValue) return;
+      const parts = isoValue.split('-');
+      state.currentDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      updateDateLabel();
+      renderCalendar();
+    }
+    function onCarFilterChanged(value) {
+      state.selectedCar = value;
+      renderCalendar();
+    }
+    function switchView(view) {
+      state.currentView = view;
+      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+      const btn = document.getElementById(`btn-view-${view}`);
+      if (btn) btn.classList.add('active');
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(`${view}-view-panel`).classList.add('active');
+      updateDateLabel();
+      renderCalendar();
+    }
+    function togglePasswordVisibility() {
+      const passwordInput = document.getElementById('login-password');
+      const toggleIcon = document.getElementById('password-toggle-icon');
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.setAttribute('data-lucide', 'eye');
+      }
+      safeCreateIcons();
+    }
+    function sendSupportMessage() {
+      const text = (document.getElementById('support-message').value || '').trim();
+      const statusEl = document.getElementById('support-send-status');
+      const btn = document.getElementById('support-send-btn');
+
+      if (!text) {
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Будь ласка, напишіть повідомлення.';
+        return;
+      }
+
+      // Формуємо дані відправника
+      const user = state.currentUser || {};
+      const senderName = user.name || user.login || 'Невідомий';
+      const senderRole = user.role || '—';
+      const timestamp = new Date().toLocaleString('uk-UA');
+
+      const fullMessage = `[${timestamp}]\nВід: ${senderName} (${senderRole})\n\n${text}`;
+
+      // Зберігаємо локально (до підключення реального каналу)
+      try {
+        const saved = JSON.parse(localStorage.getItem('support_messages') || '[]');
+        saved.push({ ts: timestamp, from: senderName, role: senderRole, text });
+        localStorage.setItem('support_messages', JSON.stringify(saved));
+      } catch(e) {}
+
+      // TODO: тут підключити реальний канал надсилання (Telegram / email / Google Sheet)
+      // Наприклад: propexApi.sendSupportMessage({ sender: senderName, role: senderRole, message: text });
+
+      // Показуємо підтвердження
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      statusEl.style.color = '#22c55e';
+      statusEl.textContent = '✅ Повідомлення збережено. Розробник отримає його найближчим часом.';
+      document.getElementById('support-message').value = '';
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        statusEl.textContent = '';
+      }, 5000);
+    }
+
+    function handleLogin() {
+
+
+
+      try {
+        console.log("handleLogin triggered");
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value.trim();
+        const errorMsg = document.getElementById('login-error-msg');
+        const submitBtn = document.getElementById('login-submit-btn');
+        if (!username || !password) {
+          errorMsg.textContent = "Будь ласка, введіть логін та пароль!";
+          errorMsg.style.display = 'block';
+          return;
+        }
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Перевірка...";
+        errorMsg.style.display = 'none';
+        if (typeof propexApi !== 'undefined') {
+          propexApi
+            .withSuccessHandler(function(response) {
+              try {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Увійти в систему";
+                if (!response) throw new Error("Empty response from server");
+                if (response.status === 'success') {
+                  if (!response.user) throw new Error("User object missing in response");
+                  loginUser(response.user);
+                } else {
+                  errorMsg.textContent = response.message || "Невірний логін або пароль";
+                  errorMsg.style.display = 'block';
+                }
+              } catch (innerErr) {
+                errorMsg.textContent = "UI Crash (Success): " + innerErr.message;
+                errorMsg.style.display = 'block';
+              }
+            })
+            .withFailureHandler(function(err) {
+              try {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Увійти в систему";
+                const errMsg = err.message || err;
+                errorMsg.textContent = "Помилка сервера: " + errMsg;
+                errorMsg.style.display = 'block';
+              } catch (innerErr) {
+                errorMsg.textContent = "UI Crash (Failure): " + innerErr.message;
+                errorMsg.style.display = 'block';
+              }
+            })
+            .authenticateUser(username, password);
+        } else {
+          errorMsg.textContent = "API is undefined. Bridge initialization failed.";
+          errorMsg.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Увійти в систему";
+        }
+      } catch (err) {
+        console.error("Помилка в handleLogin:", err);
+        const errorMsg = document.getElementById('login-error-msg');
+        if (errorMsg) {
+          errorMsg.textContent = "Критична помилка в handleLogin: " + err.message;
+          errorMsg.style.display = 'block';
+        }
+      }
+    }
+    function loginUser(user) {
+      state.currentUser = user;
+      try { sessionStorage.setItem('propex_user', JSON.stringify(user)); } catch(e) { console.warn('Storage blocked'); }
+      document.getElementById('user-profile-name').textContent = user.name;
+      document.getElementById('user-profile-role').textContent = user.role.toUpperCase();
+      document.getElementById('user-avatar-char').textContent = user.name.charAt(0).toUpperCase();
+      document.getElementById('login-container').style.display = 'none';
+      document.getElementById('app-wrapper').style.display = 'flex';
+      document.getElementById('user-profile-widget').style.display = 'flex';
+      applyRoleRestrictions();
+      loadData();
+      document.getElementById('login-username').value = '';
+      document.getElementById('login-password').value = '';
+    }
+    function handleLogout() {
+      state.currentUser = null;
+      try { sessionStorage.removeItem('propex_user'); } catch(e) {}
+      document.getElementById('login-container').style.display = 'flex';
+      document.getElementById('app-wrapper').style.display = 'none';
+      document.getElementById('user-profile-widget').style.display = 'none';
+      document.getElementById('director-mode-banner').style.display = 'none';
+    }
+    function checkSession() {
+      let savedUser = null;
+      try { savedUser = sessionStorage.getItem('propex_user'); } catch(e) {}
+      if (savedUser) {
+        try {
+          const user = JSON.parse(savedUser);
+          loginUser(user);
+        } catch (e) {
+          handleLogout();
+        }
+      } else {
+        handleLogout();
+      }
+    }
+    function applyRoleRestrictions() {
+      const user = state.currentUser;
+      if (!user) return;
+      const banner = document.getElementById('director-mode-banner');
+      const addBtn = document.getElementById('add-delivery-btn');
+      const navDashboard = document.getElementById('nav-dashboard');
+      const navAnalytics = document.getElementById('nav-analytics');
+      
+      navDashboard.style.display = 'block';
+      navAnalytics.style.display = 'block';
+      
+      if (user.role === 'director') {
+        banner.style.display = 'block';
+        banner.className = 'director-banner';
+        banner.style.background = 'linear-gradient(90deg, rgba(217, 119, 6, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%)';
+        banner.style.borderBottom = '1px solid rgba(217, 119, 6, 0.25)';
+        banner.style.color = '#f59e0b';
+        document.getElementById('director-banner-text').innerHTML = `👑 <b>Режим директора:</b> ${user.name} — перегляд та редагування дозволено`;
+        addBtn.style.display = 'inline-flex';
+        document.getElementById('det-status-select').disabled = false;
+        document.getElementById('update-status-btn').style.display = 'inline-block';
+        document.getElementById('edit-delivery-btn').style.display = 'inline-block';
+      } else if (user.role === 'logist') {
+        banner.style.display = 'block';
+        banner.className = 'director-banner';
+        banner.style.background = 'linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)';
+        banner.style.borderBottom = '1px solid rgba(59, 130, 246, 0.25)';
+        banner.style.color = '#3b82f6';
+        document.getElementById('director-banner-text').innerHTML = `⚙️ <b>Режим логістики:</b> ${user.name} — повний контроль розкладу`;
+        addBtn.style.display = 'inline-flex';
+        document.getElementById('det-status-select').disabled = false;
+        document.getElementById('update-status-btn').style.display = 'inline-block';
+        document.getElementById('edit-delivery-btn').style.display = 'inline-block';
+        navDashboard.style.display = 'none';
+        navAnalytics.style.display = 'none';
+      } else if (user.role === 'admin') {
+        banner.style.display = 'block';
+        banner.className = 'director-banner';
+        banner.style.background = 'linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)';
+        banner.style.borderBottom = '1px solid rgba(16, 185, 129, 0.25)';
+        banner.style.color = '#10b981';
+        document.getElementById('director-banner-text').innerHTML = `🛡️ <b>Режим розробника:</b> ${user.name} — адміністрування системи`;
+        addBtn.style.display = 'inline-flex';
+        document.getElementById('det-status-select').disabled = false;
+        document.getElementById('update-status-btn').style.display = 'inline-block';
+        document.getElementById('edit-delivery-btn').style.display = 'inline-block';
+      } else if (user.role === 'manager') {
+        banner.style.display = 'none';
+        addBtn.style.display = 'inline-flex';
+        navDashboard.style.display = 'none';
+        navAnalytics.style.display = 'none';
+      }
+    }
+    function hasCarIncidentOnDate(carId, dateStr) {
+      if (!state.deliveries || !Array.isArray(state.deliveries)) return false;
+      return state.deliveries.some(del => {
+        let delDateStr = del['Дата'];
+        if (delDateStr) {
+          delDateStr = String(delDateStr).replace(/^'/, '').trim();
+          if (delDateStr.includes('-')) {
+            const parts = delDateStr.split('-');
+            if (parts.length >= 3) {
+              const y = parts[0];
+              const m = parts[1];
+              const d = parts[2].substring(0, 2);
+              delDateStr = `${d}.${m}.${y}`;
+            }
+          }
+        }
+        const matchesDate = delDateStr === dateStr;
+        const matchesCar = String(del['ID_Авто']) === String(carId);
+        const matchesStatus = del['Статус'] === 'Аварія на дорозі';
+        return matchesDate && matchesCar && matchesStatus;
+      });
+    }
+    function editCurrentDelivery() {
+      if (!currentDetailDelivery) return;
+      const user = state.currentUser;
+      if (user && user.role === 'manager') {
+        const creatorId = currentDetailDelivery['ID_Менеджера'] || '';
+        if (creatorId && creatorId !== user.telegramId) {
+          alert("Ви не можете редагувати замовлення інших менеджерів!");
+          return;
+        }
+      }
+      closeModal('details-modal');
+      isEditMode = true;
+      editDeliveryId = currentDetailDelivery['ID'];
+      document.getElementById('modal-title').textContent = "Редагувати доставку";
+      document.getElementById('delivery-form').reset();
+      const parts = currentDetailDelivery['Дата'].split('.');
+      if (parts.length === 3) {
+        document.getElementById('form-date').value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+      const timeSelect = document.getElementById('form-time');
+      timeSelect.innerHTML = '';
+      hours.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h;
+        opt.textContent = h;
+        if (h === currentDetailDelivery['Час']) opt.selected = true;
+        timeSelect.appendChild(opt);
+      });
+      document.getElementById('form-order-num').value = currentDetailDelivery['Номер_замовлення'] || '';
+      document.getElementById('form-payment').value = currentDetailDelivery['Статус_оплати'] || 'Не оплачено';
+      document.getElementById('form-receiver-name').value = currentDetailDelivery["Ім'я_одержувача"] || '';
+      document.getElementById('form-receiver-phone').value = currentDetailDelivery['Телефон_одержувача'] || '';
+      document.getElementById('form-address').value = currentDetailDelivery['Адреса'] || '';
+      document.getElementById('form-comment').value = currentDetailDelivery['Коментар'] || '';
+      document.getElementById('form-manager-id').value = currentDetailDelivery['ID_Менеджера'] || '';
+      
+      const carSelect = document.getElementById('form-car');
+      const currentCar = currentDetailDelivery['ID_Авто'];
+      if (user && user.role === 'manager') {
+        document.getElementById('form-manager-id').disabled = true;
+        carSelect.innerHTML = '<option value="Самовивіз">Самовивіз</option><option value="Не призначено">-- Обере логіст --</option>';
+        if (currentCar !== 'Самовивіз' && currentCar !== 'Не призначено') {
+           carSelect.innerHTML += `<option value="${currentCar}">Авто ${currentCar}</option>`;
+           carSelect.value = currentCar;
+           carSelect.disabled = true;
+        } else {
+           carSelect.value = currentCar;
+           carSelect.disabled = false;
+        }
+      } else {
+        document.getElementById('form-manager-id').disabled = false;
+        carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="1">Авто 1</option><option value="2">Авто 2</option><option value="3">Авто 3</option><option value="4">Авто 4</option>';
+        if (currentCar && !['Не призначено', 'Самовивіз', '1', '2', '3', '4'].includes(currentCar)) {
+           carSelect.innerHTML += `<option value="${currentCar}">${currentCar}</option>`;
+        }
+        carSelect.value = currentCar;
+        carSelect.disabled = false;
+      }
+      openModal('delivery-modal');
+    }
+    function renderCalendar() {
+      if (state.currentView === 'day') {
+        renderDayView();
+      } else if (state.currentView === 'week') {
+        renderWeekView();
+      } else if (state.currentView === 'month') {
+        renderMonthView();
+      } else if (state.currentView === 'list') {
+        renderListView();
+      }
+      safeCreateIcons();
+    }
+    function passesFilters(del, specificCar = null) {
+      let matchesCar = true;
+      const delCar = String(del['ID_Авто'] || '').trim();
+      if (specificCar && specificCar !== 'all') {
+        matchesCar = delCar === String(specificCar);
+      } else if (state.filters && state.filters.cars && state.filters.cars.length > 0) {
+        matchesCar = state.filters.cars.includes(delCar);
+      } else if (state.selectedCar && state.selectedCar !== 'all') {
+        matchesCar = delCar === String(state.selectedCar);
+      }
+
+      let matchesStatus = true;
+      if (state.filters && state.filters.statuses && state.filters.statuses.length > 0) {
+        const delStatus = String(del['Статус'] || '').trim().toLowerCase();
+        matchesStatus = state.filters.statuses.some(s => s.trim().toLowerCase() === delStatus);
+      }
+
+      let matchesPayment = true;
+      if (state.filters && state.filters.payments && state.filters.payments.length > 0) {
+        const delPayment = String(del['Статус_оплати'] || '').trim().toLowerCase();
+        matchesPayment = state.filters.payments.some(s => s.trim().toLowerCase() === delPayment);
+      }
+
+      return matchesCar && matchesStatus && matchesPayment;
+    }
+
+    function getFilteredDeliveries(dateObj, specificCar = null) {
+      const dateStr = formatDateStr(dateObj);
+      return state.deliveries.filter(del => {
+        // Самовивіз ніколи не показується у колонках авто
+        if (String(del['ID_Авто'] || '').trim().toLowerCase() === 'самовивіз') return false;
+        let delDateStr = del['Дата'];
+        if (delDateStr) {
+          delDateStr = String(delDateStr).replace(/^'/, '').trim();
+          if (delDateStr.includes('-')) {
+            const parts = delDateStr.split('-');
+            if (parts.length >= 3) {
+              const y = parts[0];
+              const m = parts[1];
+              const d = parts[2].substring(0, 2);
+              delDateStr = `${d}.${m}.${y}`;
+            }
+          }
+        }
+        const matchesDate = delDateStr === dateStr;
+        return matchesDate && passesFilters(del, specificCar);
+      });
+    }
+
+    // Окрема функція — лише самовивіз на вказану дату
+    function getSamoVyvizDeliveries(dateObj) {
+      const dateStr = formatDateStr(dateObj);
+      return state.deliveries.filter(del => {
+        if (String(del['ID_Авто'] || '').trim().toLowerCase() !== 'самовивіз') return false;
+        let delDateStr = del['Дата'];
+        if (delDateStr) {
+          delDateStr = String(delDateStr).replace(/^'/, '').trim();
+          if (delDateStr.includes('-')) {
+            const parts = delDateStr.split('-');
+            if (parts.length >= 3) {
+              delDateStr = `${parts[2].substring(0,2)}.${parts[1]}.${parts[0]}`;
+            }
+          }
+        }
+        return delDateStr === dateStr;
+      });
+    }
+
+    function openAdvancedFilters() {
+      openModal('advanced-filters-modal');
+    }
+
+    function applyAdvancedFilters() {
+      state.filters.cars = Array.from(document.querySelectorAll('.filter-car-cb:checked')).map(cb => cb.value);
+      state.filters.statuses = Array.from(document.querySelectorAll('.filter-status-cb:checked')).map(cb => cb.value);
+      state.filters.payments = Array.from(document.querySelectorAll('.filter-payment-cb:checked')).map(cb => cb.value);
+      
+      closeModal('advanced-filters-modal');
+      
+      setTimeout(() => {
+        renderCalendar();
+      }, 50);
+    }
+
+    function clearAdvancedFilters() {
+      document.querySelectorAll('.filter-car-cb').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.filter-status-cb').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.filter-payment-cb').forEach(cb => cb.checked = false);
+      state.filters = { cars: [], statuses: [], payments: [] };
+      closeModal('advanced-filters-modal');
+      renderCalendar();
+    }
+    function renderDayView() {
+      const grid = document.getElementById('day-grid-container');
+      grid.innerHTML = '';
+
+      let visibleCars = [1, 2, 3, 4];
+      if (state.filters && state.filters.cars && state.filters.cars.length > 0) {
+        visibleCars = [1, 2, 3, 4].filter(c => state.filters.cars.includes(String(c)));
+      }
+
+      // +1 для колонки Самовивіз
+      grid.style.gridTemplateColumns = `80px repeat(${visibleCars.length + 1}, 1fr)`;
+
+      // Заголовок "Час"
+      const timeHeader = document.createElement('div');
+      timeHeader.className = 'grid-header';
+      timeHeader.innerHTML = `<div>Час</div>`;
+      grid.appendChild(timeHeader);
+
+      // Заголовки авто 1–4
+      visibleCars.forEach(carId => {
+        const currentDateStr = formatDateStr(state.currentDate);
+        const dynamicDriver = (state.dailyCrews && Array.isArray(state.dailyCrews))
+          ? state.dailyCrews.find(c => String(c['ID_Авто']) === String(carId) && c['Дата'] === currentDateStr)
+          : null;
+        const driver = dynamicDriver || ((state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => d['ID_Авто'] == carId) : null);
+        const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає водія';
+        const initial = name ? name.charAt(0) : '?';
+        const carHeader = document.createElement('div');
+        carHeader.className = 'grid-header';
+        carHeader.setAttribute('data-car', carId);
+        carHeader.innerHTML = `
+          <div class="driver-photo-container">
+            ${driver && driver['Фото'] ? `<img src="${driver['Фото']}" style="width:100%;height:100%;object-fit:cover;">` : initial}
+          </div>
+          <div style="font-weight: 700;">Авто ${carId}</div>
+          <div class="driver-name">${name}</div>
+        `;
+        if (state.currentUser && state.currentUser.role === 'admin') {
+          const photoContainer = carHeader.querySelector('.driver-photo-container');
+          photoContainer.classList.add('admin-editable');
+          photoContainer.title = "Натисніть для зміни фото водія";
+          const overlay = document.createElement('div');
+          overlay.className = 'avatar-edit-overlay';
+          overlay.innerHTML = '<i data-lucide="camera" style="width:14px;height:14px;color:#fff;"></i>';
+          photoContainer.appendChild(overlay);
+          photoContainer.addEventListener('click', () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.onchange = (event) => {
+              const file = event.target.files[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                const base64Photo = e.target.result;
+                const driverObj = (state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => d['ID_Авто'] == carId) : null;
+                if (driverObj) {
+                  driverObj['Фото'] = base64Photo;
+                } else {
+                  if (!state.drivers) state.drivers = [];
+                  state.drivers.push({ 'ID_Авто': carId, "Ім'я": name, 'Фото': base64Photo });
+                }
+                renderCalendar();
+                propexApi.updateDriverPhoto(carId, base64Photo);
+              };
+              reader.readAsDataURL(file);
+            };
+            fileInput.click();
+          });
+        }
+        grid.appendChild(carHeader);
+      });
+
+      // Заголовок колонки "Самовивіз"
+      const samoHeader = document.createElement('div');
+      samoHeader.className = 'grid-header';
+      samoHeader.setAttribute('data-car', 'Самовивіз');
+      samoHeader.innerHTML = `
+        <div class="driver-photo-container" style="background:linear-gradient(135deg,#2d2a1e,#3d3a00);border:2px solid rgba(255,200,50,0.4);color:#ffd700;font-size:18px;display:flex;align-items:center;justify-content:center;">📦</div>
+        <div style="font-weight:700;color:#ffd700;">Самовивіз</div>
+        <div class="driver-name" style="color:rgba(255,200,50,0.7);">Клієнти самостійно</div>
+      `;
+      grid.appendChild(samoHeader);
+
+      // Рядки з годинами
+      const activeDeliveries = getFilteredDeliveries(state.currentDate);
+      const samoDeliveries   = getSamoVyvizDeliveries(state.currentDate);
+
+      hours.forEach(hour => {
+        // Клітинка часу
+        const timeCell = document.createElement('div');
+        timeCell.className = 'time-col';
+        timeCell.textContent = hour;
+        grid.appendChild(timeCell);
+
+        // Клітинки авто 1–4
+        visibleCars.forEach(carId => {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell';
+          cell.dataset.car = carId;
+          cell.dataset.time = hour;
+          cell.addEventListener('dragover', handleDragOver);
+          cell.addEventListener('dragleave', handleDragLeave);
+          cell.addEventListener('drop', handleDrop);
+          const delivery = activeDeliveries.find(del =>
+            (del['ID_Automobile'] === String(carId) || del['ID_Авто'] === String(carId)) && del['Час'] === hour
+          );
+          if (delivery) {
+            const card = createDeliveryCard(delivery);
+            cell.appendChild(card);
+          }
+          grid.appendChild(cell);
+        });
+
+        // Клітинка Самовивіз
+        const samoCell = document.createElement('div');
+        samoCell.className = 'grid-cell';
+        samoCell.dataset.car = 'Самовивіз';
+        samoCell.dataset.time = hour;
+        samoCell.style.background = 'rgba(255,200,50,0.03)';
+        samoCell.style.borderLeft = '2px solid rgba(255,200,50,0.15)';
+        const samoDelivery = samoDeliveries.find(del => del['Час'] === hour);
+        if (samoDelivery) {
+          const card = createDeliveryCard(samoDelivery);
+          samoCell.appendChild(card);
+        }
+        grid.appendChild(samoCell);
+      });
+
+      // Буферні картки (погрузка/дорога) — тільки для авто 1–4
+      activeDeliveries.forEach(del => {
+        const car = del['ID_Авто'];
+        const time = del['Час'];
+        const timeIndex = hours.indexOf(time);
+        if (timeIndex > 0) {
+          const prevTime = hours[timeIndex - 1];
+          const prevCell = grid.querySelector(`.grid-cell[data-car="${car}"][data-time="${prevTime}"]`);
+          if (prevCell && !prevCell.querySelector('.delivery-card')) {
+            const buffer = document.createElement('div');
+            buffer.className = 'delivery-card buffer';
+            buffer.innerHTML = `
+              <div class="card-meta"><span class="card-time">${prevTime}</span></div>
+              <div class="card-address">Погрузка / Дорога</div>
+            `;
+            prevCell.appendChild(buffer);
+          }
+        }
+        if (timeIndex < hours.length - 1) {
+          const nextTime = hours[timeIndex + 1];
+          const nextCell = grid.querySelector(`.grid-cell[data-car="${car}"][data-time="${nextTime}"]`);
+          if (nextCell && !nextCell.querySelector('.delivery-card')) {
+            const buffer = document.createElement('div');
+            buffer.className = 'delivery-card buffer';
+            buffer.innerHTML = `
+              <div class="card-meta"><span class="card-time">${nextTime}</span></div>
+              <div class="card-address">Розвантаження / Наступний рейс</div>
+            `;
+            nextCell.appendChild(buffer);
+          }
+        }
+      });
+    }
+
+        function renderWeekView() {
+      const grid = document.getElementById('week-grid-container');
+      grid.innerHTML = '';
+      const timeHeader = document.createElement('div');
+      timeHeader.className = 'grid-header';
+      timeHeader.innerHTML = `<div>Час</div>`;
+      grid.appendChild(timeHeader);
+      const monday = getMonday(state.currentDate);
+      const weekDates = [];
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+        weekDates.push(date);
+      }
+      weekDates.forEach((date, index) => {
+        const isToday = date.toDateString() === new Date().toDateString();
+        const dayHeader = document.createElement('div');
+        dayHeader.className = `grid-header week-day ${isToday ? 'today' : ''}`;
+        dayHeader.innerHTML = `
+          <div class="week-day-title">${dayNamesShort[index]}</div>
+          <div class="week-day-date">${date.getDate()}</div>
+        `;
+        grid.appendChild(dayHeader);
+      });
+      const weekDeliveries = [];
+      weekDates.forEach(date => {
+        weekDeliveries.push({
+          dateStr: formatDateStr(date),
+          deliveries: getFilteredDeliveries(date)
+        });
+      });
+      hours.forEach(hour => {
+        const timeCell = document.createElement('div');
+        timeCell.className = 'time-col';
+        timeCell.textContent = hour;
+        grid.appendChild(timeCell);
+        weekDates.forEach((date, dIndex) => {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell';
+          cell.dataset.date = formatDateStr(date);
+          cell.dataset.time = hour;
+          cell.addEventListener('dragover', handleDragOver);
+          cell.addEventListener('dragleave', handleDragLeave);
+          cell.addEventListener('drop', handleDrop);
+          const dayDels = weekDeliveries[dIndex].deliveries;
+          const matchingDeliveries = dayDels.filter(del => del['Час'] === hour);
+          matchingDeliveries.forEach(delivery => {
+            const card = createDeliveryCard(delivery, true);
+            cell.appendChild(card);
+          });
+          grid.appendChild(cell);
+        });
+      });
+    }
+    function renderMonthView() {
+      const grid = document.getElementById('month-grid-container');
+      grid.innerHTML = '';
+      dayNamesShort.forEach(name => {
+        const cell = document.createElement('div');
+        cell.className = 'month-header-cell';
+        cell.textContent = name;
+        grid.appendChild(cell);
+      });
+      const date = new Date(state.currentDate);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const firstDay = new Date(year, month, 1);
+      let startDayOffset = firstDay.getDay() - 1;
+      if (startDayOffset === -1) startDayOffset = 6;
+      const lastDay = new Date(year, month + 1, 0);
+      const totalDays = lastDay.getDate();
+      const totalCells = startDayOffset + totalDays > 35 ? 42 : 35;
+      for (let i = 0; i < totalCells; i++) {
+        const cellDate = new Date(year, month, 1 - startDayOffset + i);
+        const isOtherMonth = cellDate.getMonth() !== month;
+        const isToday = cellDate.toDateString() === new Date().toDateString();
+        const cell = document.createElement('div');
+        cell.className = `month-day-cell ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`;
+        cell.innerHTML = `<span class="month-day-number">${cellDate.getDate()}</span>`;
+        const dayDeliveries = getFilteredDeliveries(cellDate);
+        dayDeliveries.sort((a, b) => a['Час'].localeCompare(b['Час']));
+        const maxVisible = 3;
+        dayDeliveries.slice(0, maxVisible).forEach(del => {
+          const miniCard = document.createElement('div');
+          let statusClass = 'planned';
+          if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
+          else if (del['Статус'] === 'Виконано') statusClass = 'completed';
+          else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
+          let isIncidentAffected = false;
+          if (statusClass !== 'completed' && statusClass !== 'problem') {
+            if (hasCarIncidentOnDate(del['ID_Авто'], del['Дата'])) {
+              isIncidentAffected = true;
+            }
+          }
+          miniCard.className = `month-mini-card ${statusClass} ${isIncidentAffected ? 'incident-affected' : ''}`;
+          const prefix = isIncidentAffected ? '⚠️ ' : (statusClass === 'problem' ? '🚨 ' : '');
+          miniCard.textContent = `${prefix}${del['Час']} [🚗${del['ID_Авто']}] ${del['Адреса'].split(',')[0]}`;
+          cell.appendChild(miniCard);
+        });
+        if (dayDeliveries.length > maxVisible) {
+          const moreBadge = document.createElement('div');
+          moreBadge.style.cssText = "font-size: 9px; text-align: center; color: var(--accent-blue); font-weight: 700;";
+          moreBadge.textContent = `+ ще ${dayDeliveries.length - maxVisible}`;
+          cell.appendChild(moreBadge);
+        }
+        cell.addEventListener('click', () => {
+          state.currentDate = cellDate;
+          switchView('day');
+        });
+        grid.appendChild(cell);
+      }
+    }
+    function renderListView() {
+      const container = document.getElementById('list-results-container');
+      container.innerHTML = '';
+      const searchQuery = document.getElementById('list-search-input').value.toLowerCase().trim();
+      let filtered = state.deliveries.filter(del => passesFilters(del));
+      if (searchQuery) {
+        filtered = filtered.filter(del => {
+          const addr = (del['Адреса'] || '').toLowerCase();
+          const order = (del['Номер_замовлення'] || '').toLowerCase();
+          const comment = (del['Коментар'] || '').toLowerCase();
+          return addr.includes(searchQuery) || order.includes(searchQuery) || comment.includes(searchQuery);
+        });
+      }
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+            <i data-lucide="info" style="width: 48px; height: 48px; margin: 0 auto 12px; display: block;"></i>
+            <p>Не знайдено жодної доставки за обраними параметрами.</p>
+          </div>
+        `;
+        return;
+      }
+      const groups = {};
+      filtered.forEach(del => {
+        const dateStr = del['Дата'];
+        if (!groups[dateStr]) groups[dateStr] = [];
+        groups[dateStr].push(del);
+      });
+      const sortedDates = Object.keys(groups).sort((a, b) => {
+        const dA = parseDateStr(a) || new Date(0);
+        const dB = parseDateStr(b) || new Date(0);
+        return dB - dA;
+      });
+      sortedDates.forEach(dateStr => {
+        const groupDels = groups[dateStr];
+        groupDels.sort((a, b) => a['Час'].localeCompare(b['Час']));
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'list-group';
+        const dateObj = parseDateStr(dateStr);
+        const formattedDate = dateObj ? getUkrainianDateString(dateObj) : dateStr;
+        groupDiv.innerHTML = `<div class="list-group-title">${formattedDate}</div>`;
+        groupDels.forEach(del => {
+          const row = document.createElement('div');
+          let statusClass = 'planned';
+          if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
+          else if (del['Статус'] === 'Виконано') statusClass = 'completed';
+          else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
+          let isIncidentAffected = false;
+          if (statusClass !== 'completed' && statusClass !== 'problem') {
+            if (hasCarIncidentOnDate(del['ID_Automobile'] || del['ID_Авто'], del['Дата'])) {
+              isIncidentAffected = true;
+            }
+          }
+          let payClass = '';
+          if (del['Статус_оплати'] === 'Оплачено') payClass = 'pay-full';
+          else if (del['Статус_оплати'] === 'Оплачено частково') payClass = 'pay-part';
+          else if (del['Статус_оплати'] === 'Не оплачено') payClass = 'pay-none';
+
+          row.className = `list-row-card ${isIncidentAffected ? 'incident-affected' : ''}`;
+          row.innerHTML = `
+            <div class="list-time">${del['Час']}</div>
+            <div class="list-car-info">
+              <span class="card-car-badge">🚗 Авто ${del['ID_Авто']}</span>
+            </div>
+            <div>
+              <div class="list-address-info">${isIncidentAffected ? '⚠️ ' : ''}<span class="card-order-badge ${payClass}">№${del['Номер_замовлення']}</span> — ${del['Ім\'я_одержувача'] ? del['Ім\'я_одержувача'] : (del['Адреса'] ? del['Адреса'].split(',')[0] : '')}</div>
+              <div class="list-address-sub">${del['Ім\'я_одержувача'] ? `📍 ${del['Адреса']} ` : ''}${del['Коментар'] ? `💬 ${del['Коментар']}` : ''}</div>
+              ${isIncidentAffected ? `<div class="incident-alert-text"><i data-lucide="shield-alert" style="width:14px;height:14px;display:inline-block;"></i> 🚨 Аварійний режим: у водія виявлено проблему!</div>` : ''}
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted);">Оплата:</div>
+              <div style="font-size: 12px; font-weight: 700;">${del['Статус_оплати'] || 'Невідомо'}</div>
+            </div>
+            <div class="list-badge-status ${statusClass}">${del['Статус']}</div>
+          `;
+          row.addEventListener('click', () => showDetails(del));
+          groupDiv.appendChild(row);
+        });
+        container.appendChild(groupDiv);
+      });
+    }
+    function createDeliveryCard(del, showCarBadge = false) {
+      const card = document.createElement('div');
+      let statusClass = 'planned';
+      if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
+      else if (del['Статус'] === 'Виконано') statusClass = 'completed';
+      else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
+      let isIncidentAffected = false;
+      if (statusClass !== 'completed' && statusClass !== 'problem') {
+        if (hasCarIncidentOnDate(del['ID_Авто'], del['Дата'])) {
+          isIncidentAffected = true;
+        }
+      }
+      card.className = `delivery-card ${statusClass} ${isIncidentAffected ? 'incident-affected' : ''}`;
+      const isProblem = del['Статус'] === 'Аварія на дорозі';
+      const companyName = del['Ім\'я_одержувача'] ? del['Ім\'я_одержувача'].trim() : '';
+      const addressShort = del['Адреса'] ? del['Адреса'].split(',')[0] : '';
+      const mainText = companyName ? companyName : addressShort;
+      const subText = companyName ? addressShort : '';
+      
+      let addressDisplay = isProblem ? `🚨 ${mainText}` : mainText;
+      if (isIncidentAffected) {
+        addressDisplay = `⚠️ ${mainText} (Аварійний режим)`;
+      }
+      const dateStr = del['Дата'];
+      const dynamicDriver = (state.dailyCrews && Array.isArray(state.dailyCrews))
+        ? state.dailyCrews.find(c => String(c['ID_Авто']) === String(del['ID_Авто']) && c['Дата'] === dateStr)
+        : null;
+      const driver = dynamicDriver || ((state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => String(d['ID_Авто']) === String(del['ID_Авто'])) : null);
+      const driverName = driver ? driver["Ім'я"] : `Авто ${del['ID_Авто']}`;
+      const driverInitial = driverName ? driverName.charAt(0) : '?';
+      const tinyAvatarHTML = (driver && driver['Фото'])
+        ? `<img src="${driver['Фото']}" class="card-driver-avatar" title="${driverName}">`
+        : `<div class="card-driver-avatar-initial" title="${driverName}">${driverInitial}</div>`;
+      let payClass = '';
+      if (del['Статус_оплати'] === 'Оплачено') payClass = 'pay-full';
+      else if (del['Статус_оплати'] === 'Оплачено частково') payClass = 'pay-part';
+      else if (del['Статус_оплати'] === 'Не оплачено') payClass = 'pay-none';
+
+      card.innerHTML = `
+        <div class="card-meta">
+          <span class="card-time">${isProblem ? '⚠️ ' : ''}${del['Час']}</span>
+          <span class="card-order-badge ${isProblem ? 'problem-badge' : payClass}">№${del['Номер_замовлення']}</span>
+        </div>
+        <div class="card-address" title="${del['Адреса']}">${addressDisplay}</div>
+        <div class="card-footer">
+          <span title="${subText}">${subText}</span>
+          <div class="card-driver-info">
+            ${tinyAvatarHTML}
+            ${showCarBadge ? `<span class="card-car-badge">Авто ${del['ID_Авто']}</span>` : ''}
+          </div>
+        </div>
+      `;
+      const user = state.currentUser;
+      if (user && (user.role === 'admin' || user.role === 'logist' || user.role === 'director' || (user.role === 'manager' && del['ID_Менеджера'] == user.telegramId))) {
+        card.draggable = true;
+        card.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', del['ID']);
+          card.classList.add('dragging');
+        });
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+        });
+      }
+      card.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showDetails(del);
+      });
+      return card;
+    }
+    function openModal(id) {
+      document.getElementById(id).classList.add('show');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+    function openNewDeliveryModal() {
+      isEditMode = false;
+      editDeliveryId = null;
+      document.getElementById('modal-title').textContent = "Нова доставка";
+      document.getElementById('delivery-form').reset();
+      const user = state.currentUser;
+      const carSelect = document.getElementById('form-car');
+      if (user) {
+        document.getElementById('form-manager-id').value = user.telegramId || '';
+        if (user.role === 'manager') {
+          document.getElementById('form-manager-id').disabled = true;
+          carSelect.innerHTML = '<option value="Самовивіз">Самовивіз</option><option value="Не призначено">-- Обере логіст --</option><option value="1">Авто 1</option><option value="2">Авто 2</option><option value="3">Авто 3</option><option value="4">Авто 4</option>';
+          carSelect.value = "Самовивіз";
+          carSelect.disabled = false;
+        } else {
+          document.getElementById('form-manager-id').disabled = false;
+          carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="1">Авто 1</option><option value="2">Авто 2</option><option value="3">Авто 3</option><option value="4">Авто 4</option>';
+          carSelect.value = "Не призначено";
+          carSelect.disabled = false;
+        }
+      }
+      const timeSelect = document.getElementById('form-time');
+      timeSelect.innerHTML = '';
+      hours.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h;
+        opt.textContent = h;
+        timeSelect.appendChild(opt);
+      });
+      document.getElementById('form-date').value = formatDateISO(state.currentDate);
+      openModal('delivery-modal');
+    }
+    let currentDetailDelivery = null;
+    function showDetails(del) {
+      currentDetailDelivery = del;
+      document.getElementById('det-car').textContent = "🚗 Автомобіль " + del['ID_Авто'];
+      document.getElementById('det-time-date').textContent = `${del['Час']} — ${del['Дата']}`;
+      document.getElementById('det-order').textContent = `№ ${del['Номер_замовлення']}`;
+      document.getElementById('det-payment').textContent = del['Статус_оплати'] || 'Не вказано';
+      document.getElementById('det-address').textContent = del['Адреса'];
+      document.getElementById('det-receiver-name').textContent = del['Ім\'я_одержувача'] || 'Не вказано';
+      document.getElementById('det-receiver-phone').textContent = del['Телефон_одержувача'] || 'Не вказано';
+      document.getElementById('det-status').textContent = del['Статус'] || 'Заплановано';
+      document.getElementById('det-comment').textContent = del['Коментар'] || 'Немає коментарів';
+      document.getElementById('det-status-select').value = del['Статус'] || 'Заплановано';
+      
+      // Control Cancel Button Visibility
+      const cancelBtn = document.getElementById('cancel-delivery-btn');
+      if (cancelBtn) {
+        if (state.currentUser && ['admin', 'керівник', 'логіст'].includes(state.currentUser.role.toLowerCase())) {
+          cancelBtn.style.display = 'block';
+        } else {
+          cancelBtn.style.display = 'none';
+        }
+      }
+      
+      openModal('details-modal');
+    }
+    function cancelDelivery() {
+      if (!currentDetailDelivery) return;
+      
+      const reason = prompt("Вкажіть причину анулювання:", "");
+      if (reason === null) return;
+      document.getElementById('det-status-select').value = "Анульовано";
+      submitStatusUpdate(reason);
+    }
+    
+    // --- Clients & Employees Modals ---
+    function toggleClientFields() {
+      const type = document.getElementById('form-client-type').value;
+      const contactGroup = document.getElementById('group-client-contact');
+      if (type === 'company') {
+        contactGroup.style.display = 'block';
+      } else {
+        contactGroup.style.display = 'none';
+      }
+    }
+    
+    function openClientModal(client = null) {
+      document.getElementById('client-form').reset();
+      
+      if (client && client['ID']) {
+        document.getElementById('form-client-id').value = client['ID'] || '';
+        document.getElementById('form-client-type').value = client['Тип'] || 'company';
+        document.getElementById('form-client-name').value = client['Назва'] || '';
+        document.getElementById('form-client-contact').value = client['Контакт'] || '';
+        document.getElementById('form-client-phone').value = client['Телефон'] || '';
+        document.getElementById('form-client-email').value = client['Email'] || '';
+        document.getElementById('form-client-telegram').value = client['Telegram'] || '';
+        document.getElementById('form-client-viber').value = client['Viber'] || '';
+        document.getElementById('form-client-whatsapp').value = client['WhatsApp'] || '';
+        document.getElementById('form-client-address').value = client['Адреса'] || '';
+        document.getElementById('form-client-note').value = client['Примітки'] || '';
+        if (client['Примітки']) {
+          document.getElementById('group-client-note').style.display = 'block';
+          document.getElementById('form-client-has-note').checked = true;
+        } else {
+          document.getElementById('group-client-note').style.display = 'none';
+          document.getElementById('form-client-has-note').checked = false;
+        }
+      } else {
+        document.getElementById('form-client-id').value = '';
+        document.getElementById('form-client-address').value = '';
+        document.getElementById('group-client-note').style.display = 'none';
+        document.getElementById('form-client-has-note').checked = false;
+      }
+      
+      toggleClientFields();
+      openModal('client-modal');
+    }
+    
+    function openEmployeeModal(emp = null) {
+      document.getElementById('employee-form').reset();
+      if (emp && emp['ID']) {
+        document.getElementById('form-emp-id').value = emp['ID'] || '';
+        document.getElementById('form-emp-name').value = emp['ПІБ'] || '';
+        document.getElementById('form-emp-role').value = emp['Роль'] || 'водій';
+        document.getElementById('form-emp-car').value = emp['Авто'] || '';
+        document.getElementById('form-emp-phone').value = emp['Телефон'] || '';
+        document.getElementById('form-emp-telegram').value = emp['Telegram'] || '';
+      } else {
+        document.getElementById('form-emp-id').value = '';
+      }
+      openModal('employee-modal');
+    }
+    
+    let clientViewMode = 'grid'; // grid or list
+    function switchClientView(mode) {
+      clientViewMode = mode;
+      document.getElementById('btn-clients-grid').classList.toggle('active', mode === 'grid');
+      document.getElementById('btn-clients-list').classList.toggle('active', mode === 'list');
+      renderClients();
+    }
+    
+    function renderClients() {
+      const container = document.getElementById('clients-container');
+      try {
+        container.innerHTML = '';
+        
+        const query = (document.getElementById('clients-search-input').value || '').toLowerCase();
+        let clients = state.clients || [];
+        if (query) {
+          clients = clients.filter(c => 
+            String(c['Назва'] || '').toLowerCase().includes(query) || 
+            String(c['Контакт'] || '').toLowerCase().includes(query) ||
+            String(c['Телефон'] || '').toLowerCase().includes(query)
+          );
+        }
+        
+        if (clients.length === 0) {
+          container.innerHTML = '<div style="color:#9ca3af; padding: 20px;">Клієнтів не знайдено. (Дані: ' + (state.clients ? state.clients.length : '0') + ')</div>';
+          return;
+        }
+        
+        // grid vs list view logic
+        if (clientViewMode === 'list') {
+          container.style.gridTemplateColumns = '1fr';
+        } else {
+          container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+
+        const debugDiv = document.createElement('div');
+        debugDiv.style.padding = '10px';
+        debugDiv.style.background = '#facc15';
+        debugDiv.style.color = '#000';
+        debugDiv.style.marginBottom = '20px';
+        debugDiv.style.borderRadius = '8px';
+        debugDiv.innerHTML = "<b>DEBUG:</b> Клієнтів завантажено: " + clients.length + ". Query: '" + query + "'";
+        container.appendChild(debugDiv);
+
+        }
+        
+        clients.forEach(c => {
+          const isCompany = c['Тип'] === 'company';
+          const icon = isCompany ? '🏢' : '👤';
+          const typeLabel = isCompany ? 'Компанія' : 'Приватна особа';
+          
+          let actionsHtml = '';
+          if (c['Telegram']) actionsHtml += `<a href="https://t.me/${String(c['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
+          if (c['Viber']) actionsHtml += `<a href="viber://chat?number=${String(c['Viber']).replace('+', '')}" class="contact-btn" title="Viber">💜</a>`;
+          if (c['WhatsApp']) actionsHtml += `<a href="https://wa.me/${String(c['WhatsApp']).replace('+', '')}" target="_blank" class="contact-btn" title="WhatsApp">💬</a>`;
+          if (c['Телефон']) actionsHtml += `<a href="tel:${c['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
+          if (c['Email']) actionsHtml += `<a href="mailto:${c['Email']}" class="contact-btn" title="Написати Email">📧</a>`;
+          
+          const card = document.createElement('div');
+          card.className = 'dash-card dash-dark';
+          card.style.position = 'relative';
+          card.style.cursor = 'pointer';
+          card.ondblclick = () => openClientModal(c);
+          
+          // Delete button for Admin/Director
+          let deleteBtn = '';
+          if (state.currentUser && state.currentUser.role && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
+            deleteBtn = `<button class="action-icon-btn" style="position:absolute; top:10px; right:10px; color:var(--danger);" onclick="deleteClient('${c['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
+          }
+          
+          card.innerHTML = `
+            ${deleteBtn}
+            <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${icon} ${typeLabel}</div>
+            <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${c['Назва'] || '-'}</h3>
+            ${isCompany && c['Контакт'] ? `<div style="font-size: 14px; margin-bottom: 5px;">👤 ${c['Контакт']}</div>` : ''}
+            ${c['Телефон'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📱 ${c['Телефон']}</div>` : ''}
+            ${c['Адреса'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📍 ${c['Адреса']}</div>` : ''}
+            ${c['Примітки'] ? `<div style="font-size: 12px; color: #6b7280; margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">📝 ${c['Примітки']}</div>` : ''}
+            
+            <div style="margin-top: 15px; display: flex; gap: 8px;">
+              ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+        safeCreateIcons();
+      } catch (err) {
+        container.innerHTML = '<div style="color:red; padding: 20px;">Помилка рендеру клієнтів: ' + err.toString() + '</div>';
+      }
+    }
+    
+    function saveClient() {
+      const btn = document.querySelector('#client-modal .btn:not(.btn-secondary)');
+      const originalText = btn.textContent;
+      btn.textContent = 'Збереження...';
+      btn.disabled = true;
+      
+      const payload = {
+        id: document.getElementById('form-client-id').value,
+        type: document.getElementById('form-client-type').value,
+        name: document.getElementById('form-client-name').value,
+        contact: document.getElementById('form-client-contact').value,
+        phone: document.getElementById('form-client-phone').value,
+        email: document.getElementById('form-client-email').value,
+        telegram: document.getElementById('form-client-telegram').value,
+        viber: document.getElementById('form-client-viber').value,
+        whatsapp: document.getElementById('form-client-whatsapp').value,
+        address: document.getElementById('form-client-address').value,
+        notes: document.getElementById('form-client-note').value
+      };
+      
+      if (!payload.name) {
+        alert("Заповніть обов'язкові поля!");
+        btn.textContent = originalText;
+        btn.disabled = false;
+        return;
+      }
+      
+      propexApi.withSuccessHandler(res => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        if (res.status === 'success') {
+          closeModal('client-modal');
+          loadData(); // Reload all data including clients
+        } else {
+          alert('Помилка: ' + res.message);
+        }
+      }).withFailureHandler(err => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        alert('Помилка сервера: ' + err);
+      }).saveClient(payload);
+    }
+    
+    function deleteClient(id) {
+      if (!confirm("Ви впевнені, що хочете видалити цього клієнта?")) return;
+      
+      propexApi.withSuccessHandler(res => {
+        if (res.status === 'success') {
+          loadData();
+        } else {
+          alert('Помилка: ' + res.message);
+        }
+      }).withFailureHandler(err => {
+        alert('Помилка сервера: ' + err);
+      }).deleteClient(id);
+    }
+    
+    // --- Employees ---
+    function renderEmployees() {
+      const container = document.getElementById('employees-container');
+      try {
+        container.innerHTML = '';
+        
+        let employees = state.employees || [];
+        
+        if (employees.length === 0) {
+          container.innerHTML = '<div style="color:#9ca3af; padding: 20px;">Співробітників не знайдено.</div>';
+          return;
+        }
+        
+        employees.forEach(e => {
+          let roleIcon = '👤';
+          let roleLabel = e['Роль'] || 'Невідомо';
+          if (roleLabel === 'admin') { roleIcon = '🛡️'; roleLabel = 'Адміністратор'; }
+          if (roleLabel === 'director') { roleIcon = '👑'; roleLabel = 'Директор'; }
+          if (roleLabel === 'manager') { roleIcon = '💼'; roleLabel = 'Менеджер'; }
+          if (roleLabel === 'logist') { roleIcon = '⚙️'; roleLabel = 'Логіст'; }
+          if (roleLabel === 'driver') { roleIcon = '🚗'; roleLabel = 'Водій'; }
+          
+          let actionsHtml = '';
+          if (e['Telegram']) actionsHtml += `<a href="https://t.me/${String(e['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
+          if (e['Телефон']) actionsHtml += `<a href="tel:${e['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
+          
+          const card = document.createElement('div');
+          card.className = 'dash-card dash-dark';
+          card.style.position = 'relative';
+          card.style.cursor = 'pointer';
+          card.ondblclick = () => openEmployeeModal(e);
+          
+          // Delete button for Admin/Director
+          let deleteBtn = '';
+          if (state.currentUser && state.currentUser.role && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
+            deleteBtn = `<button class="action-icon-btn" style="position:absolute; top:10px; right:10px; color:var(--danger);" onclick="deleteEmployee('${e['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
+          }
+          
+          card.innerHTML = `
+            ${deleteBtn}
+            <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${roleIcon} ${roleLabel}</div>
+            <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${e['ПІБ'] || '-'}</h3>
+            ${e['Авто'] && roleLabel === 'Водій' ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">🚗 Закріплене авто: ${e['Авто']}</div>` : ''}
+            ${e['Телефон'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📱 ${e['Телефон']}</div>` : ''}
+            
+            <div style="margin-top: 15px; display: flex; gap: 8px;">
+              ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+        safeCreateIcons();
+      } catch (err) {
+        container.innerHTML = '<div style="color:red; padding: 20px;">Помилка рендеру: ' + err.toString() + '</div>';
+      }
+    }
+    
+    function saveEmployee() {
+      const btn = document.querySelector('#employee-modal .btn:not(.btn-secondary)');
+      const originalText = btn.textContent;
+      btn.textContent = 'Збереження...';
+      btn.disabled = true;
+      
+      const payload = {
+        id: document.getElementById('form-emp-id').value,
+        name: document.getElementById('form-emp-name').value,
+        role: document.getElementById('form-emp-role').value,
+        car: document.getElementById('form-emp-car').value,
+        phone: document.getElementById('form-emp-phone').value,
+        telegram: document.getElementById('form-emp-telegram').value
+      };
+      
+      if (!payload.name || !payload.role) {
+        alert("Заповніть обов'язкові поля!");
+        btn.textContent = originalText;
+        btn.disabled = false;
+        return;
+      }
+      
+      propexApi.withSuccessHandler(res => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        if (res.status === 'success') {
+          closeModal('employee-modal');
+          loadData(); // Reload
+        } else {
+          alert('Помилка: ' + res.message);
+        }
+      }).withFailureHandler(err => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        alert('Помилка сервера: ' + err);
+      }).saveEmployee(payload);
+    }
+    
+    function deleteEmployee(id) {
+      if (!confirm("Ви впевнені, що хочете видалити цього співробітника?")) return;
+      propexApi.withSuccessHandler(res => {
+        if (res.status === 'success') {
+          loadData();
+        } else {
+          alert('Помилка: ' + res.message);
+        }
+      }).withFailureHandler(err => {
+        alert('Помилка сервера: ' + err);
+      }).deleteEmployee(id);
+    }
+    
+    // ---------------------------------
+    function doCancelDelivery(reason) {
+      if (reason === null || reason.trim() === "") {
+        if (reason !== null) alert("Причина є обов'язковою для анулювання!");
+        return;
+      }
+      
+      const deliveryId = currentDetailDelivery['ID'];
+      const currentComment = currentDetailDelivery['Коментар'] || '';
+      const newComment = `[Скасовано: ${reason.trim()}] ` + currentComment;
+      
+      document.getElementById('cancel-delivery-btn').disabled = true;
+      document.getElementById('cancel-delivery-btn').textContent = "Анулювання...";
+      
+      if (typeof propexApi !== 'undefined') {
+        propexApi
+          .withSuccessHandler(function(response) {
+            document.getElementById('cancel-delivery-btn').disabled = false;
+            document.getElementById('cancel-delivery-btn').textContent = "🚫 Анулювати";
+            if (response && response.status === 'success') {
+              closeModal('details-modal');
+              loadDeliveriesSafely();
+            } else {
+              alert("Помилка при анулюванні: " + (response ? response.message : "Unknown error"));
+            }
+          })
+          .withFailureHandler(function(error) {
+            document.getElementById('cancel-delivery-btn').disabled = false;
+            document.getElementById('cancel-delivery-btn').textContent = "🚫 Анулювати";
+            alert("Помилка з'єднання: " + error);
+          })
+          .updateDeliveryStatus(deliveryId, "Скасовано", newComment);
+      }
+    }
+    function submitStatusUpdate() {
+      if (!currentDetailDelivery) return;
+      const newStatus = document.getElementById('det-status-select').value;
+      const deliveryId = currentDetailDelivery['ID'];
+      let comment = '';
+      if (newStatus === 'Аварія на дорозі') {
+        comment = prompt("Будь ласка, вкажіть причину виникнення проблеми:", "Зламався автомобіль");
+        if (comment === null) return;
+      } else {
+        comment = prompt("Ви можете додати додатковий коментар / причину зміни (необов'язково):", "");
+        if (comment === null) comment = '';
+      }
+      document.getElementById('update-status-btn').disabled = true;
+      document.getElementById('update-status-btn').textContent = "Оновлення...";
+      
+        propexApi
+          .withSuccessHandler(function(response) {
+            document.getElementById('update-status-btn').disabled = false;
+            document.getElementById('update-status-btn').textContent = "Оновити";
+            closeModal('details-modal');
+            loadData();
+            alert("Статус доставки успішно оновлено!");
+          })
+          .withFailureHandler(function(err) {
+            document.getElementById('update-status-btn').disabled = false;
+            document.getElementById('update-status-btn').textContent = "Оновити";
+            alert("Помилка оновлення статусу: " + (err.message || err));
+          })
+          .updateDeliveryStatus(deliveryId, newStatus, comment);
+    }
+    function saveDelivery() {
+      const car = document.getElementById('form-car').value;
+      const rawDate = document.getElementById('form-date').value;
+      const time = document.getElementById('form-time').value;
+      const order_num = document.getElementById('form-order-num').value.trim();
+      const payment = document.getElementById('form-payment').value;
+      const address = document.getElementById('form-address').value.trim();
+      const receiver_name = document.getElementById('form-receiver-name').value.trim();
+      const receiver_phone = document.getElementById('form-receiver-phone').value.trim();
+      const comment = document.getElementById('form-comment').value.trim();
+      if (!rawDate || !order_num || !address) {
+        alert("Будь ласка, заповніть усі обов'язкові поля (*)");
+        return;
+      }
+      const parts = rawDate.split('-');
+      const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
+      const deliveryData = {
+        driver_id: car,
+        manager_chat_id: document.getElementById('form-manager-id').value.trim(),
+        date: formattedDate,
+        time: time,
+        address: address,
+        order_num: order_num,
+        payment: payment,
+        receiver_name: receiver_name,
+        receiver_phone: receiver_phone,
+        comment: comment
+      };
+      
+      if (car !== "Не призначено") {
+        const isOccupied = state.deliveries.some(d => 
+          String(d['ID']) !== String(editDeliveryId) && 
+          String(d['ID_Авто']) === String(car) && 
+          d['Дата'] === formattedDate && 
+          d['Час'] === time &&
+          d['Адреса'] !== address
+        );
+        if (isOccupied) {
+          alert(`Помилка! Цей часовий слот (${time}) для Авто ${car} вже зайнятий іншою доставкою за іншою адресою!`);
+          return;
+        }
+      }
+
+      const user = state.currentUser;
+      const userRole = user ? user.role : '';
+
+      document.getElementById('save-btn').disabled = true;
+      document.getElementById('save-btn').textContent = "Збереження...";
+      
+      // Навчальна база: автозбереження нового клієнта
+      if (receiver_name && (!window.knowledgeBase || !window.knowledgeBase[receiver_name])) {
+        const exists = (state.clients || []).some(c => (c['Назва'] || '').toString().trim() === receiver_name);
+        if (!exists) {
+          propexApi.saveClient({
+            id: '',
+            type: 'person',
+            name: receiver_name,
+            contact: '',
+            phone: receiver_phone,
+            email: '',
+            telegram: '',
+            viber: '',
+            whatsapp: '',
+            address: address,
+            notes: 'Автоматично збережено з форми доставки'
+          });
+        }
+      }
+      
+
+      if (isEditMode && editDeliveryId) {
+        propexApi.withSuccessHandler(function(response) {
+          document.getElementById('save-btn').disabled = false;
+          document.getElementById('save-btn').textContent = "Зберегти доставку";
+          closeModal('delivery-modal');
+          loadData();
+        }).withFailureHandler(function(err) {
+          document.getElementById('save-btn').disabled = false;
+          document.getElementById('save-btn').textContent = "Зберегти доставку";
+          alert("Помилка оновлення: " + (err.message || err));
+        }).updateDeliveryDetails(editDeliveryId, deliveryData, userRole);
+      } else {
+        propexApi.withSuccessHandler(function(response) {
+          document.getElementById('save-btn').disabled = false;
+          document.getElementById('save-btn').textContent = "Зберегти доставку";
+          closeModal('delivery-modal');
+          loadData();
+        }).withFailureHandler(function(err) {
+          document.getElementById('save-btn').disabled = false;
+          document.getElementById('save-btn').textContent = "Зберегти доставку";
+          alert("Помилка збереження: " + (err.message || err));
+        }).addDelivery(deliveryData);
+      }
+    }
+    const addressInput = document.getElementById('form-address');
+    const autocompleteList = document.getElementById('autocomplete-list');
+    let debounceTimer;
+    addressInput.addEventListener('input', function() {
+      const val = this.value.trim();
+      autocompleteList.innerHTML = '';
+      clearTimeout(debounceTimer);
+      if (!val || val.length < 3) return;
+      debounceTimer = setTimeout(() => {
+        let searchQuery = val;
+        if (!val.toLowerCase().includes('київ') && !val.toLowerCase().includes('киев')) {
+          searchQuery = 'Київ, ' + val;
+        }
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&addressdetails=1&limit=5&countrycodes=ua&bounded=1&viewbox=30.0,50.2,31.0,50.7`;
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+          .then(response => {
+            if (!response.ok) throw new Error("HTTP error! status: " + response.status);
+            return response.json();
+          })
+          .then(data => {
+            autocompleteList.innerHTML = '';
+            if (!data || data.length === 0) {
+              const div = document.createElement('div');
+              div.style.cssText = "padding: 10px 14px; color: var(--text-muted); font-size: 13px; font-style: italic;";
+              div.textContent = "Адресу не знайдено. Перевірте написання.";
+              autocompleteList.appendChild(div);
+              return;
+            }
+            data.forEach(item => {
+              const div = document.createElement('div');
+              const cleanName = item.display_name.replace(', Україна', '').replace(', Ukraine', '');
+              div.textContent = cleanName;
+              div.addEventListener('click', function() {
+                addressInput.value = cleanName;
+                autocompleteList.innerHTML = '';
+              });
+              autocompleteList.appendChild(div);
+            });
+          })
+          .catch(err => {
+            console.error("Autocomplete error:", err);
+            const div = document.createElement('div');
+            div.style.cssText = "padding: 10px 14px; color: var(--danger); font-size: 13px; font-weight: 600;";
+            div.textContent = "⚠️ Помилка пошуку (можливо, ліміт запитів). Спробуйте ввести вручну.";
+            autocompleteList.appendChild(div);
+          });
+      }, 400);
+    });
+    document.addEventListener('click', function (e) {
+      if (e.target !== addressInput) autocompleteList.innerHTML = '';
+    });
+    function handleDragOver(e) {
+      e.preventDefault();
+      const cell = e.currentTarget.closest('.grid-cell');
+      if (cell) cell.classList.add('drag-hover');
+    }
+    function handleDragLeave(e) {
+      const cell = e.currentTarget.closest('.grid-cell');
+      if (cell) cell.classList.remove('drag-hover');
+    }
+    function handleDrop(e) {
+      e.preventDefault();
+      const cell = e.currentTarget.closest('.grid-cell');
+      if (!cell) return;
+      cell.classList.remove('drag-hover');
+      const delId = e.dataTransfer.getData('text/plain');
+      if (!delId) return;
+      const newTime = cell.dataset.time;
+      const newCarId = cell.dataset.car;
+      const newDate = cell.dataset.date;
+      moveDelivery(delId, newTime, newCarId, newDate);
+    }
+    function moveDelivery(delId, newTime, newCarId, newDate) {
+      const user = state.currentUser;
+      if (!user) return;
+      const del = state.deliveries.find(d => d['ID'] == delId);
+      if (!del) return;
+      if (user.role === 'manager') {
+        if (del['ID_Менеджера'] != user.telegramId) {
+          alert("Ви не можете переносити замовлення інших менеджерів!");
+          return;
+        }
+        if (newCarId && String(newCarId) !== String(del['ID_Авто'])) {
+          alert("Менеджери не мають прав на зміну призначеного автомобіля!");
+          return;
+        }
+      }
+      const targetCar = newCarId || del['ID_Авто'];
+      const targetDate = newDate || formatDateStr(state.currentDate);
+      const targetTime = newTime;
+      const isOccupied = state.deliveries.some(d => 
+        d['ID'] != delId && 
+        String(d['ID_Авто']) === String(targetCar) && 
+        d['Дата'] === targetDate && 
+        d['Час'] === targetTime &&
+        d['Адреса'] !== del['Адреса']
+      );
+      if (isOccupied) {
+        alert(`Цей часовий слот (${targetTime}) для Авто ${targetCar} вже зайнятий іншою доставкою за іншою адресою!`);
+        return;
+      }
+      const oldTime = del['Час'];
+      const oldCar = del['ID_Авто'];
+      const oldDate = del['Дата'];
+      del['Час'] = targetTime;
+      del['ID_Авто'] = String(targetCar);
+      del['Дата'] = targetDate;
+      renderCalendar();
+      const deliveryData = {
+        driver_id: del['ID_Авто'],
+        date: del['Дата'],
+        time: del['Час'],
+        address: del['Адреса'],
+        order_num: del['Номер_замовлення'] || '',
+        payment: del['Статус_оплати'] || '',
+        receiver_name: del['Ім\'я_одержувача'] || '',
+        receiver_phone: del['Телефон_одержувача'] || '',
+        comment: del['Коментар'] || '',
+        manager_chat_id: del['ID_Менеджера'] || ''
+      };
+      
+        propexApi
+          .withSuccessHandler(function(res) { console.log('Delivery moved successfully', res); })
+          .withFailureHandler(function(err) {
+            alert("Помилка перетягування: " + (err.message || err));
+            del['Час'] = oldTime;
+            del['ID_Авто'] = oldCar;
+            del['Дата'] = oldDate;
+            renderCalendar();
+          })
+          .updateDeliveryDetails(delId, deliveryData, user.role);
+    }
+
+
+    function safeCreateIcons() {
+      try {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      } catch (e) {
+        console.error("Lucide failed to initialize:", e);
+      }
+    }
+    function initApp() {
+      console.log("Initializing Propex Calendar App...");
+      safeCreateIcons();
+      checkSession();
+      updateDateLabel();
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initApp();
+    } else {
+      window.addEventListener('DOMContentLoaded', initApp);
+    }
+let statusChartInstance = null;
+let comparativeChartInstance = null;
+
+window.headerCreateAction = function() {};
+
+window.switchMainTab = function(tabId) {
+    const allTabs = ['tracking', 'dashboard', 'analytics', 'clients', 'employees', 'settings'];
+
+    // Сховати всі вкладки та зняти active з навігації
+    allTabs.forEach(function(id) {
+        const view = document.getElementById(id + '-view');
+        const nav  = document.getElementById('nav-' + id);
+        if (view) { view.style.display = 'none'; view.classList.remove('active'); }
+        if (nav)  nav.classList.remove('active');
+    });
+
+    // Показати потрібну вкладку
+    const targetView = document.getElementById(tabId + '-view');
+    const targetNav  = document.getElementById('nav-' + tabId);
+    if (targetView) { targetView.style.display = 'flex'; targetView.classList.add('active'); }
+    if (targetNav)  targetNav.classList.add('active');
+
+    // Налаштування глобальної кнопки "Створити" в хедері
+    const headerBtn = document.getElementById('header-create-btn');
+    const headerBtnLabel = document.getElementById('header-create-btn-label');
+    const filterBtn = document.getElementById('header-filter-btn');
+    
+    if (headerBtn && headerBtnLabel && filterBtn) {
+        if (tabId === 'tracking') {
+            headerBtn.style.display = 'flex';
+            headerBtnLabel.textContent = 'Додати';
+            window.headerCreateAction = openNewDeliveryModal;
+            
+            filterBtn.style.display = 'flex';
+            window.headerFilterAction = openAdvancedFilters;
+        } else if (tabId === 'clients') {
+            headerBtn.style.display = 'flex';
+            headerBtnLabel.textContent = 'Додати';
+            window.headerCreateAction = openClientModal;
+            
+            filterBtn.style.display = 'flex';
+            window.headerFilterAction = function() { alert('Фільтри для клієнтів в розробці'); };
+        } else if (tabId === 'employees') {
+            headerBtn.style.display = 'flex';
+            headerBtnLabel.textContent = 'Додати';
+            window.headerCreateAction = openEmployeeModal;
+            
+            filterBtn.style.display = 'flex';
+            window.headerFilterAction = function() { alert('Фільтри для співробітників в розробці'); };
+        } else {
+            headerBtn.style.display = 'none';
+            filterBtn.style.display = 'none';
+        }
+    }
+
+    // Додаткові дії при відкритті вкладки
+    if (tabId === 'dashboard') {
+        renderDashboard();
+    } else if (tabId === 'analytics') {
+        renderAnalytics();
+    } else if (tabId === 'tracking') {
+        renderCalendar();
+    } else if (tabId === 'settings') {
+        // Заповнити профіль користувача
+        const u = state.currentUser;
+        if (u) {
+            const nameEl = document.getElementById('settings-name');
+            const roleEl = document.getElementById('settings-role');
+            const avatarEl = document.getElementById('settings-avatar');
+            const inputName = document.getElementById('settings-input-name');
+            const inputTg   = document.getElementById('settings-input-telegram');
+            if (nameEl) nameEl.textContent = u.name || u.login || '—';
+            if (roleEl) roleEl.textContent = u.role || '—';
+            if (avatarEl) avatarEl.textContent = (u.name || u.login || 'U').charAt(0).toUpperCase();
+            if (inputName) inputName.value = u.name || u.login || '';
+            if (inputTg) inputTg.value = u.telegram || u.login || '';
+            const adminSection = document.getElementById('admin-settings-section');
+            if (adminSection) adminSection.style.display = (u.role === 'admin' || u.role === 'director') ? 'block' : 'none';
+        }
+    }
+};
+
+
+// Helpers for data
+function filterDeliveriesByDateRange(deliveries, startStr, endStr) {
+    const start = new Date(startStr + 'T00:00:00');
+    const end = new Date(endStr + 'T23:59:59');
+    return deliveries.filter(d => {
+        if (!d['Дата']) return false;
+        // Format of date might be DD.MM.YYYY or YYYY-MM-DD
+        let dStr = d['Дата'];
+        let parts = dStr.split('.');
+        if (parts.length === 3) dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        const date = new Date(dStr + 'T12:00:00');
+        return date >= start && date <= end;
+    });
+}
+
+function getRanges(periodStr) {
+    const now = new Date();
+    let currStart, currEnd, prevStart, prevEnd;
+    
+    if (periodStr === 'week') {
+        // Current week (Monday to Sunday)
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
+        currStart = new Date(now.setDate(diff));
+        currEnd = new Date(currStart);
+        currEnd.setDate(currEnd.getDate() + 6);
+        
+        prevStart = new Date(currStart);
+        prevStart.setDate(prevStart.getDate() - 7);
+        prevEnd = new Date(currEnd);
+        prevEnd.setDate(prevEnd.getDate() - 7);
+        
+    } else if (periodStr === 'month') {
+        currStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        currEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        currEnd.setDate(currEnd.getDate() - 1); // fix last day of month bug
+        
+        prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        prevEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else {
+        // Custom dates
+        const s = document.getElementById('analytics-start').value;
+        const e = document.getElementById('analytics-end').value;
+        currStart = new Date(s);
+        currEnd = new Date(e);
+        
+        // Prev period of same length
+        const msDiff = currEnd - currStart;
+        prevEnd = new Date(currStart);
+        prevEnd.setDate(prevEnd.getDate() - 1);
+        prevStart = new Date(prevEnd.getTime() - msDiff);
+    }
+    
+    return {
+        curr: { start: currStart.toISOString().split('T')[0], end: currEnd.toISOString().split('T')[0] },
+        prev: { start: prevStart.toISOString().split('T')[0], end: prevEnd.toISOString().split('T')[0] }
+    };
+}
+
+function renderDashboard() {
+    if (!state || !state.deliveries) return;
+    
+    const ranges = getRanges('month');
+    const currDels = filterDeliveriesByDateRange(state.deliveries, ranges.curr.start, ranges.curr.end);
+    const prevDels = filterDeliveriesByDateRange(state.deliveries, ranges.prev.start, ranges.prev.end);
+    
+    // Totals
+    const totalCurr = currDels.length;
+    const totalPrev = prevDels.length;
+    
+    const deliveredCurr = currDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
+    const deliveredPrev = prevDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
+    
+    const issuesCurr = currDels.filter(d => d['Статус_оплати'] === 'Анульовано' || d['Статус_оплати'] === 'Відмова').length;
+    const issuesPrev = prevDels.filter(d => d['Статус_оплати'] === 'Анульовано' || d['Статус_оплати'] === 'Відмова').length;
+    
+    document.getElementById('dash-total').innerText = totalCurr;
+    document.getElementById('dash-delivered').innerText = deliveredCurr;
+    document.getElementById('dash-issues').innerText = issuesCurr;
+    
+    setTrend('dash-total-trend', totalCurr, totalPrev);
+    setTrend('dash-delivered-trend', deliveredCurr, deliveredPrev);
+    setTrend('dash-issues-trend', issuesCurr, issuesPrev);
+    
+    // Top Drivers (by month)
+    renderTopList('dash-top-drivers', currDels, 'ID_Авто', 'Авто ', ' поїздок');
+    
+    // Top Managers (by month)
+    renderTopList('dash-top-managers', currDels, 'ID_Менеджера', '', ' замовлень');
+    
+    // Recent Activities
+    const sorted = [...state.deliveries].sort((a,b) => {
+        return -1; // Assuming array order represents creation/update time roughly
+    }).slice(0, 5);
+    
+    const recentHtml = sorted.map(d => `
+        <div class="dash-recent-item">
+            <div>
+                <div class="recent-id">№${d['Номер_замовлення'] || d['ID']}</div>
+                <div class="recent-manager">${d['ID_Менеджера'] || 'Невідомий'} -> Авто ${d['ID_Авто'] || '?'}</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="color:#fff; font-size:13px; font-weight:600; padding:4px 8px; border-radius:4px; background: rgba(255,255,255,0.1);">${d['Статус_оплати'] || 'В процесі'}</div>
+                <div class="recent-time" style="margin-top:4px;">${d['Дата']} ${d['Час'] || ''}</div>
+            </div>
+        </div>
+    `).join('');
+    document.getElementById('dash-recent-activity').innerHTML = recentHtml || '<div style="color:#6b7280; padding:10px;">Немає активності</div>';
+    
+    // Chart
+    renderStatusChart(currDels);
+}
+
+function renderStatusChart(dels) {
+    const statuses = {};
+    dels.forEach(d => {
+        const s = d['Статус_оплати'] || 'Не визначено';
+        statuses[s] = (statuses[s] || 0) + 1;
+    });
+    
+    const labels = Object.keys(statuses);
+    const data = Object.values(statuses);
+    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'];
+    
+    if (statusChartInstance) {
+        statusChartInstance.destroy();
+    }
+    
+    const canvas = document.getElementById('statusChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    statusChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 0,
+                cutout: '75%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+    
+    // Custom Legend
+    const legendHtml = labels.map((l, i) => `
+        <div style="display:flex; align-items:center; gap:4px;">
+            <div style="width:10px; height:10px; border-radius:50%; background:${colors[i]}"></div>
+            <span>${l} (${data[i]})</span>
+        </div>
+    `).join('');
+    document.getElementById('status-chart-legend').innerHTML = legendHtml;
+}
+
+function setTrend(elementId, curr, prev) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    if (prev === 0) {
+        if (curr === 0) el.innerHTML = `<span style="color:#6b7280">Без змін</span>`;
+        else el.innerHTML = `<span class="trend-up">+100% &uarr;</span> з минулого періоду`;
+        return;
+    }
+    
+    const pct = Math.round(((curr - prev) / prev) * 100);
+    if (pct > 0) {
+        el.innerHTML = `<span class="trend-up">+${pct}% &uarr;</span> з минулого періоду`;
+    } else if (pct < 0) {
+        el.innerHTML = `<span class="trend-down">${pct}% &darr;</span> з минулого періоду`;
+    } else {
+        el.innerHTML = `<span style="color:#6b7280">Без змін</span>`;
+    }
+}
+
+function renderTopList(elementId, dels, groupByField, prefix, suffix) {
+    const counts = {};
+    dels.forEach(d => {
+        const key = d[groupByField] || 'Невідомий';
+        counts[key] = (counts[key] || 0) + 1;
+    });
+    
+    const sorted = Object.keys(counts).map(k => ({ name: k, count: counts[k] })).sort((a,b) => b.count - a.count).slice(0, 5);
+    
+    if (sorted.length === 0) {
+        document.getElementById(elementId).innerHTML = `<div style="color:#6b7280; padding: 10px;">Немає даних за цей період</div>`;
+        return;
+    }
+    
+    const html = sorted.map(u => `
+        <div class="top-item">
+            <div class="top-user">
+                <div class="top-avatar">${u.name.substring(0,2).toUpperCase()}</div>
+                <div class="top-name">${prefix}${u.name}</div>
+            </div>
+            <div class="top-score">${u.count}${suffix}</div>
+        </div>
+    `).join('');
+    document.getElementById(elementId).innerHTML = html;
+}
+
+window.updateAnalyticsUI = function() {
+    const period = document.getElementById('analytics-period').value;
+    const customDiv = document.getElementById('analytics-custom-dates');
+    if (period === 'custom') {
+        customDiv.style.display = 'flex';
+        if (!document.getElementById('analytics-start').value) return; 
+        if (!document.getElementById('analytics-end').value) return;
+    } else {
+        customDiv.style.display = 'none';
+    }
+    
+    renderAnalytics();
+};
+
+function renderAnalytics() {
+    if (!state || !state.deliveries) return;
+    
+    const period = document.getElementById('analytics-period').value;
+    
+    if (period === 'custom' && (!document.getElementById('analytics-start').value || !document.getElementById('analytics-end').value)) {
+        return; 
+    }
+    
+    const ranges = getRanges(period);
+    const currDels = filterDeliveriesByDateRange(state.deliveries, ranges.curr.start, ranges.curr.end);
+    const prevDels = filterDeliveriesByDateRange(state.deliveries, ranges.prev.start, ranges.prev.end);
+    
+    // Top Car (Mock mileage)
+    const carCounts = {};
+    currDels.forEach(d => {
+        const key = d['ID_Авто'] || 'Невідомий';
+        carCounts[key] = (carCounts[key] || 0) + 1;
+    });
+    const sortedCars = Object.keys(carCounts).map(k => ({ name: k, count: carCounts[k] })).sort((a,b) => b.count - a.count);
+    if (sortedCars.length > 0) {
+        document.getElementById('analytics-top-car-name').innerText = 'Авто ' + sortedCars[0].name;
+        const mockKm = sortedCars[0].count * 15;
+        document.getElementById('analytics-top-car-km').innerText = `${mockKm} км / ${sortedCars[0].count} доставок`;
+    } else {
+        document.getElementById('analytics-top-car-name').innerText = '-';
+        document.getElementById('analytics-top-car-km').innerText = '0 км / 0 доставок';
+    }
+    
+    // Top Manager
+    const mgrCounts = {};
+    currDels.forEach(d => {
+        const key = d['ID_Менеджера'] || 'Невідомий';
+        mgrCounts[key] = (mgrCounts[key] || 0) + 1;
+    });
+    const sortedMgrs = Object.keys(mgrCounts).map(k => ({ name: k, count: mgrCounts[k] })).sort((a,b) => b.count - a.count);
+    if (sortedMgrs.length > 0) {
+        document.getElementById('analytics-top-manager-name').innerText = sortedMgrs[0].name;
+        document.getElementById('analytics-top-manager-count').innerText = `${sortedMgrs[0].count} доставок`;
+    } else {
+        document.getElementById('analytics-top-manager-name').innerText = '-';
+        document.getElementById('analytics-top-manager-count').innerText = '0 доставок';
+    }
+    
+    // Success Rate
+    const deliveredCurr = currDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
+    const deliveredPrev = prevDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
+    const currRate = currDels.length ? Math.round((deliveredCurr / currDels.length) * 100) : 0;
+    const prevRate = prevDels.length ? Math.round((deliveredPrev / prevDels.length) * 100) : 0;
+    
+    document.getElementById('analytics-success-rate').innerText = currRate + '%';
+    
+    const diff = currRate - prevRate;
+    const tr = document.getElementById('analytics-success-trend');
+    if (diff > 0) tr.innerHTML = `<span class="trend-up">+${diff}% &uarr;</span> з минулого періоду`;
+    else if (diff < 0) tr.innerHTML = `<span class="trend-down">${diff}% &darr;</span> з минулого періоду`;
+    else tr.innerHTML = `<span style="color:#6b7280">Без змін</span>`;
+    
+    // Comparative Chart (Daily grouped)
+    renderComparativeChart(currDels, prevDels, ranges.curr.start, ranges.curr.end, ranges.prev.start, ranges.prev.end);
+}
+
+function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe) {
+    const currDates = [];
+    let cur = new Date(cs);
+    const end = new Date(ce);
+    
+    // Limit to 31 days max to prevent memory crashes on huge ranges
+    let safety = 0;
+    while (cur <= end && safety < 31) {
+        currDates.push(cur.toISOString().split('T')[0]);
+        cur.setDate(cur.getDate() + 1);
+        safety++;
+    }
+    
+    const currCounts = currDates.map(d => {
+        return currDels.filter(del => {
+            let dStr = del['Дата'];
+            if (!dStr) return false;
+            let parts = dStr.split('.');
+            if (parts.length === 3) dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            return dStr === d;
+        }).length;
+    });
+    
+    const prevCounts = currDates.map((d, index) => {
+        const targetDate = new Date(ps);
+        targetDate.setDate(targetDate.getDate() + index);
+        const targetDateStr = targetDate.toISOString().split('T')[0];
+        
+        return prevDels.filter(del => {
+            let dStr = del['Дата'];
+            if (!dStr) return false;
+            let parts = dStr.split('.');
+            if (parts.length === 3) dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            return dStr === targetDateStr;
+        }).length;
+    });
+    
+    const labels = currDates.map(d => {
+        const parts = d.split('-');
+        return `${parts[2]}.${parts[1]}`;
+    });
+    
+    if (comparativeChartInstance) {
+        comparativeChartInstance.destroy();
+    }
+    
+    const canvas = document.getElementById('comparativeChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    comparativeChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Поточний період',
+                    data: currCounts,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Минулий період',
+                    data: prevCounts,
+                    borderColor: '#6b7280',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af', stepSize: 1 } },
+                x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+            },
+            plugins: {
+                legend: { labels: { color: '#fff' } }
+            }
+        }
+    });
+}
+

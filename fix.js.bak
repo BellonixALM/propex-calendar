@@ -1,0 +1,90 @@
+
+// ====== АВТОМАТИЧНІ РОЗСИЛКИ ======
+
+function setupNotifications() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    var handlerName = triggers[i].getHandlerFunction();
+    if (handlerName === 'sendCarSelectionReminders' || handlerName === 'sendTomorrowRoutes') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  
+  ScriptApp.newTrigger('sendCarSelectionReminders')
+           .timeBased()
+           .after(5 * 60 * 1000)
+           .create();
+           
+  ScriptApp.newTrigger('sendTomorrowRoutes')
+           .timeBased()
+           .everyDays(1)
+           .atHour(9)
+           .create();
+           
+  Logger.log('Тригери успішно встановлено!');
+}
+
+function sendCarSelectionReminders() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Користувачі');
+  if (!sheet) return;
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var roleIdx = headers.indexOf('Роль');
+  var tgIdx = headers.indexOf('Telegram_ID');
+  
+  if (roleIdx === -1 || tgIdx === -1) return;
+  
+  for (var i = 1; i < data.length; i++) {
+    var role = data[i][roleIdx];
+    var tgId = data[i][tgIdx];
+    if (role === 'driver' && tgId) {
+      var msg = 'Привіт! 🚗 Нагадую, що тобі потрібно обрати авто на завтра.\n\nБудь ласка, перейди у додаток та зроби свій вибір.';
+      try {
+        sendTelegramMessage(tgId, msg);
+      } catch (e) {}
+    }
+  }
+}
+
+function sendTomorrowRoutes() {
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var tomorrowStr = Utilities.formatDate(tomorrow, 'Europe/Kiev', 'yyyy-MM-dd');
+  
+  var deliveries = getDeliveries().filter(function(d) { return d['Дата'] === tomorrowStr; });
+  var dailyCrews = getDailyCrews().filter(function(c) { return c['Дата'] === tomorrowStr; });
+  
+  var carDeliveries = {};
+  deliveries.forEach(function(d) {
+    if (!carDeliveries[d['ID_Авто']]) carDeliveries[d['ID_Авто']] = [];
+    carDeliveries[d['ID_Авто']].push(d);
+  });
+  
+  dailyCrews.forEach(function(crew) {
+    var tgId = crew['Telegram_ID'];
+    var carId = crew['ID_Авто'];
+    if (!tgId || !carId) return;
+    
+    var routeMsg = '🗺 Твій маршрут на завтра (' + tomorrowStr + ') для Авто ' + carId + ':\n\n';
+    var dels = carDeliveries[carId] || [];
+    
+    if (dels.length === 0) {
+      routeMsg += 'На завтра доставок поки немає. Відпочивай! 😎';
+    } else {
+      dels.sort(function(a, b) { return a['Час'].localeCompare(b['Час']); });
+      dels.forEach(function(d, index) {
+        var comp = d['Ім\'я_одержувача'] ? d['Ім\'я_одержувача'] : '';
+        routeMsg += (index + 1) + '. ⏰ ' + d['Час'] + '\n';
+        if (comp) routeMsg += '🏢 ' + comp + '\n';
+        routeMsg += '📍 ' + d['Адреса'] + '\n';
+        routeMsg += '📦 №' + d['Номер_замовлення'] + ' (' + (d['Статус_оплати'] || 'Невідомо') + ')\n';
+        if (d['Коментар']) routeMsg += '💬 ' + d['Коментар'] + '\n';
+        routeMsg += '\n';
+      });
+    }
+    
+    try {
+      sendTelegramMessage(tgId, routeMsg);
+    } catch (e) {}
+  });
+}

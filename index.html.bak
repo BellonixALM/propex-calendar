@@ -48,16 +48,6 @@
     document.addEventListener('DOMContentLoaded', initTheme);
 
 // --- MAP LOGIC ---
-window.getCarName = function(carId) {
-  if (!carId || carId === 'Не призначено' || carId === 'Самовивіз') return carId;
-  const map = {
-    '1': 'Hyundai',
-    '2': 'MAN',
-    '3': 'Volkswagen Crafter',
-    '4': 'Renault Dokker'
-  };
-  return map[String(carId)] || `Авто ${carId}`;
-};
 let fleetMap = null;
 const addressCache = {}; // Cache for geocoding
 
@@ -85,7 +75,6 @@ async function geocodeAddress(addressStr) {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function openGlobalMap() {
-  try {
   document.getElementById('map-modal').classList.add('show');
   
   if (!fleetMap) {
@@ -99,78 +88,51 @@ async function openGlobalMap() {
     // If map already exists, just invalidate size
     setTimeout(() => fleetMap.invalidateSize(), 100);
     fleetMap.eachLayer((layer) => {
-      if (!(layer instanceof L.TileLayer)) {
+      if (layer instanceof L.Marker) {
         fleetMap.removeLayer(layer);
       }
     });
   }
 
-  // Base Propex location (Вікентія Хвойки, 18/14, Київ)
-  const baseCoords = [50.484077, 30.486195];
+  // Base Propex location (Placeholder in Kyiv)
+  const baseCoords = [50.4501, 30.5234];
   
   const loadingOverlay = document.getElementById('map-loading-overlay');
   const loadingText = document.getElementById('map-loading-text');
   loadingOverlay.style.display = 'flex';
   
-  const todayStr = String(state.currentDate.getDate()).padStart(2, '0') + '.' + 
-                   String(state.currentDate.getMonth() + 1).padStart(2, '0') + '.' + 
-                   state.currentDate.getFullYear();
-
-  const todayDels = (state.deliveries || []).filter(d => {
-    let delDate = d['Дата'] ? String(d['Дата']).trim() : '';
-    // handle YYYY-MM-DD
-    if (delDate.includes('-')) {
-       const p = delDate.split('-');
-       delDate = `${p[2]}.${p[1]}.${p[0]}`;
-    }
-    return delDate === todayStr;
+  const todayDels = Object.values(window.cachedDeliveries || {}).filter(d => {
+    return d.date === state.currentDateStr;
   });
 
   const carRoutes = {};
   todayDels.forEach(d => {
-    const carId = d['ID_Авто'] || 'Невідомо';
-    if (carId && carId !== 'Самовивіз' && carId !== 'Не призначено') {
-      if (!carRoutes[carId]) {
-        let modelLabel = window.getCarName(carId);
-        const driver = (state.drivers || []).find(dr => String(dr['ID_Авто']) === String(carId));
-        if (driver) {
-           const foundModel = driver['Авто'] || driver['Модель'] || driver['Марка_Авто'] || driver['Автомобіль'];
-           if (foundModel) modelLabel = foundModel;
-        }
-        
-        const isIncident = hasCarIncidentOnDate(carId, todayStr);
-        carRoutes[carId] = {
-          model: modelLabel,
-          incident: isIncident,
-          deliveries: []
-        };
-      }
-      carRoutes[carId].deliveries.push(d);
+    const carObj = (window.cachedCars || []).find(c => String(c.id) === String(d.car));
+    const modelLabel = carObj ? (carObj.brand + ' ' + carObj.model) : d.car;
+    const isIncident = carObj && (carObj.status === 'Ремонт' || carObj.status === 'Аварія');
+
+    if (d.car && d.car !== 'Самовивіз' && d.car !== 'Не призначено') {
+      if (!carRoutes[d.car]) carRoutes[d.car] = {
+        model: modelLabel,
+        incident: isIncident,
+        deliveries: []
+      };
+      carRoutes[d.car].deliveries.push(d);
     }
   });
 
-  // Calculate idle cars (from drivers)
+  // Calculate idle cars
   const activeCarIds = Object.keys(carRoutes);
-  const idleCars = (state.drivers || []).filter(d => !activeCarIds.includes(String(d['ID_Авто'])));
-  const idleCarNames = idleCars.map(d => window.getCarName(d['ID_Авто'])).join(', ');
+  const idleCars = (window.cachedCars || []).filter(c => !activeCarIds.includes(String(c.id)));
+  const idleCarNames = idleCars.map(c => c.model).join(', ');
   
   // Place idle cars at base
-  const baseIconHtml = `
-    <div style="display:flex; flex-direction:column; align-items:center; position:relative; z-index: 100;">
-      <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.2); padding: 2px 6px; display:flex; font-family:'Outfit', sans-serif; font-weight:900; font-size:12px; margin-bottom: 2px;">
-        <span style="color:#b01c24;">Pro</span><span style="color:#112349;">Pex</span>
-      </div>
-      <div style="background:#1e1b4b; border:2px solid white; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.5); width:24px; height:24px; display:flex; align-items:center; justify-content:center; color:white;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      </div>
-    </div>
-    ${idleCarNames ? `<div style="position:absolute; bottom:-20px; left:-50%; white-space:nowrap; background:rgba(30,30,35,0.9); color:var(--text-muted); font-size:10px; padding:3px 6px; border-radius:4px; border: 1px solid rgba(255,255,255,0.05); transform:translateX(-25%); z-index: 101;">В гаражі: ${idleCarNames}</div>` : ''}
-  `;
   const baseIcon = L.divIcon({
     className: 'custom-map-icon',
-    html: baseIconHtml,
-    iconSize: [34, 34],
-    iconAnchor: [17, 17]
+    html: `<div style="background:#71717a; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.3);"></div>
+           <div style="position:absolute; top:-25px; left:-50%; white-space:nowrap; background:rgba(0,0,0,0.8); color:white; font-size:10px; padding:2px 6px; border-radius:4px; transform:translateX(-25%);">На базі: ${idleCarNames || 'Немає'}</div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
   });
   L.marker(baseCoords, {icon: baseIcon}).addTo(fleetMap);
 
@@ -178,9 +140,8 @@ async function openGlobalMap() {
   const toGeocode = [];
   Object.values(carRoutes).forEach(route => {
     route.deliveries.forEach(d => {
-      const addr = d['Адреса'] ? d['Адреса'].trim() : '';
-      if (addr && !addressCache[addr]) {
-        toGeocode.push(addr);
+      if (!addressCache[d.address]) {
+        toGeocode.push(d.address);
       }
     });
   });
@@ -198,223 +159,95 @@ async function openGlobalMap() {
     }
   }
 
-  // Setup map UI
-  document.getElementById('map-filter-buttons').innerHTML = '';
-  document.getElementById('map-total-km').textContent = '0.0 км';
-
   loadingOverlay.style.display = 'none';
 
-  // State for map markers and layers
-  window.mapRouteLayers = {};
-  window.mapCarDistances = {};
+  // Draw markers
   const bounds = L.latLngBounds([baseCoords]);
-  let totalFleetDistance = 0;
 
-  // Colors for different cars
-  const carColors = ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ef4444', '#06b6d4', '#d946ef'];
-
-  // Global toggle function
-  window.toggleMapCar = function(carId) {
-    if (carId === 'all') {
-      const isChecked = document.getElementById('map-filter-all').checked;
-      document.querySelectorAll('.map-car-checkbox').forEach(cb => {
-        if (cb.value !== 'all') {
-           cb.checked = isChecked;
-           toggleSingleCar(cb.value, isChecked);
-        }
-      });
-    } else {
-      const isChecked = document.getElementById('map-cb-' + carId).checked;
-      toggleSingleCar(carId, isChecked);
-      
-      // Update 'all' checkbox state
-      const allChecked = Array.from(document.querySelectorAll('.map-car-checkbox:not(#map-filter-all)')).every(cb => cb.checked);
-      document.getElementById('map-filter-all').checked = allChecked;
-    }
-    
-    // Recalculate total distance
-    let newTotal = 0;
-    document.querySelectorAll('.map-car-checkbox:not(#map-filter-all)').forEach(cb => {
-      if (cb.checked && window.mapCarDistances[cb.value]) {
-        newTotal += window.mapCarDistances[cb.value];
-      }
-    });
-    document.getElementById('map-total-km').textContent = newTotal.toFixed(1) + ' км';
-  };
-
-  function toggleSingleCar(carId, show) {
-    if (window.mapRouteLayers[carId]) {
-      window.mapRouteLayers[carId].forEach(layer => {
-        if (show) layer.addTo(fleetMap);
-        else fleetMap.removeLayer(layer);
-      });
-    }
-  }
-
-  // Generate All button
-  let filtersHtml = `
-    <label class="btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-color);">
-      <input type="checkbox" id="map-filter-all" class="map-car-checkbox" value="all" checked onchange="toggleMapCar('all')" style="cursor:pointer;">
-      <span style="font-weight: 700; color: var(--text-color);">Усі маршрути</span>
-    </label>
-  `;
-
-  let colorIndex = 0;
-  
-  // Process each car route
-  for (const [carId, route] of Object.entries(carRoutes)) {
-    const routeColor = carColors[colorIndex % carColors.length];
-    colorIndex++;
-    
-    // Sort deliveries by time
-    route.deliveries.sort((a, b) => (a['Час'] || '').localeCompare(b['Час'] || ''));
-    
-    let validDeliveries = [];
+  Object.values(carRoutes).forEach(route => {
     route.deliveries.forEach(d => {
-      const addr = d['Адреса'] ? d['Адреса'].trim() : '';
-      const coords = addressCache[addr];
+      const coords = addressCache[d.address];
       if (coords) {
-        validDeliveries.push(d);
         bounds.extend([coords.lat, coords.lon]);
+        const isCompleted = (d.status === 'Виконано' || d.status === 'Завершено');
+        const isProblem = route.incident && !isCompleted;
+        
+        let color = '#3b82f6'; // Planned
+        if (isCompleted) color = '#10b981'; // Completed
+        if (isProblem) color = '#ef4444'; // Incident
+
+        const pulsingCss = isProblem ? 'animation: mapPulse 2s infinite ease-in-out;' : '';
+        const pulseKeyframes = isProblem && !document.getElementById('mapPulseAnim') ? `<style id="mapPulseAnim">@keyframes mapPulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+/* Light theme additions */
+body.light-theme #header-filter-btn {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important;
+  border-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+body.light-theme #add-delivery-btn {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+body.light-theme #header-map-btn {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+  color: #8b5cf6 !important;
+}
+
+body.light-theme .month-day-cell.other-month {
+  background-color: #e5e7eb;
+}
+
+body.light-theme .list-badge-status.planned {
+  color: #4b5563;
+  border-color: #9ca3af;
+}
+
+body.light-theme .topbar {
+  background-color: #ffffff;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+body.light-theme .input-search {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+  color: #111827;
+}
+
+</style>` : '';
+        
+        if (pulseKeyframes) document.head.insertAdjacentHTML('beforeend', pulseKeyframes);
+
+        const iconHtml = `
+          <div style="background:${color}; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.3); ${pulsingCss}"></div>
+          <div style="position:absolute; top:-25px; left:-50%; white-space:nowrap; background:rgba(0,0,0,0.8); color:white; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:600; transform:translateX(-25%);">${route.model}</div>
+        `;
+
+        const customIcon = L.divIcon({
+          className: 'custom-map-icon',
+          html: iconHtml,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8]
+        });
+
+        L.marker([coords.lat, coords.lon], {icon: customIcon}).addTo(fleetMap).bindPopup(`<b>${route.model}</b><br>${d.address}<br>Час: ${d.time}<br>Статус: ${d.status}`);
       }
     });
-
-    let lastCompletedIdx = -1;
-    for (let i = validDeliveries.length - 1; i >= 0; i--) {
-      const st = validDeliveries[i]['Статус'] || '';
-      if (st === 'Виконано' || st === 'Завершено') {
-        lastCompletedIdx = i;
-        break;
-      }
-    }
-
-    let waypointsSolid = [];
-    let waypointsDashed = [];
-
-    if (lastCompletedIdx === -1) {
-      waypointsDashed = [baseCoords, ...validDeliveries.map(d => {
-        const c = addressCache[d['Адреса'] ? d['Адреса'].trim() : ''];
-        return [c.lat, c.lon];
-      }), baseCoords];
-    } else if (lastCompletedIdx === validDeliveries.length - 1) {
-      waypointsSolid = [baseCoords, ...validDeliveries.map(d => {
-        const c = addressCache[d['Адреса'] ? d['Адреса'].trim() : ''];
-        return [c.lat, c.lon];
-      }), baseCoords];
-    } else {
-      waypointsSolid = [baseCoords];
-      for (let i = 0; i <= lastCompletedIdx; i++) {
-        const c = addressCache[validDeliveries[i]['Адреса'] ? validDeliveries[i]['Адреса'].trim() : ''];
-        waypointsSolid.push([c.lat, c.lon]);
-      }
-      waypointsDashed = [];
-      for (let i = lastCompletedIdx; i < validDeliveries.length; i++) {
-        const c = addressCache[validDeliveries[i]['Адреса'] ? validDeliveries[i]['Адреса'].trim() : ''];
-        waypointsDashed.push([c.lat, c.lon]);
-      }
-      waypointsDashed.push(baseCoords);
-    }
-    
-    let distanceKm = 0;
-    window.mapRouteLayers[carId] = [];
-
-    if (validDeliveries.length > 0) {
-      try {
-        loadingOverlay.style.display = 'flex';
-        loadingText.textContent = `Побудова маршруту для ${route.model}...`;
-
-        const fetchSegment = async (wpts, isDashed) => {
-          if (wpts.length < 2) return;
-          const coordString = wpts.map(wp => `${wp[1]},${wp[0]}`).join(';');
-          const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`;
-          const res = await fetch(osrmUrl);
-          const data = await res.json();
-          if (data.routes && data.routes.length > 0) {
-            const osrmRoute = data.routes[0];
-            distanceKm += (osrmRoute.distance / 1000);
-            const latLngs = osrmRoute.geometry.coordinates.map(coord => [coord[1], coord[0]]);
-            const polyline = L.polyline(latLngs, {
-              color: routeColor,
-              weight: 4,
-              opacity: 0.8,
-              dashArray: isDashed ? '8, 8' : null
-            }).addTo(fleetMap);
-            window.mapRouteLayers[carId].push(polyline);
-          }
-          await sleep(500); // rate limit
-        };
-
-        if (waypointsSolid.length >= 2) await fetchSegment(waypointsSolid, false);
-        if (waypointsDashed.length >= 2) await fetchSegment(waypointsDashed, true);
-
-        totalFleetDistance += distanceKm;
-        window.mapCarDistances[carId] = distanceKm;
-      } catch (err) {
-        console.error("OSRM Routing error:", err);
-      }
-    }
-    
-    // Draw markers
-    validDeliveries.forEach((d, index) => {
-      const addr = d['Адреса'] ? d['Адреса'].trim() : '';
-      const coords = addressCache[addr];
-      const status = d['Статус'] || '';
-      const isCompleted = (status === 'Виконано' || status === 'Завершено');
-      const isProblem = route.incident && !isCompleted;
-      
-      const pulsingCss = isProblem ? 'animation: mapPulse 2s infinite ease-in-out;' : '';
-      
-      const iconHtml = `
-        <div style="background:${routeColor}; width:20px; height:20px; border-radius:50%; border:2px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:white; font-size:11px; font-weight:800; ${pulsingCss}">${index + 1}</div>
-        <div style="position:absolute; top:-28px; left:-50%; white-space:nowrap; background:rgba(30,30,35,0.9); color:white; font-size:10px; padding:3px 8px; border-radius:6px; font-weight:600; border:1px solid ${routeColor}; transform:translateX(-25%);">${route.model} (№${index + 1})</div>
-      `;
-
-      const customIcon = L.divIcon({
-        className: 'custom-map-icon',
-        html: iconHtml,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-      });
-
-      const marker = L.marker([coords.lat, coords.lon], { icon: customIcon }).addTo(fleetMap);
-      
-      // Popup info
-      marker.bindTooltip(`<b>${d['Час'] || ''} - ${route.model}</b><br>${addr}<br>Статус: ${status}`, { direction: 'top', offset: [0, -10] });
-      
-      window.mapRouteLayers[carId].push(marker);
-    });
-
-    // Add filter button for this car
-    filtersHtml += `
-      <label class="btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid ${routeColor}40;">
-        <input type="checkbox" id="map-cb-${carId}" class="map-car-checkbox" value="${carId}" checked onchange="toggleMapCar('${carId}')" style="cursor:pointer; accent-color: ${routeColor};">
-        <span style="font-weight: 700; color: var(--text-color);">${route.model} <span style="color:var(--text-muted);">(${distanceKm.toFixed(1)} км)</span></span>
-      </label>
-    `;
-  }
-
-  document.getElementById('map-filter-buttons').innerHTML = filtersHtml;
-  document.getElementById('map-total-km').textContent = totalFleetDistance.toFixed(1) + ' км';
-  
-  loadingOverlay.style.display = 'none';
+  });
 
   if (Object.keys(carRoutes).length > 0 || idleCars.length > 0) {
     fleetMap.fitBounds(bounds, {padding: [50, 50], maxZoom: 14});
-  }
-  } catch (err) {
-    alert("Map Error: " + err.message + "\n" + err.stack);
-    loadingOverlay.style.display = 'none';
   }
 }
 
 
 </script>
-  <style>:root{--sidebar-bg:#1c1c1e;--bg-color:#252528;--card-bg:#2c2c2e;--card-hover:#333335;--border-color:rgba(255,255,255,0.08);--border-focus:#3b82f6;--text-color:#ffffff;--text-muted:#a1a1aa;--text-dark:#71717a;--primary:#10b981;--primary-hover:#059669;--accent-blue:#3b82f6;--accent-purple:#8b5cf6;--danger:#ef4444;--status-planned:#71717a;--status-in-progress:#3b82f6;--status-completed:#10b981;--status-problem:#ef4444;--font-title:'Outfit', 'Inter', sans-serif;--font-body:'Inter', sans-serif;--transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:var(--font-body);background-color:var(--bg-color);color:var(--text-color);line-height:1.5;overflow-x:hidden;height:100vh;}.header-top{display:flex;justify-content:space-between;align-items:center;}.logo-container{display:flex;align-items:baseline;font-family:var(--font-title);text-decoration:none;cursor:pointer;}.logo-pro{color:#b01c24;font-weight:800;font-size:32px;letter-spacing:-1px;}.logo-pex{color:#112349;font-weight:800;font-size:32px;letter-spacing:-1px;}.logo-sub{color:var(--text-muted);font-size:10px;margin-left:4px;font-weight:700;letter-spacing:4px;text-transform:uppercase;}.header-actions{display:flex;gap:12px;align-items:center;}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background-color:rgba(16, 185, 129, 0.15);color:#10b981;border:none;padding:10px 20px;border-radius:8px;font-family:var(--font-title);font-weight:600;font-size:14px;cursor:pointer;transition:var(--transition);box-shadow:none;}.btn:hover{background-color:rgba(16, 185, 129, 0.25);transform:none;box-shadow:none;}.btn:active{transform:translateY(0);}.btn-secondary{background-color:rgba(255, 255, 255, 0.05);border:1px solid rgba(255, 255, 255, 0.05);color:var(--text-muted);box-shadow:none;}.btn-secondary:hover{background-color:var(--card-hover);border-color:var(--text-muted);box-shadow:none;}.btn-icon{width:38px;height:38px;padding:0;border-radius:8px;}.control-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;background-color:var(--card-bg);padding:12px 16px;border-radius:12px;border:1px solid var(--border-color);}.date-navigation{display:flex;align-items:center;gap:8px;}.date-display{font-family:var(--font-title);font-size:16px;font-weight:700;min-width:180px;text-align:center;cursor:pointer;padding:6px 12px;border-radius:6px;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:6px;}.date-display:hover{background-color:var(--border-color);}.datepicker-input{position:absolute;opacity:0;pointer-events:none;width:0;height:0;}.view-selector{display:flex;background-color:var(--bg-color);padding:4px;border-radius:8px;border:1px solid var(--border-color);}.view-btn{background:none;border:none;color:var(--text-muted);padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:6px;}.view-btn.active{background-color:var(--card-bg);color:var(--text-color);box-shadow:0 2px 8px rgba(0,0,0,0.4);}.view-btn:hover:not(.active){color:var(--text-color);}.car-filter-container{display:flex;align-items:center;gap:8px;}.car-filter-container label{font-size:12px;color:var(--text-muted);font-weight:500;}.select-custom{background-color:var(--bg-color);color:var(--text-color);border:1px solid var(--border-color);padding:6px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;outline:none;transition:var(--transition);}.select-custom:focus{border-color:var(--border-focus);}.calendar-body{flex-grow:1;position:relative;min-height:500px;}.view-panel{display:none;height:100%;animation:fadeIn 0.25s ease-out;}.view-panel.active{display:block;}@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}.day-grid{display:grid;grid-template-columns:80px repeat(4, minmax(0, 1fr));background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow-x:hidden;overflow-y:auto;height:100%;max-height:calc(100vh - 200px);}.grid-header{position:sticky;top:0;z-index:100;background-color:var(--card-bg);padding:12px;text-align:center;font-weight:700;font-family:var(--font-title);border-bottom:2px solid var(--border-color);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}.driver-photo-container{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.3);}.driver-name{font-size:11px;color:var(--text-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}.time-col{background-color:var(--card-bg);padding:10px;text-align:center;font-weight:700;color:var(--text-muted);font-size:12px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border-color);}.grid-cell{background-color:var(--bg-color);padding:6px;min-height:48px;transition:var(--transition);position:relative;}.grid-cell:hover{background-color:var(--card-hover);}.delivery-card{background:linear-gradient(135deg, #1c1f26 0%, #252a34 100%);border-left:4px solid var(--status-planned);border-radius:6px;padding:8px 10px;font-size:12px;margin-bottom:4px;cursor:pointer;box-shadow:0 4px 10px rgba(0, 0, 0, 0.2);transition:var(--transition);position:relative;z-index:5;}.delivery-card:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 8px 16px rgba(0, 0, 0, 0.4);z-index:10;}.delivery-card.planned{border-left-color:var(--status-planned);}.delivery-card.in-progress{border-left-color:var(--status-in-progress);}.delivery-card.completed{border-left-color:var(--status-completed);}.delivery-card.problem{border-left-color:var(--status-problem);background:linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, #1c1f26 100%);border:1px solid rgba(239, 68, 68, 0.25);border-left:4px solid var(--status-problem);animation:problemCardPulse 2s infinite ease-in-out;}@keyframes problemCardPulse{0%{box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.25);}50%{box-shadow:0 4px 20px rgba(239, 68, 68, 0.45), 0 0 10px rgba(239, 68, 68, 0.2);border-color:rgba(239, 68, 68, 0.6);}100%{box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.25);}}.delivery-card.buffer{background:repeating-linear-gradient( 45deg, #14161a, #14161a 10px, #1c1f26 10px, #1c1f26 20px );border-left:4px dashed var(--text-dark);opacity:0.55;cursor:not-allowed;box-shadow:none;}.delivery-card.buffer:hover{transform:none;box-shadow:none;}.card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}.card-time{font-weight:800;color:#ffffff;font-size:11px;}.card-order-badge{background-color:var(--border-color);color:var(--accent-blue);padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;}.card-order-badge.cash{color:#eab308;}.card-address{font-weight:500;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}.card-footer{display:flex;justify-content:space-between;color:var(--text-muted);font-size:10px;}.card-car-badge{background-color:rgba(2, 132, 199, 0.15);color:var(--accent-blue);padding:0px 4px;border-radius:3px;font-weight:800;}.week-grid{display:grid;grid-template-columns:80px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,0.5fr) minmax(0,0.5fr);background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow-x:hidden;overflow-y:auto;height:100%;max-height:calc(100vh - 200px);}.grid-header.week-day{border-bottom:2px solid var(--border-color);}.week-day-title{font-size:13px;font-weight:700;}.week-day-date{font-size:18px;font-weight:800;color:var(--accent-blue);font-family:var(--font-title);}.week-day.today .week-day-date{background-color:var(--accent-blue);color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}.month-grid{display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:auto;height:100%;}.month-header-cell{background-color:var(--card-bg);padding:10px;text-align:center;font-weight:700;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border-color);}.month-day-cell{background-color:var(--bg-color);min-height:100px;padding:8px;border-right:1px solid var(--border-color);border-bottom:1px solid var(--border-color);cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;gap:4px;}.month-day-cell:hover{background-color:var(--card-hover);}.month-day-cell.other-month{background-color:#08090a;opacity:0.4;}.month-day-number{font-family:var(--font-title);font-weight:800;font-size:14px;align-self:flex-end;color:var(--text-muted);}.month-day-cell.today .month-day-number{color:#ffffff;background-color:var(--accent-blue);width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;}.month-mini-card{font-size:10px;padding:2px 6px;border-radius:4px;background-color:var(--card-bg);border-left:3px solid var(--status-planned);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-color);font-weight:500;}.month-mini-card.planned{border-left-color:var(--status-planned);}.month-mini-card.in-progress{border-left-color:var(--status-in-progress);}.month-mini-card.completed{border-left-color:var(--status-completed);}.month-mini-card.problem{border-left-color:var(--status-problem);}.list-container{display:flex;flex-direction:column;gap:16px;}.list-search-bar{display:flex;gap:12px;background-color:var(--card-bg);padding:12px 16px;border-radius:12px;border:1px solid var(--border-color);}.search-input-wrapper{position:relative;flex-grow:1;}.search-input-wrapper i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);width:18px;height:18px;}.input-search{width:100%;background-color:var(--bg-color);border:1px solid var(--border-color);color:var(--text-color);padding:10px 10px 10px 40px;border-radius:8px;outline:none;font-size:14px;transition:var(--transition);}.input-search:focus{border-color:var(--border-focus);}.list-results{display:flex;flex-direction:column;gap:16px;max-height:calc(100vh - 260px);overflow-y:auto;padding-right:4px;}.list-group{display:flex;flex-direction:column;gap:8px;}.list-group-title{font-family:var(--font-title);font-size:14px;font-weight:700;color:var(--accent-blue);border-left:3px solid var(--accent-blue);padding-left:8px;margin-bottom:4px;}.list-row-card{background-color:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:16px;display:grid;grid-template-columns:80px 120px 1fr 100px 100px;align-items:center;gap:16px;cursor:pointer;transition:var(--transition);}.list-row-card:hover{background-color:var(--card-hover);border-color:var(--text-muted);transform:translateX(4px);}.list-time{font-family:var(--font-title);font-weight:800;font-size:16px;}.list-car-info{display:flex;align-items:center;gap:8px;}.list-address-info{font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.list-address-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}.list-badge-status{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:700;background-color:rgba(255,255,255,0.05);width:fit-content;}.list-badge-status.planned{color:var(--text-muted);border:1px solid var(--status-planned);}.list-badge-status.in-progress{color:var(--status-in-progress);border:1px solid var(--status-in-progress);}.list-badge-status.completed{color:var(--status-completed);border:1px solid var(--status-completed);}.list-badge-status.problem{color:var(--status-problem);border:1px solid var(--status-problem);}.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(6, 7, 9, 0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);justify-content:center;align-items:center;z-index:1000;opacity:0;transition:opacity 0.25s ease-out;}.modal.show{display:flex;opacity:1;}.modal-content{background-color:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;width:520px;max-width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.6);transform:scale(0.95);transition:transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);}.modal.show .modal-content{transform:scale(1);}.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border-color);}.modal-header h2{font-family:var(--font-title);font-size:20px;font-weight:800;}.modal-close-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:50%;transition:var(--transition);}.modal-close-btn:hover{background-color:var(--border-color);color:#fff;}.modal-body{padding:24px;}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.form-group{margin-bottom:18px;position:relative;}.form-group.full-width{grid-column:span 2;}.form-group label{display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--text-muted);}.form-control{width:100%;background-color:var(--bg-color);border:1px solid var(--border-color);color:var(--text-color);padding:10px 12px;border-radius:8px;font-family:var(--font-body);font-size:14px;outline:none;transition:var(--transition);}.form-control:focus{border-color:var(--border-focus);box-shadow:0 0 0 2px rgba(59, 130, 246, 0.15);}.autocomplete-items{position:absolute;border:1px solid var(--border-color);z-index:120;top:100%;left:0;right:0;background-color:var(--card-bg);max-height:180px;overflow-y:auto;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);margin-top:4px;}.autocomplete-items div{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border-color);font-size:13px;transition:var(--transition);}.autocomplete-items div:hover{background-color:var(--border-color);color:#ffffff;}.modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid var(--border-color);}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.detail-item{border-bottom:1px solid var(--border-color);padding-bottom:8px;}.detail-item.full-width{grid-column:span 2;}.detail-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}.detail-value{font-size:14px;font-weight:600;color:#ffffff;}@media (max-width:1024px){.list-row-card{grid-template-columns:80px 1fr 100px;}.list-car-info{display:none;}}@media (max-width:768px){.control-bar{flex-direction:column;align-items:stretch;}.date-navigation{justify-content:space-between;}.view-selector{justify-content:space-between;}.list-row-card{grid-template-columns:1fr;gap:8px;}.form-grid{grid-template-columns:1fr;}.form-group.full-width{grid-column:span 1;}}.warehouse-problem{border:1px dashed rgba(239, 68, 68, 0.45);border-left:4px dashed var(--danger) !important;background:linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, #1c1f26 100%) !important;animation:warehouseProblemPulse 2.5s infinite ease-in-out;}.warehouse-problem .card-time{color:var(--danger) !important;font-weight:700;}@keyframes warehouseProblemPulse{0%{box-shadow:0 4px 8px rgba(239, 68, 68, 0.05);border-color:rgba(239, 68, 68, 0.3);}50%{box-shadow:0 4px 15px rgba(239, 68, 68, 0.25), 0 0 8px rgba(239, 68, 68, 0.1);border-color:rgba(239, 68, 68, 0.6);}100%{box-shadow:0 4px 8px rgba(239, 68, 68, 0.05);border-color:rgba(239, 68, 68, 0.3);}}.delivery-card.incident-affected{border:2px dashed #f97316 !important; animation:incidentAffectedPulse 2s infinite ease-in-out !important;} .delivery-card.incident-affected .card-time{color:#f97316 !important;font-weight:700;}@keyframes incidentAffectedPulse{0%{box-shadow:0 4px 8px rgba(249, 115, 22, 0.05);border-color:rgba(249, 115, 22, 0.3);background:linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, #1c1f26 100%);}50%{box-shadow:0 4px 15px rgba(249, 115, 22, 0.35), 0 0 8px rgba(249, 115, 22, 0.2);border-color:rgba(249, 115, 22, 0.8);background:linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, #1c1f26 100%);}100%{box-shadow:0 4px 8px rgba(249, 115, 22, 0.05);border-color:rgba(249, 115, 22, 0.3);background:linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, #1c1f26 100%);}}.month-mini-card.incident-affected{border:1px dashed #f97316 !important;border-left:3px dashed #f97316 !important;background-color:rgba(249, 115, 22, 0.15) !important;color:#fdba74 !important;animation:monthIncidentPulse 2s infinite ease-in-out;}@keyframes monthIncidentPulse{0%{background-color:rgba(249, 115, 22, 0.1);}50%{background-color:rgba(249, 115, 22, 0.3);}100%{background-color:rgba(249, 115, 22, 0.1);}}.list-row-card.incident-affected{border:2px dashed #f97316 !important;animation:listIncidentPulse 2s infinite ease-in-out;}.incident-alert-text{color:#f97316;font-size:11px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px;}@keyframes listIncidentPulse{0%{border-color:rgba(249, 115, 22, 0.3);background:linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, #14161a 100%);}50%{border-color:rgba(249, 115, 22, 0.8);background:linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, #14161a 100%);}100%{border-color:rgba(249, 115, 22, 0.3);background:linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, #14161a 100%);}}.login-screen-container{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center, #111317 0%, #07080a 100%);display:flex;align-items:center;justify-content:center;z-index:99999;font-family:var(--font-body);}.login-card{width:100%;max-width:420px;padding:40px;background:rgba(20, 22, 26, 0.7);border:1px solid rgba(255, 255, 255, 0.05);border-radius:16px;box-shadow:0 20px 50px rgba(0, 0, 0, 0.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);text-align:center;animation:loginFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);}@keyframes loginFadeIn{from{opacity:0;transform:scale(0.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}.login-logo{font-family:var(--font-title);font-size:28px;font-weight:800;background:linear-gradient(135deg, #10b981 0%, #0284c7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;letter-spacing:-0.5px;}.login-subtitle{color:var(--text-muted);font-size:14px;margin-bottom:30px;}.login-form-group{text-align:left;margin-bottom:20px;position:relative;}.login-form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}.login-input{width:100%;padding:12px 16px;background:rgba(11, 12, 14, 0.6);border:1px solid rgba(255, 255, 255, 0.08);border-radius:8px;color:var(--text-color);font-size:14px;font-family:var(--font-body);transition:var(--transition);}.login-input:focus{outline:none;border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(2, 132, 199, 0.15);background:rgba(11, 12, 14, 0.9);}.password-toggle-btn{position:absolute;right:12px;top:35px;background:none;border:none;color:var(--text-dark);cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}.password-toggle-btn:hover{color:var(--text-muted);}.login-error{color:var(--danger);font-size:13px;font-weight:500;margin-bottom:15px;display:none;padding:8px 12px;background:rgba(239, 68, 68, 0.1);border-radius:6px;border:1px solid rgba(239, 68, 68, 0.15);text-align:left;}.login-btn{width:100%;padding:12px;background:rgba(16, 185, 129, 0.15);border:none;border-radius:8px;color:#10b981;font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);box-shadow:none;}.login-btn:hover{background:rgba(16, 185, 129, 0.25);transform:none;box-shadow:none;}.login-btn:active{transform:translateY(0);}.login-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}@media (max-width:600px){.login-screen-container{padding:10px;}.login-card{max-width:94%;padding:36px 20px;border-radius:20px;box-shadow:0 15px 40px rgba(0, 0, 0, 0.6);}.login-logo{font-size:34px !important;margin-bottom:12px;}.login-subtitle{font-size:16px !important;margin-bottom:35px;}.login-form-group{margin-bottom:24px;}.login-form-group label{font-size:14px !important;margin-bottom:10px;}.login-input{padding:16px 20px !important;font-size:18px !important;border-radius:10px;}.password-toggle-btn{top:40px !important;right:16px !important;transform:scale(1.2);}.login-btn{width:100%;padding:12px;background:rgba(16, 185, 129, 0.15);border:none;border-radius:8px;color:#10b981;font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);box-shadow:none;}.login-logo-container svg{width:80px !important;height:80px !important;margin-bottom:16px !important;}}.header-profile-info{display:flex;align-items:center;gap:12px;margin-left:15px;padding-left:15px;border-left:1px solid var(--border-color);}.profile-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:white;}.profile-details{display:flex;flex-direction:column;text-align:left;}.profile-name{font-size:12px;font-weight:700;color:var(--text-color);}.profile-role{font-size:10px;color:var(--text-muted);font-weight:500;}.logout-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}.logout-btn:hover{background:rgba(239, 68, 68, 0.1);color:var(--danger);}.director-banner{width:100%;background:linear-gradient(90deg, rgba(217, 119, 6, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%);border-bottom:1px solid rgba(217, 119, 6, 0.25);padding:8px 20px;font-size:12px;color:#f59e0b;font-weight:600;display:flex;align-items:center;gap:8px;}.delivery-card[draggable="true"]{cursor:grab;user-select:none;}.delivery-card.dragging{opacity:0.35;transform:scale(0.97);border:2px dashed var(--accent-blue) !important;box-shadow:0 4px 12px rgba(0, 0, 0, 0.3) !important;z-index:1000 !important;}.grid-cell.drag-hover{background-color:rgba(2, 132, 199, 0.12) !important;outline:2px dashed var(--border-focus) !important;outline-offset:-2px;transition:var(--transition);box-shadow:inset 0 0 10px rgba(59, 130, 246, 0.15);}.driver-photo-container{position:relative;cursor:default;}.driver-photo-container.admin-editable{cursor:pointer;}.avatar-edit-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0, 0, 0, 0.6);display:flex;align-items:center;justify-content:center;opacity:0;transition:var(--transition);border-radius:50%;}.driver-photo-container.admin-editable:hover .avatar-edit-overlay{opacity:1;}.card-driver-info{display:flex;align-items:center;gap:6px;}.card-driver-avatar{width:18px;height:18px;border-radius:50%;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1px solid rgba(255, 255, 255, 0.15);}.card-driver-avatar-initial{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1px solid rgba(255, 255, 255, 0.15);}
+  <style>:root{--sidebar-bg:#1c1c1e;--bg-color:#252528;--card-bg:#2c2c2e;--card-hover:#333335;--border-color:rgba(255,255,255,0.08);--border-focus:#3b82f6;--text-color:#ffffff;--text-muted:#a1a1aa;--text-dark:#71717a;--primary:#10b981;--primary-hover:#059669;--accent-blue:#3b82f6;--accent-purple:#8b5cf6;--danger:#ef4444;--status-planned:#71717a;--status-in-progress:#3b82f6;--status-completed:#10b981;--status-problem:#ef4444;--font-title:'Outfit', 'Inter', sans-serif;--font-body:'Inter', sans-serif;--transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:var(--font-body);background-color:var(--bg-color);color:var(--text-color);line-height:1.5;overflow-x:hidden;height:100vh;}.header-top{display:flex;justify-content:space-between;align-items:center;}.logo-container{display:flex;align-items:baseline;font-family:var(--font-title);text-decoration:none;cursor:pointer;}.logo-pro{color:#ef4444;font-weight:800;font-size:32px;letter-spacing:-1px;}.logo-pex{color:#0284c7;font-weight:800;font-size:32px;letter-spacing:-1px;}.logo-sub{color:var(--text-muted);font-size:10px;margin-left:6px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}.header-actions{display:flex;gap:12px;align-items:center;}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background-color:rgba(16, 185, 129, 0.15);color:#10b981;border:none;padding:10px 20px;border-radius:8px;font-family:var(--font-title);font-weight:600;font-size:14px;cursor:pointer;transition:var(--transition);box-shadow:none;}.btn:hover{background-color:rgba(16, 185, 129, 0.25);transform:none;box-shadow:none;}.btn:active{transform:translateY(0);}.btn-secondary{background-color:rgba(255, 255, 255, 0.05);border:1px solid rgba(255, 255, 255, 0.05);color:var(--text-muted);box-shadow:none;}.btn-secondary:hover{background-color:var(--card-hover);border-color:var(--text-muted);box-shadow:none;}.btn-icon{width:38px;height:38px;padding:0;border-radius:8px;}.control-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;background-color:var(--card-bg);padding:12px 16px;border-radius:12px;border:1px solid var(--border-color);}.date-navigation{display:flex;align-items:center;gap:8px;}.date-display{font-family:var(--font-title);font-size:16px;font-weight:700;min-width:180px;text-align:center;cursor:pointer;padding:6px 12px;border-radius:6px;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:6px;}.date-display:hover{background-color:var(--border-color);}.datepicker-input{position:absolute;opacity:0;pointer-events:none;width:0;height:0;}.view-selector{display:flex;background-color:var(--bg-color);padding:4px;border-radius:8px;border:1px solid var(--border-color);}.view-btn{background:none;border:none;color:var(--text-muted);padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:6px;}.view-btn.active{background-color:var(--card-bg);color:var(--text-color);box-shadow:0 2px 8px rgba(0,0,0,0.4);}.view-btn:hover:not(.active){color:var(--text-color);}.car-filter-container{display:flex;align-items:center;gap:8px;}.car-filter-container label{font-size:12px;color:var(--text-muted);font-weight:500;}.select-custom{background-color:var(--bg-color);color:var(--text-color);border:1px solid var(--border-color);padding:6px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;outline:none;transition:var(--transition);}.select-custom:focus{border-color:var(--border-focus);}.calendar-body{flex-grow:1;position:relative;min-height:500px;}.view-panel{display:none;height:100%;animation:fadeIn 0.25s ease-out;}.view-panel.active{display:block;}@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}.day-grid{display:grid;grid-template-columns:80px repeat(4, 1fr);background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:auto;height:100%;max-height:calc(100vh - 200px);overflow-y:auto;}.grid-header{position:sticky;top:0;z-index:100;background-color:var(--card-bg);padding:12px;text-align:center;font-weight:700;font-family:var(--font-title);border-bottom:2px solid var(--border-color);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}.driver-photo-container{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.3);}.driver-name{font-size:11px;color:var(--text-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}.time-col{background-color:var(--card-bg);padding:10px;text-align:center;font-weight:700;color:var(--text-muted);font-size:12px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border-color);}.grid-cell{background-color:var(--bg-color);padding:6px;min-height:48px;transition:var(--transition);position:relative;}.grid-cell:hover{background-color:var(--card-hover);}.delivery-card{background:linear-gradient(135deg, #1c1f26 0%, #252a34 100%);border-left:4px solid var(--status-planned);border-radius:6px;padding:8px 10px;font-size:12px;margin-bottom:4px;cursor:pointer;box-shadow:0 4px 10px rgba(0, 0, 0, 0.2);transition:var(--transition);position:relative;z-index:5;}.delivery-card:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 8px 16px rgba(0, 0, 0, 0.4);z-index:10;}.delivery-card.planned{border-left-color:var(--status-planned);}.delivery-card.in-progress{border-left-color:var(--status-in-progress);}.delivery-card.completed{border-left-color:var(--status-completed);}.delivery-card.problem{border-left-color:var(--status-problem);background:linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, #1c1f26 100%);border:1px solid rgba(239, 68, 68, 0.25);border-left:4px solid var(--status-problem);animation:problemCardPulse 2s infinite ease-in-out;}@keyframes problemCardPulse{0%{box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.25);}50%{box-shadow:0 4px 20px rgba(239, 68, 68, 0.45), 0 0 10px rgba(239, 68, 68, 0.2);border-color:rgba(239, 68, 68, 0.6);}100%{box-shadow:0 4px 10px rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.25);}}.delivery-card.buffer{background:repeating-linear-gradient( 45deg, #14161a, #14161a 10px, #1c1f26 10px, #1c1f26 20px );border-left:4px dashed var(--text-dark);opacity:0.55;cursor:not-allowed;box-shadow:none;}.delivery-card.buffer:hover{transform:none;box-shadow:none;}.card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}.card-time{font-weight:800;color:#ffffff;font-size:11px;}.card-order-badge{background-color:var(--border-color);color:var(--accent-blue);padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;}.card-order-badge.cash{color:#eab308;}.card-address{font-weight:500;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}.card-footer{display:flex;justify-content:space-between;color:var(--text-muted);font-size:10px;}.card-car-badge{background-color:rgba(2, 132, 199, 0.15);color:var(--accent-blue);padding:0px 4px;border-radius:3px;font-weight:800;}.week-grid{display:grid;grid-template-columns:80px repeat(7, minmax(0, 1fr));background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:auto;height:100%;max-height:calc(100vh - 200px);overflow-y:auto;}.grid-header.week-day{border-bottom:2px solid var(--border-color);}.week-day-title{font-size:13px;font-weight:700;}.week-day-date{font-size:18px;font-weight:800;color:var(--accent-blue);font-family:var(--font-title);}.week-day.today .week-day-date{background-color:var(--accent-blue);color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}.month-grid{display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));background-color:var(--border-color);border:1px solid var(--border-color);border-radius:12px;overflow:auto;height:100%;}.month-header-cell{background-color:var(--card-bg);padding:10px;text-align:center;font-weight:700;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border-color);}.month-day-cell{background-color:var(--bg-color);min-height:100px;padding:8px;border-right:1px solid var(--border-color);border-bottom:1px solid var(--border-color);cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;gap:4px;}.month-day-cell:hover{background-color:var(--card-hover);}.month-day-cell.other-month{background-color:#08090a;opacity:0.4;}.month-day-number{font-family:var(--font-title);font-weight:800;font-size:14px;align-self:flex-end;color:var(--text-muted);}.month-day-cell.today .month-day-number{color:#ffffff;background-color:var(--accent-blue);width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;}.month-mini-card{font-size:10px;padding:2px 6px;border-radius:4px;background-color:var(--card-bg);border-left:3px solid var(--status-planned);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-color);font-weight:500;}.month-mini-card.planned{border-left-color:var(--status-planned);}.month-mini-card.in-progress{border-left-color:var(--status-in-progress);}.month-mini-card.completed{border-left-color:var(--status-completed);}.month-mini-card.problem{border-left-color:var(--status-problem);}.list-container{display:flex;flex-direction:column;gap:16px;}.list-search-bar{display:flex;gap:12px;background-color:var(--card-bg);padding:12px 16px;border-radius:12px;border:1px solid var(--border-color);}.search-input-wrapper{position:relative;flex-grow:1;}.search-input-wrapper i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);width:18px;height:18px;}.input-search{width:100%;background-color:var(--bg-color);border:1px solid var(--border-color);color:var(--text-color);padding:10px 10px 10px 40px;border-radius:8px;outline:none;font-size:14px;transition:var(--transition);}.input-search:focus{border-color:var(--border-focus);}.list-results{display:flex;flex-direction:column;gap:16px;max-height:calc(100vh - 260px);overflow-y:auto;padding-right:4px;}.list-group{display:flex;flex-direction:column;gap:8px;}.list-group-title{font-family:var(--font-title);font-size:14px;font-weight:700;color:var(--accent-blue);border-left:3px solid var(--accent-blue);padding-left:8px;margin-bottom:4px;}.list-row-card{background-color:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:16px;display:grid;grid-template-columns:80px 120px 1fr 100px 100px;align-items:center;gap:16px;cursor:pointer;transition:var(--transition);}.list-row-card:hover{background-color:var(--card-hover);border-color:var(--text-muted);transform:translateX(4px);}.list-time{font-family:var(--font-title);font-weight:800;font-size:16px;}.list-car-info{display:flex;align-items:center;gap:8px;}.list-address-info{font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.list-address-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}.list-badge-status{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:700;background-color:rgba(255,255,255,0.05);width:fit-content;}.list-badge-status.planned{color:var(--text-muted);border:1px solid var(--status-planned);}.list-badge-status.in-progress{color:var(--status-in-progress);border:1px solid var(--status-in-progress);}.list-badge-status.completed{color:var(--status-completed);border:1px solid var(--status-completed);}.list-badge-status.problem{color:var(--status-problem);border:1px solid var(--status-problem);}.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(6, 7, 9, 0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);justify-content:center;align-items:center;z-index:1000;opacity:0;transition:opacity 0.25s ease-out;}.modal.show{display:flex;opacity:1;}.modal-content{background-color:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;width:520px;max-width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.6);transform:scale(0.95);transition:transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);}.modal.show .modal-content{transform:scale(1);}.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border-color);}.modal-header h2{font-family:var(--font-title);font-size:20px;font-weight:800;}.modal-close-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:50%;transition:var(--transition);}.modal-close-btn:hover{background-color:var(--border-color);color:#fff;}.modal-body{padding:24px;}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.form-group{margin-bottom:18px;position:relative;}.form-group.full-width{grid-column:span 2;}.form-group label{display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--text-muted);}.form-control{width:100%;background-color:var(--bg-color);border:1px solid var(--border-color);color:var(--text-color);padding:10px 12px;border-radius:8px;font-family:var(--font-body);font-size:14px;outline:none;transition:var(--transition);}.form-control:focus{border-color:var(--border-focus);box-shadow:0 0 0 2px rgba(59, 130, 246, 0.15);}.autocomplete-items{position:absolute;border:1px solid var(--border-color);z-index:120;top:100%;left:0;right:0;background-color:var(--card-bg);max-height:180px;overflow-y:auto;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);margin-top:4px;}.autocomplete-items div{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border-color);font-size:13px;transition:var(--transition);}.autocomplete-items div:hover{background-color:var(--border-color);color:#ffffff;}.modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid var(--border-color);}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.detail-item{border-bottom:1px solid var(--border-color);padding-bottom:8px;}.detail-item.full-width{grid-column:span 2;}.detail-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}.detail-value{font-size:14px;font-weight:600;color:#ffffff;}@media (max-width:1024px){.list-row-card{grid-template-columns:80px 1fr 100px;}.list-car-info{display:none;}}@media (max-width:768px){.control-bar{flex-direction:column;align-items:stretch;}.date-navigation{justify-content:space-between;}.view-selector{justify-content:space-between;}.list-row-card{grid-template-columns:1fr;gap:8px;}.form-grid{grid-template-columns:1fr;}.form-group.full-width{grid-column:span 1;}}.delivery-card.incident-affected{border:1px dashed rgba(249, 115, 22, 0.45);border-left:4px dashed #f97316 !important;background:linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, #16181d 100%) !important;animation:incidentAffectedPulse 2.5s infinite ease-in-out;}.delivery-card.incident-affected .card-time{color:#f97316 !important;font-weight:700;}@keyframes incidentAffectedPulse{0%{box-shadow:0 4px 8px rgba(249, 115, 22, 0.05);border-color:rgba(249, 115, 22, 0.3);}50%{box-shadow:0 4px 15px rgba(249, 115, 22, 0.25), 0 0 8px rgba(249, 115, 22, 0.1);border-color:rgba(249, 115, 22, 0.6);}100%{box-shadow:0 4px 8px rgba(249, 115, 22, 0.05);border-color:rgba(249, 115, 22, 0.3);}}.month-mini-card.incident-affected{border-left:3px dashed #f97316 !important;background-color:rgba(249, 115, 22, 0.15) !important;color:#ff9d5c !important;}.list-row-card.incident-affected{border:1px dashed rgba(249, 115, 22, 0.35) !important;background:linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, #14161a 100%) !important;animation:listIncidentPulse 3s infinite ease-in-out;}.incident-alert-text{color:#f97316;font-size:11px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px;}@keyframes listIncidentPulse{0%{border-color:rgba(249, 115, 22, 0.2);}50%{border-color:rgba(249, 115, 22, 0.45);}100%{border-color:rgba(249, 115, 22, 0.2);}}.login-screen-container{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center, #111317 0%, #07080a 100%);display:flex;align-items:center;justify-content:center;z-index:99999;font-family:var(--font-body);}.login-card{width:100%;max-width:420px;padding:40px;background:rgba(20, 22, 26, 0.7);border:1px solid rgba(255, 255, 255, 0.05);border-radius:16px;box-shadow:0 20px 50px rgba(0, 0, 0, 0.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);text-align:center;animation:loginFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);}@keyframes loginFadeIn{from{opacity:0;transform:scale(0.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}.login-logo{font-family:var(--font-title);font-size:28px;font-weight:800;background:linear-gradient(135deg, #10b981 0%, #0284c7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;letter-spacing:-0.5px;}.login-subtitle{color:var(--text-muted);font-size:14px;margin-bottom:30px;}.login-form-group{text-align:left;margin-bottom:20px;position:relative;}.login-form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}.login-input{width:100%;padding:12px 16px;background:rgba(11, 12, 14, 0.6);border:1px solid rgba(255, 255, 255, 0.08);border-radius:8px;color:var(--text-color);font-size:14px;font-family:var(--font-body);transition:var(--transition);}.login-input:focus{outline:none;border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(2, 132, 199, 0.15);background:rgba(11, 12, 14, 0.9);}.password-toggle-btn{position:absolute;right:12px;top:35px;background:none;border:none;color:var(--text-dark);cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}.password-toggle-btn:hover{color:var(--text-muted);}.login-error{color:var(--danger);font-size:13px;font-weight:500;margin-bottom:15px;display:none;padding:8px 12px;background:rgba(239, 68, 68, 0.1);border-radius:6px;border:1px solid rgba(239, 68, 68, 0.15);text-align:left;}.login-btn{width:100%;padding:12px;background:rgba(16, 185, 129, 0.15);border:none;border-radius:8px;color:#10b981;font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);box-shadow:none;}.login-btn:hover{background:rgba(16, 185, 129, 0.25);transform:none;box-shadow:none;}.login-btn:active{transform:translateY(0);}.login-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}@media (max-width:600px){.login-screen-container{padding:10px;}.login-card{max-width:94%;padding:36px 20px;border-radius:20px;box-shadow:0 15px 40px rgba(0, 0, 0, 0.6);}.login-logo{font-size:34px !important;margin-bottom:12px;}.login-subtitle{font-size:16px !important;margin-bottom:35px;}.login-form-group{margin-bottom:24px;}.login-form-group label{font-size:14px !important;margin-bottom:10px;}.login-input{padding:16px 20px !important;font-size:18px !important;border-radius:10px;}.password-toggle-btn{top:40px !important;right:16px !important;transform:scale(1.2);}.login-btn{width:100%;padding:12px;background:rgba(16, 185, 129, 0.15);border:none;border-radius:8px;color:#10b981;font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);box-shadow:none;}.login-logo-container svg{width:80px !important;height:80px !important;margin-bottom:16px !important;}}.header-profile-info{display:flex;align-items:center;gap:12px;margin-left:15px;padding-left:15px;border-left:1px solid var(--border-color);}.profile-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:white;}.profile-details{display:flex;flex-direction:column;text-align:left;}.profile-name{font-size:12px;font-weight:700;color:var(--text-color);}.profile-role{font-size:10px;color:var(--text-muted);font-weight:500;}.logout-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}.logout-btn:hover{background:rgba(239, 68, 68, 0.1);color:var(--danger);}.director-banner{width:100%;background:linear-gradient(90deg, rgba(217, 119, 6, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%);border-bottom:1px solid rgba(217, 119, 6, 0.25);padding:8px 20px;font-size:12px;color:#f59e0b;font-weight:600;display:flex;align-items:center;gap:8px;}.delivery-card[draggable="true"]{cursor:grab;user-select:none;}.delivery-card.dragging{opacity:0.35;transform:scale(0.97);border:2px dashed var(--accent-blue) !important;box-shadow:0 4px 12px rgba(0, 0, 0, 0.3) !important;z-index:1000 !important;}.grid-cell.drag-hover{background-color:rgba(2, 132, 199, 0.12) !important;outline:2px dashed var(--border-focus) !important;outline-offset:-2px;transition:var(--transition);box-shadow:inset 0 0 10px rgba(59, 130, 246, 0.15);}.driver-photo-container{position:relative;cursor:default;}.driver-photo-container.admin-editable{cursor:pointer;}.avatar-edit-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0, 0, 0, 0.6);display:flex;align-items:center;justify-content:center;opacity:0;transition:var(--transition);border-radius:50%;}.driver-photo-container.admin-editable:hover .avatar-edit-overlay{opacity:1;}.card-driver-info{display:flex;align-items:center;gap:6px;}.card-driver-avatar{width:18px;height:18px;border-radius:50%;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1px solid rgba(255, 255, 255, 0.15);}.card-driver-avatar-initial{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1px solid rgba(255, 255, 255, 0.15);}
 .app-container{display:flex;height:100vh;width:100vw;max-width:none;margin:0;padding:0;overflow:hidden;}
 .sidebar{width:260px;background-color:var(--sidebar-bg);border-right:1px solid var(--border-color);display:flex;flex-direction:column;padding:24px 16px;z-index:100;
       transition: width 0.3s ease;
       overflow-x: hidden;
-      overflow-y: auto;
     }
     .sidebar.collapsed {
       width: 80px;
@@ -423,7 +256,7 @@ async function openGlobalMap() {
       display: none;
     }
 .sidebar-logo-container{display:flex;align-items:center;gap:12px;margin-bottom:30px;padding:0 12px;text-decoration:none;}
-.sidebar-nav{display:flex;flex-direction:column;gap:4px;flex-grow:1;}
+.sidebar-nav{display:flex;flex-direction:column;gap:4px;}
 .nav-item{display:flex;align-items:center;gap:12px;padding:10px 16px;color:var(--text-muted);text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;transition:var(--transition);cursor:pointer;}
 .nav-item:hover{background-color:rgba(255,255,255,0.05);color:var(--text-color);}
 .nav-item.active{background-color:rgba(255,255,255,0.1);color:var(--text-color);}
@@ -650,27 +483,6 @@ body.light-theme .input-search {
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <style>
-    .delivery-card.cancelled {
-      border-left-color: #9ca3af;
-      background: linear-gradient(135deg, rgba(156, 163, 175, 0.1) 0%, #1c1f26 100%);
-      opacity: 0.7;
-    }
-    .month-mini-card.cancelled {
-      border-left-color: #9ca3af;
-      color: #9ca3af;
-      text-decoration: line-through;
-    }
-    .list-badge-status.cancelled {
-      color: #9ca3af;
-      border: 1px solid #9ca3af;
-    }
-    body.light-theme .delivery-card.cancelled {
-      background: #f3f4f6;
-      border-left-color: #9ca3af;
-      opacity: 0.7;
-    }
-  </style>
 </head>
 <body>
   
@@ -679,8 +491,7 @@ body.light-theme .input-search {
       <div class="login-logo-container" style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: center;">
         
         
-        <div style="line-height:1;"><span style="color:#b01c24; font-weight:900; font-size:42px; font-family:var(--font-title);">Pro</span><span style="color:#112349; font-weight:900; font-size:42px; font-family:var(--font-title);">Pex</span></div>
-        <div style="color:var(--text-muted); font-size:12px; font-weight:700; letter-spacing:6px; margin-top:4px; text-transform:uppercase; margin-left:4px; font-family:var(--font-title);">U K R A I N E</div>
+        <span class="login-logo-text" style="font-family: var(--font-title); font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #10b981 0%, #0284c7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">Propex</span>
       </div>
       <div class="login-subtitle">Система планування та логістики Propex</div>
       
@@ -711,9 +522,9 @@ body.light-theme .input-search {
     
   <aside class="sidebar" id="main-sidebar">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 30px; padding: 0 12px;" class="sidebar-header-wrapper">
-      <a class="sidebar-logo-container" onclick="resetToToday()" style="cursor:pointer; margin-bottom:0; padding:0; display:flex; flex-direction:column; align-items:flex-start;">
-        <div style="line-height:1;"><span style="color:#b01c24; font-weight:900; font-size:28px;">Pro</span><span style="color:#112349; font-weight:900; font-size:28px;">Pex</span></div>
-        <div style="color:var(--text-muted); font-size:9px; font-weight:700; letter-spacing:3px; margin-top:2px; text-transform:uppercase; margin-left:2px;">U K R A I N E</div>
+      <a class="sidebar-logo-container" onclick="resetToToday()" style="cursor:pointer; margin-bottom:0; padding:0;">
+        
+      <span style="color:var(--propex-red); font-weight:800;">Pro</span><span style="color:var(--propex-blue); font-weight:800;">pex</span>
       </a>
       <button onclick="toggleSidebar()" class="sidebar-toggle-btn" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:6px;" title="Згорнути панель">
         <i data-lucide="panel-left-close" style="width:20px;height:20px;"></i>
@@ -725,8 +536,8 @@ body.light-theme .input-search {
       <a class="nav-item" id="nav-dashboard" onclick="switchMainTab('dashboard')" title="Дашборд"><i data-lucide="layout-dashboard"></i> <span class="nav-item-text">Дашборд</span></a>
       <a class="nav-item" id="nav-analytics" onclick="switchMainTab('analytics')" title="Аналітика"><i data-lucide="bar-chart-2"></i> <span class="nav-item-text">Аналітика</span></a>
       <a class="nav-item active" id="nav-tracking" onclick="switchMainTab('tracking')" title="Трекінг"><i data-lucide="map"></i> <span class="nav-item-text">Трекінг</span></a>
-      <a class="nav-item" id="nav-clients" onclick="switchMainTab('clients')" title="Клієнти / Компанії"><i data-lucide="users"></i> <span class="nav-item-text">Клієнти / Компанії</span></a>
-      <a class="nav-item admin-only" id="nav-employees" onclick="switchMainTab('employees')" style="display:none;" title="Співробітники"><i data-lucide="contact"></i> <span class="nav-item-text">Співробітники</span></a>
+      <a class="nav-item" id="nav-clients" onclick="switchMainTab('clients')"><i data-lucide="users"></i> Покупці</a>
+      <a class="nav-item admin-only" id="nav-employees" onclick="switchMainTab('employees')" style="display:none;"><i data-lucide="contact"></i> Співробітники</a>
       <a class="nav-item" id="nav-settings" onclick="switchMainTab('settings')" title="Налаштування"><i data-lucide="settings"></i> <span class="nav-item-text">Налаштування</span></a>
     </nav>
   </aside>
@@ -1007,10 +818,10 @@ body.light-theme .input-search {
               <select id="form-car" class="form-control" required>
                 <option value="Не призначено">-- Обере логіст --</option>
                 <option value="Самовивіз">Самовивіз</option>
-                <option value="1">Hyundai</option>
-                <option value="2">MAN</option>
-                <option value="3">Volkswagen Crafter</option>
-                <option value="4">Renault Dokker</option>
+                <option value="1">Авто 1</option>
+                <option value="2">Авто 2</option>
+                <option value="3">Авто 3</option>
+                <option value="4">Авто 4</option>
               </select>
             </div>
             <div class="form-group">
@@ -1111,10 +922,9 @@ body.light-theme .input-search {
             <div style="display: flex; gap: 10px; margin-top: 6px;">
               <select id="det-status-select" class="select-custom" style="flex-grow: 1; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; font-weight: 600; color: var(--text-color); outline: none;">
                 <option value="Заплановано">⚪ Заплановано</option>
-                <option value="В процесі">🔵 В процесі (в дорозі)</option>
+                <option value="В процесі">🔵 В процесі</option>
                 <option value="Виконано">🟢 Виконано</option>
-                <option value="Проблема">🔴 Проблема / Аварія</option>
-                <option value="Скасовано">🚫 Скасовано</option>
+                <option value="Аварія на дорозі">🔴 Аварія на дорозі</option>
               </select>
               <button class="btn" id="update-status-btn" onclick="submitStatusUpdate()" style="padding: 8px 16px;">Оновити</button>
             </div>
@@ -1504,16 +1314,6 @@ body.light-theme .input-search {
       if (btn) btn.classList.add('active');
       document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
       document.getElementById(`${view}-view-panel`).classList.add('active');
-      
-      const mapBtn = document.getElementById('header-map-btn');
-      if (mapBtn) {
-        if (view === 'day') {
-          mapBtn.style.display = 'inline-flex';
-        } else {
-          mapBtn.style.display = 'none';
-        }
-      }
-      
       updateDateLabel();
       renderCalendar();
     }
@@ -1693,7 +1493,7 @@ body.light-theme .input-search {
         }
         const matchesDate = delDateStr === dateStr;
         const matchesCar = String(del['ID_Авто']) === String(carId);
-        const matchesStatus = del['Статус'] === 'Аварія на дорозі' || del['Статус'] === 'Проблема';
+        const matchesStatus = del['Статус'] === 'Аварія на дорозі';
         return matchesDate && matchesCar && matchesStatus;
       });
     }
@@ -1739,7 +1539,7 @@ body.light-theme .input-search {
         document.getElementById('form-manager-id').disabled = true;
         carSelect.innerHTML = '<option value="Самовивіз">Самовивіз</option><option value="Не призначено">-- Обере логіст --</option>';
         if (currentCar !== 'Самовивіз' && currentCar !== 'Не призначено') {
-           carSelect.innerHTML += `<option value="${currentCar}">${window.getCarName(currentCar)}</option>`;
+           carSelect.innerHTML += `<option value="${currentCar}">Авто ${currentCar}</option>`;
            carSelect.value = currentCar;
            carSelect.disabled = true;
         } else {
@@ -1748,7 +1548,7 @@ body.light-theme .input-search {
         }
       } else {
         document.getElementById('form-manager-id').disabled = false;
-        carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="1">Hyundai</option><option value="2">MAN</option><option value="3">Volkswagen Crafter</option><option value="4">Renault Dokker</option>';
+        carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="1">Авто 1</option><option value="2">Авто 2</option><option value="3">Авто 3</option><option value="4">Авто 4</option>';
         if (currentCar && !['Не призначено', 'Самовивіз', '1', '2', '3', '4'].includes(currentCar)) {
            carSelect.innerHTML += `<option value="${currentCar}">${currentCar}</option>`;
         }
@@ -1782,13 +1582,8 @@ body.light-theme .input-search {
 
       let matchesStatus = true;
       if (state.filters && state.filters.statuses && state.filters.statuses.length > 0) {
-        let delStatus = String(del['Статус'] || '').trim().toLowerCase();
-        if (delStatus === 'проблема') delStatus = 'аварія на дорозі';
-        matchesStatus = state.filters.statuses.some(s => {
-          let filterVal = s.trim().toLowerCase();
-          if (filterVal === 'проблема') filterVal = 'аварія на дорозі';
-          return filterVal === delStatus;
-        });
+        const delStatus = String(del['Статус'] || '').trim().toLowerCase();
+        matchesStatus = state.filters.statuses.some(s => s.trim().toLowerCase() === delStatus);
       }
 
       let matchesPayment = true;
@@ -1864,7 +1659,7 @@ body.light-theme .input-search {
       }
 
       // +1 для колонки Самовивіз
-      grid.style.gridTemplateColumns = `80px repeat(${visibleCars.length + 1}, minmax(0, 1fr))`;
+      grid.style.gridTemplateColumns = `80px repeat(${visibleCars.length + 1}, 1fr)`;
 
       // Заголовок "Час"
       const timeHeader = document.createElement('div');
@@ -1888,7 +1683,7 @@ body.light-theme .input-search {
           <div class="driver-photo-container">
             ${driver && driver['Фото'] ? `<img src="${driver['Фото']}" style="width:100%;height:100%;object-fit:cover;">` : initial}
           </div>
-          <div style="font-weight: 700;">${window.getCarName(carId)}</div>
+          <div style="font-weight: 700;">Авто ${carId}</div>
           <div class="driver-name">${name}</div>
         `;
         if (state.currentUser && state.currentUser.role === 'admin') {
@@ -1975,9 +1770,6 @@ body.light-theme .input-search {
         samoCell.dataset.time = hour;
         samoCell.style.background = 'rgba(255,200,50,0.03)';
         samoCell.style.borderLeft = '2px solid rgba(255,200,50,0.15)';
-        samoCell.addEventListener('dragover', handleDragOver);
-        samoCell.addEventListener('dragleave', handleDragLeave);
-        samoCell.addEventListener('drop', handleDrop);
         const samoDelivery = samoDeliveries.find(del => del['Час'] === hour);
         if (samoDelivery) {
           const card = createDeliveryCard(samoDelivery);
@@ -1986,14 +1778,37 @@ body.light-theme .input-search {
         grid.appendChild(samoCell);
       });
 
-      // Буферні картки (погрузка/дорога) — тільки для авто
+      // Буферні картки (погрузка/дорога) — тільки для авто 1–4
       activeDeliveries.forEach(del => {
         const car = del['ID_Авто'];
-        if (!car || car === 'Самовивіз' || car === 'Не призначено') return;
-        
         const time = del['Час'];
         const timeIndex = hours.indexOf(time);
-
+        if (timeIndex > 0) {
+          const prevTime = hours[timeIndex - 1];
+          const prevCell = grid.querySelector(`.grid-cell[data-car="${car}"][data-time="${prevTime}"]`);
+          if (prevCell && !prevCell.querySelector('.delivery-card')) {
+            const buffer = document.createElement('div');
+            buffer.className = 'delivery-card buffer';
+            buffer.innerHTML = `
+              <div class="card-meta"><span class="card-time">${prevTime}</span></div>
+              <div class="card-address">Погрузка / Дорога</div>
+            `;
+            prevCell.appendChild(buffer);
+          }
+        }
+        if (timeIndex < hours.length - 1) {
+          const nextTime = hours[timeIndex + 1];
+          const nextCell = grid.querySelector(`.grid-cell[data-car="${car}"][data-time="${nextTime}"]`);
+          if (nextCell && !nextCell.querySelector('.delivery-card')) {
+            const buffer = document.createElement('div');
+            buffer.className = 'delivery-card buffer';
+            buffer.innerHTML = `
+              <div class="card-meta"><span class="card-time">${nextTime}</span></div>
+              <div class="card-address">Розвантаження / Наступний рейс</div>
+            `;
+            nextCell.appendChild(buffer);
+          }
+        }
       });
 
       // --- Секція САМОВИВІЗ ---
@@ -2106,8 +1921,7 @@ body.light-theme .input-search {
           let statusClass = 'planned';
           if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
           else if (del['Статус'] === 'Виконано') statusClass = 'completed';
-          else if (del['Статус'] === 'Аварія на дорозі' || del['Статус'] === 'Проблема') statusClass = 'problem';
-          else if (del['Статус'] === 'Скасовано') statusClass = 'cancelled';
+          else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
           let isIncidentAffected = false;
           if (statusClass !== 'completed' && statusClass !== 'problem') {
             if (hasCarIncidentOnDate(del['ID_Авто'], del['Дата'])) {
@@ -2178,8 +1992,7 @@ body.light-theme .input-search {
           let statusClass = 'planned';
           if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
           else if (del['Статус'] === 'Виконано') statusClass = 'completed';
-          else if (del['Статус'] === 'Аварія на дорозі' || del['Статус'] === 'Проблема') statusClass = 'problem';
-          else if (del['Статус'] === 'Скасовано') statusClass = 'cancelled';
+          else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
           let isIncidentAffected = false;
           if (statusClass !== 'completed' && statusClass !== 'problem') {
             if (hasCarIncidentOnDate(del['ID_Automobile'] || del['ID_Авто'], del['Дата'])) {
@@ -2195,7 +2008,7 @@ body.light-theme .input-search {
           row.innerHTML = `
             <div class="list-time">${del['Час']}</div>
             <div class="list-car-info">
-              <span class="card-car-badge">🚗 ${window.getCarName(del['ID_Авто'])}</span>
+              <span class="card-car-badge">🚗 Авто ${del['ID_Авто']}</span>
             </div>
             <div>
               <div class="list-address-info">${isIncidentAffected ? '⚠️ ' : ''}<span class="card-order-badge ${payClass}">№${del['Номер_замовлення']}</span> — ${del['Ім\'я_одержувача'] ? del['Ім\'я_одержувача'] : (del['Адреса'] ? del['Адреса'].split(',')[0] : '')}</div>
@@ -2219,8 +2032,7 @@ body.light-theme .input-search {
       let statusClass = 'planned';
       if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
       else if (del['Статус'] === 'Виконано') statusClass = 'completed';
-      else if (del['Статус'] === 'Аварія на дорозі' || del['Статус'] === 'Проблема') statusClass = 'problem';
-      else if (del['Статус'] === 'Скасовано') statusClass = 'cancelled';
+      else if (del['Статус'] === 'Аварія на дорозі') statusClass = 'problem';
       let isIncidentAffected = false;
       if (statusClass !== 'completed' && statusClass !== 'problem') {
         if (hasCarIncidentOnDate(del['ID_Авто'], del['Дата'])) {
@@ -2228,7 +2040,7 @@ body.light-theme .input-search {
         }
       }
       card.className = `delivery-card ${statusClass} ${isIncidentAffected ? 'incident-affected' : ''}`;
-      const isProblem = del['Статус'] === 'Аварія на дорозі' || del['Статус'] === 'Проблема';
+      const isProblem = del['Статус'] === 'Аварія на дорозі';
       const companyName = del['Ім\'я_одержувача'] ? del['Ім\'я_одержувача'].trim() : '';
       const addressShort = del['Адреса'] ? del['Адреса'].split(',')[0] : '';
       const mainText = companyName ? companyName : addressShort;
@@ -2243,7 +2055,7 @@ body.light-theme .input-search {
         ? state.dailyCrews.find(c => String(c['ID_Авто']) === String(del['ID_Авто']) && c['Дата'] === dateStr)
         : null;
       const driver = dynamicDriver || ((state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => String(d['ID_Авто']) === String(del['ID_Авто'])) : null);
-      const driverName = window.getCarName(del['ID_Авто']);
+      const driverName = driver ? driver["Ім'я"] : `Авто ${del['ID_Авто']}`;
       const driverInitial = driverName ? driverName.charAt(0) : '?';
       const tinyAvatarHTML = (driver && driver['Фото'])
         ? `<img src="${driver['Фото']}" class="card-driver-avatar" title="${driverName}">`
@@ -2254,38 +2066,27 @@ body.light-theme .input-search {
       else if (del['Статус_оплати'] === 'Не оплачено') payClass = 'pay-none';
       
       let whIcon = '';
-      const whStatus = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
-      const isWhProblem = whStatus.startsWith('Проблема') || whStatus.startsWith('Відмова');
-      if (whStatus === 'Очікує') {
-        whIcon = '<span class="wh-icon" title="Очікує збірки" style="color:#9ca3af; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="clock" style="width:20px;height:20px;"></i></span>';
-      } else if (whStatus === 'В процесі збору' || whStatus === 'Збирається') {
-        whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
+      const whStatus = String(del['Статус_Склад'] || '').trim();
+      if (whStatus === 'Прийнято') {
+        whIcon = '<span class="wh-icon" title="Прийнято комірником" style="color:#3b82f6; margin-right:6px; display:inline-flex; align-items:center;"><i data-lucide="package-open" style="width:14px;height:14px;"></i></span>';
+      } else if (whStatus === 'Збирається') {
+        whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; margin-right:6px; display:inline-flex; align-items:center;"><i data-lucide="loader" style="width:14px;height:14px;animation:spin 2s linear infinite;"></i></span>';
       } else if (whStatus === 'Зібрано') {
-        whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
-      } else if (isWhProblem) {
-        whIcon = '<span class="wh-icon" title="Проблема зі збіркою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
+        whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; margin-right:6px; display:inline-flex; align-items:center;"><i data-lucide="package-check" style="width:14px;height:14px;"></i></span>';
       }
-
-      if (isWhProblem) {
-        statusClass += ' warehouse-problem';
-      }
-
-      const driverInfoHTML = `
-        <div class="card-driver-info">
-          ${tinyAvatarHTML}
-          ${showCarBadge ? `<span class="card-car-badge">${window.getCarName(del['ID_Авто'])}</span>` : ''}
-        </div>
-      `;
 
       card.innerHTML = `
         <div class="card-meta">
-          <span class="card-time">${isProblem ? '⚠️ ' : ''}${del['Час']}</span>
-          <span class="card-order-badge ${isProblem ? 'problem-badge' : payClass}" style="display:flex; align-items:center;">№${del['Номер_замовлення']}${whIcon}</span>
+          ${whIcon}<span class="card-time">${isProblem ? '⚠️ ' : ''}${del['Час']}</span>
+          <span class="card-order-badge ${isProblem ? 'problem-badge' : payClass}">№${del['Номер_замовлення']}${whIcon}</span>
         </div>
         <div class="card-address" title="${del['Адреса']}">${addressDisplay}</div>
         <div class="card-footer">
           <span title="${subText}">${subText}</span>
-          ${driverInfoHTML}
+          <div class="card-driver-info">
+            ${tinyAvatarHTML}
+            ${showCarBadge ? `<span class="card-car-badge">Авто ${del['ID_Авто']}</span>` : ''}
+          </div>
         </div>
       `;
       const user = state.currentUser;
@@ -2322,13 +2123,12 @@ body.light-theme .input-search {
         document.getElementById('form-manager-id').value = user.telegramId || '';
         if (user.role === 'manager') {
           document.getElementById('form-manager-id').disabled = true;
-          carSelect.innerHTML = '<option value="Самовивіз">Самовивіз</option><option value="Не призначено">-- Обере логіст --</option><option value="1">Hyundai</option><option value="2">MAN</option><option value="3">Volkswagen Crafter</option><option value="4">Renault Dokker</option>';
+          carSelect.innerHTML = '<option value="Самовивіз">Самовивіз</option><option value="Не призначено">-- Обере логіст --</option><option value="1">Авто 1</option><option value="2">Авто 2</option><option value="3">Авто 3</option><option value="4">Авто 4</option>';
           carSelect.value = "Самовивіз";
           carSelect.disabled = false;
-          document.getElementById('form-address').value = 'склад Propex, вул. Вікентія Хвойки, 18/14, місто Київ';
         } else {
           document.getElementById('form-manager-id').disabled = false;
-          carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="1">Hyundai</option><option value="2">MAN</option><option value="3">Volkswagen Crafter</option><option value="4">Renault Dokker</option>';
+          carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="1">Авто 1</option><option value="2">Авто 2</option><option value="3">Авто 3</option><option value="4">Авто 4</option>';
           carSelect.value = "Не призначено";
           carSelect.disabled = false;
         }
@@ -2381,11 +2181,6 @@ body.light-theme .input-search {
       }
       
       const deliveryId = currentDetailDelivery['ID'];
-      if (!deliveryId) {
-        alert("Ця доставка не має унікального ідентифікатора (можливо, вона була створена до оновлення системи або вручну в таблиці). Анулюйте її безпосередньо в Google Таблиці.");
-        return;
-      }
-      
       const currentComment = currentDetailDelivery['Коментар'] || '';
       const newComment = `[Скасовано: ${reason.trim()}] ` + currentComment;
       
@@ -2417,7 +2212,7 @@ body.light-theme .input-search {
       const newStatus = document.getElementById('det-status-select').value;
       const deliveryId = currentDetailDelivery['ID'];
       let comment = '';
-      if (newStatus === 'Аварія на дорозі' || newStatus === 'Проблема') {
+      if (newStatus === 'Аварія на дорозі') {
         comment = prompt("Будь ласка, вкажіть причину виникнення проблеми:", "Зламався автомобіль");
         if (comment === null) return;
       } else {
@@ -2480,7 +2275,7 @@ body.light-theme .input-search {
           d['Адреса'] !== address
         );
         if (isOccupied) {
-          alert(`Помилка! Цей часовий слот (${time}) для ${window.getCarName(car)} вже зайнятий іншою доставкою за іншою адресою!`);
+          alert(`Помилка! Цей часовий слот (${time}) для Авто ${car} вже зайнятий іншою доставкою за іншою адресою!`);
           return;
         }
       }
@@ -2623,7 +2418,7 @@ body.light-theme .input-search {
         d['Адреса'] !== del['Адреса']
       );
       if (isOccupied) {
-        alert(`Цей часовий слот (${targetTime}) для ${window.getCarName(targetCar)} вже зайнятий іншою доставкою за іншою адресою!`);
+        alert(`Цей часовий слот (${targetTime}) для Авто ${targetCar} вже зайнятий іншою доставкою за іншою адресою!`);
         return;
       }
       const oldTime = del['Час'];
@@ -2892,10 +2687,10 @@ function renderClients() {
         <div style="margin-bottom: 15px;">
           <label style="font-weight: bold; margin-bottom: 5px; display: block;">Автомобіль:</label>
           <div style="display: flex; flex-direction: column; gap: 5px;">
-            <label><input type="checkbox" class="filter-car-cb" value="1"> Hyundai</label>
-            <label><input type="checkbox" class="filter-car-cb" value="2"> MAN</label>
-            <label><input type="checkbox" class="filter-car-cb" value="3"> Volkswagen Crafter</label>
-            <label><input type="checkbox" class="filter-car-cb" value="4"> Renault Dokker</label>
+            <label><input type="checkbox" class="filter-car-cb" value="1"> Авто 1</label>
+            <label><input type="checkbox" class="filter-car-cb" value="2"> Авто 2</label>
+            <label><input type="checkbox" class="filter-car-cb" value="3"> Авто 3</label>
+            <label><input type="checkbox" class="filter-car-cb" value="4"> Авто 4</label>
             <label><input type="checkbox" class="filter-car-cb" value="Не призначено"> Не призначено</label>
           </div>
         </div>
@@ -2905,8 +2700,8 @@ function renderClients() {
             <label><input type="checkbox" class="filter-status-cb" value="Заплановано"> Заплановані</label>
             <label><input type="checkbox" class="filter-status-cb" value="В процесі"> В процесі (в дорозі)</label>
             <label><input type="checkbox" class="filter-status-cb" value="Виконано"> Виконані (Відвантажені)</label>
-            <label><input type="checkbox" class="filter-status-cb" value="Скасовано"> Анульовані (Скасовані)</label>
-            <label><input type="checkbox" class="filter-status-cb" value="Проблема"> Проблема / Аварія на дорозі</label>
+            <label><input type="checkbox" class="filter-status-cb" value="Скасовано"> Анульовані</label>
+            <label><input type="checkbox" class="filter-status-cb" value="Аварія на дорозі"> Аварія на дорозі</label>
           </div>
         </div>
         <div style="margin-bottom: 15px;">
@@ -2964,18 +2759,6 @@ function renderClients() {
       safeCreateIcons();
       checkSession();
       updateDateLabel();
-      
-      const formCarEl = document.getElementById('form-car');
-      if (formCarEl) {
-        formCarEl.addEventListener('change', function() {
-          if (this.value === 'Самовивіз') {
-            const addrInput = document.getElementById('form-address');
-            if (addrInput && (!addrInput.value || addrInput.value.trim() === '')) {
-              addrInput.value = 'склад Propex, вул. Вікентія Хвойки, 18/14, місто Київ';
-            }
-          }
-        });
-      }
     }
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       initApp();
@@ -2984,11 +2767,6 @@ function renderClients() {
     }
 let statusChartInstance = null;
 let comparativeChartInstance = null;
-
-window.onerror = function(msg, url, lineNo, columnNo, error) {
-  alert("JS Error: " + msg + "\nLine: " + lineNo);
-  return false;
-};
 
 window.switchMainTab = function(tabId) {
     // Hide all
@@ -3002,16 +2780,6 @@ window.switchMainTab = function(tabId) {
     // Show active
     document.getElementById(tabId + '-view').classList.add('active');
     document.getElementById('nav-' + tabId).classList.add('active');
-    
-    // Toggle map button visibility
-    const mapBtn = document.getElementById('header-map-btn');
-    if (mapBtn) {
-        if (tabId === 'tracking' && state.currentView === 'day') {
-            mapBtn.style.display = 'inline-flex';
-        } else {
-            mapBtn.style.display = 'none';
-        }
-    }
     
     if (tabId === 'dashboard') {
         renderDashboard();
@@ -3109,7 +2877,7 @@ function renderDashboard() {
     setTrend('dash-issues-trend', issuesCurr, issuesPrev);
     
     // Top Drivers (by month)
-    renderTopList('dash-top-drivers', currDels, 'ID_Авто', function(val) { return window.getCarName(val); }, ' поїздок');
+    renderTopList('dash-top-drivers', currDels, 'ID_Авто', 'Авто ', ' поїздок');
     
     // Top Managers (by month)
     renderTopList('dash-top-managers', currDels, 'ID_Менеджера', '', ' замовлень');
@@ -3222,7 +2990,7 @@ function renderTopList(elementId, dels, groupByField, prefix, suffix) {
         <div class="top-item">
             <div class="top-user">
                 <div class="top-avatar">${u.name.substring(0,2).toUpperCase()}</div>
-                <div class="top-name">${typeof prefix === 'function' ? prefix(u.name) : prefix + u.name}</div>
+                <div class="top-name">${prefix}${u.name}</div>
             </div>
             <div class="top-score">${u.count}${suffix}</div>
         </div>
@@ -3265,7 +3033,7 @@ function renderAnalytics() {
     });
     const sortedCars = Object.keys(carCounts).map(k => ({ name: k, count: carCounts[k] })).sort((a,b) => b.count - a.count);
     if (sortedCars.length > 0) {
-        document.getElementById('analytics-top-car-name').innerText = window.getCarName(sortedCars[0].name);
+        document.getElementById('analytics-top-car-name').innerText = 'Авто ' + sortedCars[0].name;
         const mockKm = sortedCars[0].count * 15;
         document.getElementById('analytics-top-car-km').innerText = `${mockKm} км / ${sortedCars[0].count} доставок`;
     } else {
@@ -3399,20 +3167,15 @@ function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe) {
 
 </script>
 
-  <div class="modal" id="map-modal" onclick="if(event.target===this) closeMapModal()">
+  <div class="modal-overlay" id="map-modal" onclick="if(event.target===this) closeMapModal()">
     <div class="modal-content" style="width: 95%; max-width: 1400px; height: 90vh; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h3 id="map-modal-title">🗺️ Карта маршрутів (Флот)</h3>
         <button class="modal-close" onclick="closeMapModal()"><i data-lucide="x"></i></button>
       </div>
       <div class="modal-body" style="flex-grow: 1; padding: 0; position: relative; display: flex; flex-direction: column;">
-        <div id="map-car-filters" style="display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); align-items: center; justify-content: space-between; z-index: 10;">
-          <div id="map-filter-buttons" style="display: flex; gap: 8px; flex-wrap: wrap; flex-grow: 1;">
-            <!-- Filter buttons dynamically injected here -->
-          </div>
-          <div id="map-total-distance" style="font-weight: 700; font-size: 13px; color: var(--text-color); white-space: nowrap; margin-left: 16px;">
-            Загальний пробіг за день: <span style="color: var(--accent-blue);" id="map-total-km">0.0 км</span>
-          </div>
+        <div id="map-car-filters" style="display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); align-items: center; z-index: 10;">
+          <!-- Filter buttons dynamically injected here -->
         </div>
         <div id="map-loading-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30,30,35,0.85); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white;">
           <div class="spinner" style="border:4px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div>
