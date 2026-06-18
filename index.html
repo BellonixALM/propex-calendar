@@ -536,10 +536,9 @@ async function openGlobalMap() {
 
 .sidebar { transition: width 0.3s ease, padding 0.3s ease; }
 .sidebar.collapsed { width: 80px; padding: 24px 8px; }
-.sidebar.collapsed .sidebar-brand-text { display: none; }
-.sidebar.collapsed .sidebar-header-wrapper { justify-content: center; padding: 0; }
+.sidebar.collapsed .sidebar-header-wrapper { justify-content: flex-start; padding: 0 0 0 10px !important; }
 .sidebar.collapsed .sidebar-toggle-btn { display: none; }
-.sidebar.collapsed .sidebar-logo-container { margin-right: 0; }
+.sidebar.collapsed .sidebar-logo-container { margin-right: 0; transform: scale(0.65); transform-origin: left center; }
 .sidebar.collapsed .nav-group-title { display: none; }
 .sidebar.collapsed .nav-item-text { display: none; }
 .sidebar.collapsed .nav-item { justify-content: center; padding: 10px; }
