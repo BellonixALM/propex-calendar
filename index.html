@@ -2629,9 +2629,19 @@ body.light-theme .input-search {
       const oldTime = del['Час'];
       const oldCar = del['ID_Авто'];
       const oldDate = del['Дата'];
+      const oldAddress = del['Адреса'];
+      
+      let newAddress = oldAddress;
+      if (String(targetCar) === "Самовивіз" && String(oldCar) !== "Самовивіз") {
+        newAddress = "склад Propex, вул. Вікентія Хвойки, 18/14, місто Київ";
+      } else if (String(targetCar) !== "Самовивіз" && String(oldCar) === "Самовивіз") {
+        newAddress = "Не вказана адреса";
+      }
+      
       del['Час'] = targetTime;
       del['ID_Авто'] = String(targetCar);
       del['Дата'] = targetDate;
+      del['Адреса'] = newAddress;
       renderCalendar();
       const deliveryData = {
         driver_id: del['ID_Авто'],
@@ -2653,6 +2663,7 @@ body.light-theme .input-search {
             del['Час'] = oldTime;
             del['ID_Авто'] = oldCar;
             del['Дата'] = oldDate;
+            del['Адреса'] = oldAddress;
             renderCalendar();
           })
           .updateDeliveryDetails(delId, deliveryData, user.role);
