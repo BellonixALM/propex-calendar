@@ -2017,6 +2017,15 @@ body.light-theme .input-search {
       );
     }
 
+    function isDriverOnRoute(carId, dateStr) {
+      if (!carId || !dateStr || !state.deliveries) return false;
+      return state.deliveries.some(d => {
+        if (String(d['ID_Авто']) !== String(carId) || d['Дата'] !== dateStr) return false;
+        const lowerStatus = String(d['Статус'] || '').trim().toLowerCase();
+        return ['в процесі', 'завантажено', 'в дорозі', 'на маршруті', 'виконано', 'виконана', 'завершено'].includes(lowerStatus);
+      });
+    }
+
     function getFilteredDeliveries(dateObj, specificCar = null) {
       const dateStr = formatDateStr(dateObj);
       return state.deliveries.filter(del => {
@@ -2319,10 +2328,17 @@ body.light-theme .input-search {
         dayDeliveries.slice(0, maxVisible).forEach(del => {
           const miniCard = document.createElement('div');
           let statusClass = 'planned';
-          if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
-          else if (del['Статус'] === 'Виконано') statusClass = 'completed';
-          else if (del['Статус'] === 'Аварія на дорозі' || del['Статус'] === 'Проблема') statusClass = 'problem';
-          else if (del['Статус'] === 'Скасовано') statusClass = 'cancelled';
+          const rawStatus = (del['Статус'] || '').trim();
+          const lowerStatus = rawStatus.toLowerCase();
+          if (['в процесі', 'завантажено', 'в дорозі', 'на маршруті'].includes(lowerStatus)) statusClass = 'in-progress';
+          else if (['виконано', 'виконана', 'завершено'].includes(lowerStatus)) statusClass = 'completed';
+          else if (lowerStatus.includes('аварія') || lowerStatus.includes('проблема')) statusClass = 'problem';
+          else if (lowerStatus.includes('скасовано') || lowerStatus.includes('скасована')) statusClass = 'cancelled';
+          
+          const whStatus = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
+          if (statusClass === 'planned' && whStatus === 'Зібрано' && isDriverOnRoute(del['ID_Авто'], del['Дата'])) {
+            statusClass = 'in-progress';
+          }
           let isIncidentAffected = false;
           if (statusClass !== 'completed' && statusClass !== 'problem') {
             if (hasCarIncidentOnDate(del['ID_Авто'], del['Дата'])) {
@@ -2397,6 +2413,13 @@ body.light-theme .input-search {
           else if (['виконано', 'виконана'].includes(lowerStatus)) statusClass = 'completed';
           else if (lowerStatus.includes('аварія') || lowerStatus.includes('проблема')) statusClass = 'problem';
           else if (lowerStatus.includes('скасовано') || lowerStatus.includes('скасована')) statusClass = 'cancelled';
+          
+          const whStatus = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
+          let smartOnRoute = false;
+          if (statusClass === 'planned' && whStatus === 'Зібрано' && isDriverOnRoute(del['ID_Авто'], del['Дата'])) {
+            statusClass = 'in-progress';
+            smartOnRoute = true;
+          }
           let isIncidentAffected = false;
           if (statusClass !== 'completed' && statusClass !== 'problem') {
             if (hasCarIncidentOnDate(del['ID_Automobile'] || del['ID_Авто'], del['Дата'])) {
@@ -2423,7 +2446,7 @@ body.light-theme .input-search {
               <div style="font-size: 11px; color: var(--text-muted);">Оплата:</div>
               <div style="font-size: 12px; font-weight: 700;">${del['Статус_оплати'] || 'Невідомо'}</div>
             </div>
-            <div class="list-badge-status ${statusClass}">${del['Статус']}</div>
+            <div class="list-badge-status ${statusClass}">${smartOnRoute ? 'В дорозі 🚛' : del['Статус']}</div>
           `;
           row.addEventListener('click', () => showDetails(del));
           groupDiv.appendChild(row);
@@ -2440,6 +2463,13 @@ body.light-theme .input-search {
       else if (['виконано', 'виконана'].includes(lowerStatus)) statusClass = 'completed';
       else if (lowerStatus.includes('аварія') || lowerStatus.includes('проблема')) statusClass = 'problem';
       else if (lowerStatus.includes('скасовано') || lowerStatus.includes('скасована')) statusClass = 'cancelled';
+      
+      const whStatusForSmart = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
+      let smartOnRoute = false;
+      if (statusClass === 'planned' && whStatusForSmart === 'Зібрано' && isDriverOnRoute(del['ID_Авто'], del['Дата'])) {
+        statusClass = 'in-progress';
+        smartOnRoute = true;
+      }
       let isIncidentAffected = false;
       if (statusClass !== 'completed' && statusClass !== 'problem') {
         if (hasCarIncidentOnDate(del['ID_Авто'], del['Дата'])) {
@@ -2480,7 +2510,11 @@ body.light-theme .input-search {
       } else if (whStatus === 'В процесі збору' || whStatus === 'Збирається') {
         whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
       } else if (whStatus === 'Зібрано') {
-        whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
+        if (smartOnRoute) {
+          whIcon = '<span class="wh-icon" title="Передано водію (в дорозі)" style="color:var(--accent-blue); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
+        } else {
+          whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
+        }
       } else if (isWhProblem) {
         whIcon = '<span class="wh-icon" title="Проблема зі збіркою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
       }
