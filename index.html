@@ -53,7 +53,7 @@ window.getCarLogoSvg = function(carName, size = 24, color = 'white', bgColor = '
   
   if (name.includes('volkswagen') || name.includes('vw')) {
     // Volkswagen SVG
-    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><circle cx="50" cy="50" r="45" fill="none" stroke="${color}" stroke-width="6"/><path d="M 15 25 L 35 80 L 50 40 L 65 80 L 85 25 M 35 80 L 25 25 M 65 80 L 75 25 M 50 40 L 40 25 M 50 40 L 60 25" fill="none" stroke="${color}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><circle cx="50" cy="50" r="45" fill="none" stroke="${color}" stroke-width="7"/><path d="M 24 23 L 50 58 L 76 23" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="bevel" stroke-linecap="square"/><path d="M 20 54 L 35 90 L 50 58 L 65 90 L 80 54" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="bevel" stroke-linecap="square"/></svg>`;
   } else if (name.includes('renault')) {
     // Renault SVG
     return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><path d="M 50 10 L 75 50 L 50 90 L 25 50 Z" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="round"/><path d="M 50 25 L 65 50 L 50 75 L 35 50 Z" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="round"/></svg>`;
