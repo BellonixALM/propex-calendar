@@ -48,6 +48,27 @@
     document.addEventListener('DOMContentLoaded', initTheme);
 
 // --- MAP LOGIC ---
+window.getCarLogoSvg = function(carName, size = 24, color = 'white', bgColor = 'transparent') {
+  const name = (carName || '').toLowerCase();
+  
+  if (name.includes('volkswagen') || name.includes('vw')) {
+    // Volkswagen SVG
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><circle cx="50" cy="50" r="45" fill="none" stroke="${color}" stroke-width="6"/><path d="M 15 25 L 35 80 L 50 40 L 65 80 L 85 25 M 35 80 L 25 25 M 65 80 L 75 25 M 50 40 L 40 25 M 50 40 L 60 25" fill="none" stroke="${color}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  } else if (name.includes('renault')) {
+    // Renault SVG
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><path d="M 50 10 L 75 50 L 50 90 L 25 50 Z" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="round"/><path d="M 50 25 L 65 50 L 50 75 L 35 50 Z" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="round"/></svg>`;
+  } else if (name.includes('hyundai')) {
+    // Hyundai SVG
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><ellipse cx="50" cy="50" rx="45" ry="30" fill="none" stroke="${color}" stroke-width="6"/><path d="M 35 35 L 30 65 M 65 35 L 60 65 M 32 50 L 62 50" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  } else if (name.includes('man')) {
+    // MAN SVG
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><text x="50" y="62" fill="${color}" font-family="'Outfit', sans-serif" font-size="34" font-weight="900" text-anchor="middle">MAN</text></svg>`;
+  } else {
+    // Generic truck SVG
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background:${bgColor}; border-radius:50%;"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`;
+  }
+};
+
 window.getCarName = function(carId) {
   if (!carId || carId === 'Не призначено' || carId === 'Самовивіз') return carId;
   const map = {
@@ -152,7 +173,10 @@ async function openGlobalMap() {
   // Calculate idle cars (from drivers)
   const activeCarIds = Object.keys(carRoutes);
   const idleCars = (state.drivers || []).filter(d => !activeCarIds.includes(String(d['ID_Авто'])));
-  const idleCarNames = idleCars.map(d => window.getCarName(d['ID_Авто'])).join(', ');
+  const idleCarLogosHtml = idleCars.map(d => {
+    const carName = window.getCarName(d['ID_Авто']);
+    return `<div title="${carName}" style="display:inline-flex; align-items:center; justify-content:center; margin: 0 4px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); padding: 4px; background:rgba(30,30,35,0.9); box-shadow:0 2px 6px rgba(0,0,0,0.6);">${window.getCarLogoSvg(carName, 20, '#d1d5db')}</div>`;
+  }).join('');
   
   // Place idle cars at base
   const baseIconHtml = `
@@ -164,7 +188,7 @@ async function openGlobalMap() {
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       </div>
     </div>
-    ${idleCarNames ? `<div style="position:absolute; bottom:-20px; left:-50%; white-space:nowrap; background:rgba(30,30,35,0.9); color:var(--text-muted); font-size:10px; padding:3px 6px; border-radius:4px; border: 1px solid rgba(255,255,255,0.05); transform:translateX(-25%); z-index: 101;">В гаражі: ${idleCarNames}</div>` : ''}
+    ${idleCars.length > 0 ? `<div style="position:absolute; bottom:-34px; left:50%; transform:translateX(-50%); z-index: 101; display:flex; align-items:center;">${idleCarLogosHtml}</div>` : ''}
   `;
   const baseIcon = L.divIcon({
     className: 'custom-map-icon',
@@ -364,9 +388,14 @@ async function openGlobalMap() {
       
       const pulsingCss = isProblem ? 'animation: mapPulse 2s infinite ease-in-out;' : '';
       
+      const carNameForLogo = route.model;
+      const logoSvg = window.getCarLogoSvg(carNameForLogo, 20, routeColor, 'white');
+      
       const iconHtml = `
-        <div style="background:${routeColor}; width:20px; height:20px; border-radius:50%; border:2px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:white; font-size:11px; font-weight:800; ${pulsingCss}">${index + 1}</div>
-        <div style="position:absolute; top:-28px; left:-50%; white-space:nowrap; background:rgba(30,30,35,0.9); color:white; font-size:10px; padding:3px 8px; border-radius:6px; font-weight:600; border:1px solid ${routeColor}; transform:translateX(-25%);">${route.model} (№${index + 1})</div>
+        <div style="position:relative; display:flex; flex-direction:column; align-items:center;">
+          <div style="background:${routeColor}; width:20px; height:20px; border-radius:50%; border:2px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:white; font-size:11px; font-weight:800; ${pulsingCss} z-index:10;">${index + 1}</div>
+          <div style="position:absolute; top:-22px; z-index:11; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">${logoSvg}</div>
+        </div>
       `;
 
       const customIcon = L.divIcon({
@@ -385,9 +414,11 @@ async function openGlobalMap() {
     });
 
     // Add filter button for this car
+    const btnLogo = window.getCarLogoSvg(route.model, 16, routeColor);
     filtersHtml += `
       <label class="btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid ${routeColor}40;">
         <input type="checkbox" id="map-cb-${carId}" class="map-car-checkbox" value="${carId}" checked onchange="toggleMapCar('${carId}')" style="cursor:pointer; accent-color: ${routeColor};">
+        ${btnLogo}
         <span style="font-weight: 700; color: var(--text-color);">${route.model} <span style="color:var(--text-muted);">(${distanceKm.toFixed(1)} км)</span></span>
       </label>
     `;
