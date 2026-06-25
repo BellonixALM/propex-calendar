@@ -1069,21 +1069,25 @@ function setupNotifications() {
     }
   }
   
+  // О 16:30 — запит водіям обрати авто на завтра
   ScriptApp.newTrigger('sendCarSelectionReminders')
            .timeBased()
            .everyDays(1)
-           .atHour(11)
-           .nearMinute(0)
+           .atHour(16)
+           .nearMinute(30)
+           .inTimezone('Europe/Kiev')
            .create();
            
-  ScriptApp.newTrigger('sendTodayRoutes')
+  // О 19:00 — план доставок на завтра
+  ScriptApp.newTrigger('sendTomorrowRoutes')
            .timeBased()
            .everyDays(1)
-           .atHour(11)
-           .nearMinute(30)
+           .atHour(19)
+           .nearMinute(0)
+           .inTimezone('Europe/Kiev')
            .create();
            
-  Logger.log('Тригери успішно встановлено!');
+  Logger.log('Тригери успішно встановлено! 16:30 — вибір авто, 19:00 — маршрути на завтра.');
 }
 
 function sendCarSelectionReminders() {
@@ -1108,12 +1112,21 @@ function sendCarSelectionReminders() {
   }
 }
 
-function sendTodayRoutes() {
+function sendTomorrowRoutes() {
   var today = new Date();
-  var todayStr = Utilities.formatDate(today, 'Europe/Kiev', 'yyyy-MM-dd');
+  var tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var tomorrowStr = Utilities.formatDate(tomorrow, 'Europe/Kiev', 'dd.MM.yyyy');
+  var tomorrowStrISO = Utilities.formatDate(tomorrow, 'Europe/Kiev', 'yyyy-MM-dd');
   
-  var deliveries = getDeliveries().filter(function(d) { return d['Дата'] === todayStr; });
-  var dailyCrews = getDailyCrews().filter(function(c) { return c['Дата'] === todayStr; });
+  var allDeliveries = getDeliveries();
+  var deliveries = allDeliveries.filter(function(d) {
+    return d['Дата'] === tomorrowStr || d['Дата'] === tomorrowStrISO;
+  });
+  var allCrews = getDailyCrews();
+  var dailyCrews = allCrews.filter(function(c) {
+    return c['Дата'] === tomorrowStr || c['Дата'] === tomorrowStrISO;
+  });
   
   var carDeliveries = {};
   deliveries.forEach(function(d) {
@@ -1122,41 +1135,19 @@ function sendTodayRoutes() {
   });
   
   dailyCrews.forEach(function(crew) {
-    var workerName = "Невідомий комірник";
-    var workerTgId = "";
-    
-    if (workerId === 'general') {
-      workerName = 'Комірник';
-    } else if (usersSheet) {
-      var data = usersSheet.getDataRange().getValues();
-      var headers = data[0];
-      var tgCol = headers.indexOf('Telegram_ID');
-      var nameCol = headers.indexOf('ПІБ');
-      var idCol = headers.indexOf('ID');
-      
-      if (tgCol !== -1) {
-        for (var i = 1; i < data.length; i++) {
-          var uId = (idCol !== -1 && data[i][idCol]) ? data[i][idCol] : data[i][tgCol];
-          if (String(uId) === String(workerId) || String(data[i][tgCol]) === String(workerId)) {
-            workerName = nameCol !== -1 ? data[i][nameCol] : ('Комірник ' + workerId);
-            workerTgId = data[i][tgCol];
-            break;
-          }
-        }
-      }
-    }  var tgId = crew['Telegram_ID'];
+    var tgId = crew['Telegram_ID'];
     var carId = crew['ID_Авто'];
     if (!tgId || !carId) return;
     
-    var routeMsg = '🗺 Твій маршрут на сьогодні (' + todayStr + ') для Авто ' + carId + ':\n\n';
+    var routeMsg = '🗺 Твій маршрут на завтра (' + tomorrowStr + ') для Авто ' + carId + ':\n\n';
     var dels = carDeliveries[carId] || [];
     
     if (dels.length === 0) {
-      routeMsg += 'На сьогодні доставок поки немає. Відпочивай! 😎';
+      routeMsg += 'На завтра доставок поки немає. Відпочивай! 😎';
     } else {
       dels.sort(function(a, b) { return a['Час'].localeCompare(b['Час']); });
       dels.forEach(function(d, index) {
-        var comp = d['Ім\'я_одержувача'] ? d['Ім\'я_одержувача'] : '';
+        var comp = d["Ім'я_одержувача"] ? d["Ім'я_одержувача"] : '';
         routeMsg += (index + 1) + '. ⏰ ' + d['Час'] + '\n';
         if (comp) routeMsg += '🏢 ' + comp + '\n';
         routeMsg += '📍 ' + d['Адреса'] + '\n';
@@ -1168,8 +1159,17 @@ function sendTodayRoutes() {
     
     try {
       sendTelegramMessage(tgId, routeMsg);
-    } catch (e) {}
+    } catch (e) {
+      Logger.log('Помилка відправки маршруту водію ' + tgId + ': ' + e);
+    }
   });
+  
+  Logger.log('Розсилка маршрутів на завтра (' + tomorrowStr + ') завершена. Водіїв у розкладі: ' + dailyCrews.length);
+}
+
+// Стара функція — залишена для сумісності
+function sendTodayRoutes() {
+  sendTomorrowRoutes();
 }
 
 // ==========================================
