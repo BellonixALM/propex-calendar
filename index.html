@@ -1441,11 +1441,11 @@ body.light-theme .input-search {
         return this;
       };
       ScriptRunBridge.prototype.updateDriverPhoto = function(carId, photoBase64) {
-        this._callAPI('updateDriverPhoto', { carId: carId, photoBase64: photoBase64 });
+        this._callAPI('updateDriverPhoto', { carId: carId, imageBase64: photoBase64 });
         return this;
       };
       ScriptRunBridge.prototype.updateDeliveryStatus = function(deliveryId, newStatus, comment) {
-        this._callAPI('updateDeliveryStatus', { id: deliveryId, status: newStatus, comment: comment });
+        this._callAPI('updateDeliveryStatus', { deliveryId: deliveryId, newStatus: newStatus, comment: comment });
         return this;
       };
       ScriptRunBridge.prototype.addDelivery = function(deliveryData) {
@@ -1453,11 +1453,11 @@ body.light-theme .input-search {
         return this;
       };
       ScriptRunBridge.prototype.updateDeliveryDetails = function(deliveryId, deliveryData, userRole) {
-        this._callAPI('updateDeliveryDetails', { id: deliveryId, deliveryData: deliveryData, userRole: userRole });
+        this._callAPI('updateDeliveryDetails', { deliveryId: deliveryId, deliveryData: deliveryData, userRole: userRole });
         return this;
       };
       ScriptRunBridge.prototype.saveDailyCrew = function(dateStr, crewDataJson) {
-        this._callAPI('saveDailyCrew', { dateStr: dateStr, crewData: crewDataJson });
+        this._callAPI('saveDailyCrew', { dateStr: dateStr, crews: crewDataJson });
         return this;
       };
       ScriptRunBridge.prototype.saveClient = function(clientData) {
