@@ -624,7 +624,17 @@ body.light-theme .top-score { color: var(--propex-red); }
 body.light-theme .list-group-title { color: var(--propex-blue); border-left-color: var(--propex-blue); }
 body.light-theme .card-time { color: #111827; }
 body.light-theme .delivery-card { background: #FFFFFF; color: #111827; border: 1px solid #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+body.light-theme .delivery-card .card-address { color: #111827; }
+body.light-theme .delivery-card .card-time { color: #111827; }
+body.light-theme .delivery-card .card-footer { color: #4B5563; }
 body.light-theme .delivery-card.problem { background: rgba(185, 28, 28, 0.05); }
+
+/* Dark theme — delivery cards always have dark backgrounds, force white text */
+body:not(.light-theme) .delivery-card { color: #ffffff; }
+body:not(.light-theme) .delivery-card .card-address { color: #ffffff; }
+body:not(.light-theme) .delivery-card .card-time { color: #ffffff; }
+body:not(.light-theme) .list-address-info { color: #ffffff; }
+body:not(.light-theme) .month-mini-card { color: #ffffff; }
 
 /* Fix header text in light mode */
 body.light-theme .header-top { color: #111827; }
