@@ -2666,7 +2666,7 @@ body.light-theme .input-search {
       
       const deliveryId = String(currentDetailDelivery['ID'] || currentDetailDelivery['ID_Замовлення'] || '');
       if (!deliveryId || deliveryId === 'undefined' || deliveryId === 'null') {
-        alert("Ця доставка не має унікального ідентифікатора (можливо, вона була створена до оновлення системи або вручну в таблиці). Анулюйте її безпосередньо в Google Таблиці.");
+        alert("Ця доставка має пошкоджений ID ('undefined'). Видаліть її або анулюйте безпосередньо в Google Таблиці!");
         return;
       }
       
