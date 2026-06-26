@@ -1498,13 +1498,51 @@ body.light-theme .card-address { color: #111827; }
       };
       ScriptRunBridge.prototype._callAPI = function(action, data) {
         const self = this;
-        const callbackName = 'propex_cb_' + Math.round(1000000000 * Math.random());
-        
-        // Capture handlers in closure and reset them immediately
         const successCb = this._successHandler;
         const failureCb = this._failureHandler;
         this._successHandler = null;
         this._failureHandler = null;
+
+        // Use POST fetch for write actions that can have large payloads (base64 images)
+        const postActions = ['saveClient', 'saveEmployee', 'updateDriverPhoto', 'deleteClient', 'deleteEmployee'];
+        if (postActions.includes(action)) {
+          fetch(WEBAPP_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8'
+            },
+            body: JSON.stringify({
+              action: action,
+              data: data
+            })
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result && result.status === 'error') {
+              if (failureCb) {
+                failureCb(result.message || "Server error");
+              } else {
+                const errD = document.getElementById('login-error-msg');
+                if (errD) { errD.textContent = "Помилка: " + (result.message || "Unknown"); errD.style.display = 'block'; }
+              }
+            } else {
+              if (successCb) successCb(result);
+            }
+          })
+          .catch(err => {
+            console.error("POST API failed:", err);
+            if (failureCb) {
+              failureCb("Помилка мережі при виконанні POST запиту");
+            } else {
+              const errD = document.getElementById('login-error-msg');
+              if (errD) { errD.textContent = "Помилка мережі (POST)"; errD.style.display = 'block'; }
+            }
+          });
+          return;
+        }
+
+        const callbackName = 'propex_cb_' + Math.round(1000000000 * Math.random());
         
         window[callbackName] = function(result) {
           delete window[callbackName];

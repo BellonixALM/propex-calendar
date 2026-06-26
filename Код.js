@@ -162,6 +162,26 @@ function doPost(e) {
     } else if (action === 'getDailyCrews') {
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getDailyCrews() }))
         .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'saveClient') {
+      var result = saveClient(data.data);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'saveEmployee') {
+      var result = saveEmployee(data.data);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'deleteClient') {
+      var result = deleteClient(data.data.id);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'deleteEmployee') {
+      var result = deleteEmployee(data.data.id);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'updateDriverPhoto') {
+      var result = updateDriverPhoto(data.data.carId, data.data.imageBase64);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
     }
     
     return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Unknown action: ' + action }))
