@@ -2217,9 +2217,9 @@ body.light-theme .card-address { color: #111827; }
       const grid = document.getElementById('day-grid-container');
       grid.innerHTML = '';
 
-      let visibleCars = [1, 2, 3, 4];
+      let visibleCars = [1, 2, 3, 4, 5];
       if (state.filters && state.filters.cars && state.filters.cars.length > 0) {
-        visibleCars = [1, 2, 3, 4].filter(c => state.filters.cars.includes(String(c)));
+        visibleCars = [1, 2, 3, 4, 5].filter(c => state.filters.cars.includes(String(c)));
       }
 
       // +1 для колонки Самовивіз
