@@ -3255,12 +3255,12 @@ function renderClients() {
       container.innerHTML = '';
       
       const depts = [
-        { id: 'management', name: 'Керівництво', icon: '👑', roles: ['director', 'керівник'] },
-        { id: 'administration', name: 'Адміністрація', icon: '🛡️', roles: ['admin', 'адміністратор', 'творець', 'системний'] },
-        { id: 'sales', name: 'Відділ продажів', icon: '💼', roles: ['manager', 'менеджер'] },
-        { id: 'logistics', name: 'Логістика', icon: '🚗', roles: ['logist', 'driver', 'логіст', 'водій'] },
-        { id: 'warehouse', name: 'Склад', icon: '📦', roles: ['warehouse', 'комірник', 'склад', 'головний комірник'] },
-        { id: 'other', name: 'Інші', icon: '👤', roles: [] }
+        { id: 'management', name: 'Керівництво', icon: '👑', color: '#f59e0b', roles: ['director', 'керівник', 'директор'] },
+        { id: 'sales', name: 'Відділ продажів', icon: '💼', color: '#8b5cf6', roles: ['sales', 'продаж', 'менеджер'] },
+        { id: 'office_manager', name: 'Офіс-менеджер', icon: '👩‍💼', color: '#3b82f6', roles: ['офіс', 'office'] },
+        { id: 'drivers', name: 'Водії', icon: '🚗', color: '#10b981', roles: ['driver', 'водій'] },
+        { id: 'warehouse', name: 'Склад', icon: '📦', color: '#ef4444', roles: ['warehouse', 'комірник', 'склад', 'головний комірник'] },
+        { id: 'other', name: 'Інші', icon: '👤', color: '#6b7280', roles: [] }
       ];
 
       const counts = {};
@@ -3269,37 +3269,55 @@ function renderClients() {
       (state.employees || []).forEach(e => {
         let r = (e['Роль'] || '').toLowerCase().trim();
         let found = false;
-        for (let d of depts) {
-           if (d.id === 'other') continue;
-           if (d.roles.some(role => r.includes(role))) {
-              counts[d.id]++;
-              found = true;
-              break;
-           }
+        
+        // Match specific groups in order of specificity
+        if (r.includes('офіс') || r.includes('office')) {
+          counts['office_manager']++;
+          found = true;
+        } else if (['director', 'директор', 'керівник'].some(role => r.includes(role))) {
+          counts['management']++;
+          found = true;
+        } else if (r === 'водій' || r === 'driver') {
+          counts['drivers']++;
+          found = true;
+        } else if (['warehouse', 'комірник', 'склад'].some(role => r.includes(role))) {
+          counts['warehouse']++;
+          found = true;
+        } else if (['sales', 'продаж', 'менеджер'].some(role => r.includes(role))) {
+          counts['sales']++;
+          found = true;
         }
+        
         if (!found) counts['other']++;
       });
 
       depts.forEach(d => {
         const card = document.createElement('div');
-        card.className = 'dash-card dash-dark';
+        card.className = 'dash-card';
         card.style.cursor = 'pointer';
         card.style.display = 'flex';
         card.style.flexDirection = 'column';
         card.style.alignItems = 'center';
         card.style.justifyContent = 'center';
         card.style.padding = '30px 20px';
-        card.style.transition = 'all 0.2s';
+        card.style.transition = 'all 0.2s ease';
         card.style.textAlign = 'center';
+        card.style.borderLeft = `4px solid ${d.color}`;
         
-        card.onmouseover = () => card.style.transform = 'translateY(-4px)';
-        card.onmouseout = () => card.style.transform = 'none';
+        card.onmouseover = () => {
+          card.style.transform = 'translateY(-4px)';
+          card.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
+        };
+        card.onmouseout = () => {
+          card.style.transform = 'none';
+          card.style.boxShadow = 'none';
+        };
         
         card.onclick = () => showEmployeeDepartment(d.id, d.name);
         
         card.innerHTML = `
-          <div style="font-size: 48px; margin-bottom: 15px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">${d.icon}</div>
-          <h3 style="font-size: 18px; font-weight: 700; color: var(--text-color); margin: 0 0 10px 0;">${d.name}</h3>
+          <div style="font-size: 48px; margin-bottom: 15px; text-shadow: 0 4px 10px rgba(0,0,0,0.3);">${d.icon}</div>
+          <h3 style="font-size: 18px; font-weight: 700; color: var(--text-color); margin: 0 0 10px 0; font-family: var(--font-title);">${d.name}</h3>
           <div style="font-size: 13px; color: var(--text-muted); background: var(--bg-color); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 12px; font-weight: 500;">
             ${counts[d.id]} співробітників
           </div>
@@ -4145,7 +4163,38 @@ function renderEmployees() {
     container.innerHTML = '';
     let employees = state.employees || [];
     
-    // Apply Filters
+    // 1. Filter by Department
+    if (currentEmployeeDepartment) {
+      employees = employees.filter(e => {
+        let r = (e['Роль'] || '').toLowerCase().trim();
+        if (currentEmployeeDepartment === 'office_manager') {
+          return r.includes('офіс') || r.includes('office');
+        }
+        if (currentEmployeeDepartment === 'management') {
+          return ['director', 'директор', 'керівник'].some(role => r.includes(role));
+        }
+        if (currentEmployeeDepartment === 'drivers') {
+          return r === 'водій' || r === 'driver';
+        }
+        if (currentEmployeeDepartment === 'warehouse') {
+          return ['warehouse', 'комірник', 'склад'].some(role => r.includes(role));
+        }
+        if (currentEmployeeDepartment === 'sales') {
+          return ['sales', 'продаж', 'менеджер'].some(role => r.includes(role)) && !r.includes('офіс') && !r.includes('керівник') && !r.includes('директор');
+        }
+        if (currentEmployeeDepartment === 'other') {
+          const isOffice = r.includes('офіс') || r.includes('office');
+          const isMgmt = ['director', 'директор', 'керівник'].some(role => r.includes(role));
+          const isDriver = r === 'водій' || r === 'driver';
+          const isWarehouse = ['warehouse', 'комірник', 'склад'].some(role => r.includes(role));
+          const isSales = ['sales', 'продаж', 'менеджер'].some(role => r.includes(role));
+          return !isOffice && !isMgmt && !isDriver && !isWarehouse && !isSales;
+        }
+        return true;
+      });
+    }
+
+    // 2. Apply Role Filter (from dropdown)
     const roleFilter = document.getElementById('emp-filter-role');
     if (roleFilter && roleFilter.value !== 'Всі') {
       const selectedRole = roleFilter.value.toLowerCase();
@@ -4161,79 +4210,92 @@ function renderEmployees() {
     }
 
     if (employees.length === 0) {
-      container.innerHTML = '<div style="color:#9ca3af; padding: 20px;">Співробітників не знайдено за вибраними фільтрами.</div>';
+      container.innerHTML = '<div style="color:var(--text-muted); padding: 30px; grid-column: 1/-1; text-align: center; font-size: 14px; font-weight: 500;">Співробітників не знайдено.</div>';
       return;
     }
 
-    const groups = { 'Керівництво': [], 'Склад': [], 'Адміністрація': [], 'Водії': [], 'Монтажники': [], 'Інші': [] };
-
+    // Render employee cards directly
     employees.forEach(e => {
-      let r = e['Роль'] || '';
-      let groupName = 'Інші';
+      let r = e['Роль'] || 'Невідомо';
+      let roleIcon = '👤';
+      let roleLabel = r;
+      let themeColor = '#6b7280'; // default gray
       
-      if (['Директор', 'Керівник', 'Керівник підприємства', 'керівник підприємства'].includes(r)) {
-        groupName = 'Керівництво';
-      } else if (r.includes('Головний комірник') || r.includes('Склад') || r.includes('Комірник')) {
-        groupName = 'Склад';
-      } else if (['Адміністратор', 'Системний адміністратор', 'Творець системи', 'admin', 'офіс-менеджер', 'Офіс-менеджер'].includes(r)) {
-        groupName = 'Адміністрація';
-      } else if (r === 'Водій' || r === 'driver') {
-        groupName = 'Водії';
-      } else if (r.toLowerCase().includes('монтаж')) {
-        groupName = 'Монтажники';
+      // Determine theme color and icon based on role
+      let rLower = r.toLowerCase();
+      if (rLower.includes('офіс') || rLower.includes('office')) {
+        roleIcon = '👩‍💼';
+        roleLabel = 'Офіс-менеджер';
+        themeColor = '#3b82f6';
+      } else if (['director', 'директор', 'керівник'].some(role => rLower.includes(role))) {
+        roleIcon = '👑';
+        roleLabel = rLower.includes('директор') ? 'Директор' : 'Керівник';
+        themeColor = '#f59e0b';
+      } else if (rLower === 'водій' || rLower === 'driver') {
+        roleIcon = '🚗';
+        roleLabel = 'Водій';
+        themeColor = '#10b981';
+      } else if (['warehouse', 'комірник', 'склад'].some(role => rLower.includes(role))) {
+        roleIcon = '📦';
+        roleLabel = rLower.includes('головний') ? 'Головний комірник' : 'Комірник';
+        themeColor = '#ef4444';
+      } else if (['sales', 'продаж', 'менеджер'].some(role => rLower.includes(role))) {
+        roleIcon = '💼';
+        roleLabel = 'Менеджер';
+        themeColor = '#8b5cf6';
       }
+
+      let actionsHtml = '';
+      if (e['Telegram']) {
+        actionsHtml += `<a href="https://t.me/${String(e['Telegram']).replace('@', '')}" target="_blank" class="btn btn-secondary btn-icon" style="width: 32px; height: 32px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; margin: 0;" onclick="event.stopPropagation();" title="Telegram">✈️</a>`;
+      }
+      if (e['Телефон']) {
+        actionsHtml += `<a href="tel:${e['Телефон']}" class="btn btn-secondary btn-icon" style="width: 32px; height: 32px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; margin: 0;" onclick="event.stopPropagation();" title="Зателефонувати">📞</a>`;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'dash-card';
       
-      groups[groupName].push(e);
+      // Dynamic styles to match premium aesthetic of order cards
+      card.style.position = 'relative';
+      card.style.cursor = 'pointer';
+      card.style.borderLeft = `4px solid ${themeColor}`;
+      card.style.padding = '18px 20px';
+      card.style.transition = 'all 0.2s ease';
+      
+      card.onmouseover = () => {
+        card.style.transform = 'translateY(-2px)';
+        card.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
+      };
+      card.onmouseout = () => {
+        card.style.transform = 'none';
+        card.style.boxShadow = 'none';
+      };
+      
+      card.onclick = () => openEmployeeModal(e);
+
+      let deleteBtn = '';
+      if (state.currentUser && state.currentUser.role && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
+        deleteBtn = `<button class="action-icon-btn" style="position:absolute; top:14px; right:14px; color:var(--danger); background:none; border:none; cursor:pointer;" onclick="event.stopPropagation(); deleteEmployee('${e['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
+      }
+
+      card.innerHTML = `
+        ${deleteBtn}
+        <div style="font-size: 11px; font-weight: 700; color: ${themeColor}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+          <span>${roleIcon}</span> <span>${roleLabel}</span>
+        </div>
+        <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: var(--text-color); font-family: var(--font-title);">${e['ПІБ'] || '-'}</h3>
+        ${e['Авто'] && (rLower === 'водій' || rLower === 'driver') ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>🚗</span> <span>Авто: <b>${e['Авто']}</b></span></div>` : ''}
+        ${e['Телефон'] ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>📱</span> <span>${e['Телефон']}</span></div>` : ''}
+        ${e['Telegram'] ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>✈️</span> <span>${e['Telegram']}</span></div>` : ''}
+        
+        <div style="margin-top: 14px; display: flex; gap: 8px; align-items: center;">
+          ${actionsHtml || '<span style="font-size: 11px; color: var(--text-dark);">Немає контактів</span>'}
+        </div>
+      `;
+      container.appendChild(card);
     });
 
-    Object.keys(groups).forEach(gName => {
-      if (groups[gName].length === 0) return;
-      
-      const groupHeader = document.createElement('h3');
-      groupHeader.style.cssText = 'grid-column: 1 / -1; margin: 20px 0 10px 0; color: #a1a1aa; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;';
-      groupHeader.textContent = gName;
-      container.appendChild(groupHeader);
-      
-      groups[gName].forEach(e => {
-          let roleIcon = '👤';
-          let roleLabel = e['Роль'] || 'Невідомо';
-          if (['admin', 'Адміністратор', 'Системний адміністратор', 'Творець системи'].includes(roleLabel)) { roleIcon = '🛡️'; roleLabel = 'Адміністратор'; }
-          if (['director', 'Директор', 'Керівник підприємства', 'керівник підприємства'].includes(roleLabel)) { roleIcon = '👑'; roleLabel = 'Керівник підприємства'; }
-          if (['manager', 'Менеджер', 'офіс-менеджер', 'Офіс-менеджер'].includes(roleLabel)) { roleIcon = '💼'; roleLabel = roleLabel.includes('офіс') ? 'Офіс-менеджер' : 'Менеджер'; }
-          if (roleLabel === 'logist') { roleIcon = '⚙️'; roleLabel = 'Логіст'; }
-          if (['driver', 'Водій'].includes(roleLabel)) { roleIcon = '🚗'; roleLabel = 'Водій'; }
-          if (roleLabel.includes('комірник') || roleLabel.includes('Комірник') || roleLabel.includes('Склад')) { roleIcon = '📦'; }
-          
-          let actionsHtml = '';
-          if (e['Telegram']) actionsHtml += `<a href="https://t.me/${String(e['Telegram']).replace('@', '')}" target="_blank" class="contact-btn" title="Telegram">✈️</a>`;
-          if (e['Телефон']) actionsHtml += `<a href="tel:${e['Телефон']}" class="contact-btn" title="Зателефонувати">📞</a>`;
-          
-          const card = document.createElement('div');
-          card.className = 'dash-card dash-dark';
-          card.style.position = 'relative';
-          card.style.cursor = 'pointer';
-          card.onclick = () => openEmployeeModal(e);
-          
-          let deleteBtn = '';
-          if (state.currentUser && state.currentUser.role && ['admin', 'director', 'керівник'].includes(String(state.currentUser.role).toLowerCase())) {
-            deleteBtn = `<button class="action-icon-btn" style="position:absolute; top:10px; right:10px; color:var(--danger);" onclick="event.stopPropagation(); deleteEmployee('${e['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
-          }
-          
-          card.innerHTML = `
-            ${deleteBtn}
-            <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">${roleIcon} ${roleLabel}</div>
-            <h3 style="margin: 0 0 10px 0; font-size: 18px; color: var(--text-color);">${e['ПІБ'] || '-'}</h3>
-            ${e['Авто'] && (roleLabel === 'Водій' || roleLabel === 'driver') ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">🚗 Закріплене авто: ${e['Авто']}</div>` : ''}
-            ${e['Телефон'] ? `<div style="font-size: 13px; color: #9ca3af; margin-bottom: 3px;">📱 ${e['Телефон']}</div>` : ''}
-            
-            <div style="margin-top: 15px; display: flex; gap: 8px;">
-              ${actionsHtml || '<span style="font-size: 12px; color: #6b7280;">Немає контактів</span>'}
-            </div>
-          `;
-          container.appendChild(card);
-      });
-    });
-    
     if(typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
   } catch (err) {
     container.innerHTML = '<div style="color:red; padding: 20px;">Помилка рендеру: ' + err.toString() + '</div>';
