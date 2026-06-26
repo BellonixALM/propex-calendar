@@ -989,7 +989,7 @@ body.light-theme .card-address { color: #111827; }
       
       <!-- Dashboard Tab -->
       
-      <div id="employees-view" class="main-tab-view" style="display:none; padding-right: 10px;">
+      <div id="employees-view" class="main-tab-view" style="padding-right: 10px;">
         <div style="position: sticky; top: 0; z-index: 10; background: var(--bg-color); padding: 16px 0 12px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border-color);">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 15px;">
@@ -1006,7 +1006,7 @@ body.light-theme .card-address { color: #111827; }
         </div>
       </div>
       
-      <div id="clients-view" class="main-tab-view" style="display:none; padding-right: 10px;">
+      <div id="clients-view" class="main-tab-view" style="padding-right: 10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
           <h2 style="font-size: 24px; font-weight: 700; margin: 0;">Клієнти / Компанії</h2>
           <div class="view-toggle" style="display: flex; background: var(--bg-secondary); border-radius: 8px; padding: 4px; border: 1px solid var(--border-color);">
@@ -1779,6 +1779,7 @@ body.light-theme .card-address { color: #111827; }
             state.dailyCrews = [];
           })
           .getDailyCrews();
+          
         propexApi
           .withFailureHandler(function(err) {
             dataLoadedSuccessfully = true;
@@ -1794,6 +1795,32 @@ body.light-theme .card-address { color: #111827; }
             loadDeliveriesSafely();
           })
           .getDrivers();
+
+        propexApi
+          .withSuccessHandler(function(response) {
+            state.clients = (response && response.status === 'success') ? response.data : (response || []);
+            if (typeof renderClients === 'function') renderClients();
+          })
+          .withFailureHandler(function(err) {
+            console.error("Failed to load clients:", err);
+            state.clients = [];
+          })
+          .getClients();
+
+        propexApi
+          .withSuccessHandler(function(response) {
+            state.employees = (response && response.status === 'success') ? response.data : (response || []);
+            if (currentEmployeeDepartment) {
+              if (typeof renderEmployees === 'function') renderEmployees();
+            } else {
+              if (typeof renderEmployeeDepartments === 'function') renderEmployeeDepartments();
+            }
+          })
+          .withFailureHandler(function(err) {
+            console.error("Failed to load employees:", err);
+            state.employees = [];
+          })
+          .getEmployees();
     }
     function renderDriversHeader() {
     }

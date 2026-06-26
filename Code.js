@@ -1061,6 +1061,7 @@ function getDailyCrews() {
 // ====== АВТОМАТИЧНІ РОЗСИЛКИ ======
 
 function setupNotifications() {
+  // Видаляємо всі старі тригери розсилок, щоб уникнути дублювання з Python-ботом
   var triggers = ScriptApp.getProjectTriggers();
   for (var i = 0; i < triggers.length; i++) {
     var handlerName = triggers[i].getHandlerFunction();
@@ -1068,26 +1069,7 @@ function setupNotifications() {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
-  
-  // О 16:30 — запит водіям обрати авто на завтра
-  ScriptApp.newTrigger('sendCarSelectionReminders')
-           .timeBased()
-           .everyDays(1)
-           .atHour(16)
-           .nearMinute(30)
-           .inTimezone('Europe/Kiev')
-           .create();
-           
-  // О 19:00 — план доставок на завтра
-  ScriptApp.newTrigger('sendTomorrowRoutes')
-           .timeBased()
-           .everyDays(1)
-           .atHour(19)
-           .nearMinute(0)
-           .inTimezone('Europe/Kiev')
-           .create();
-           
-  Logger.log('Тригери успішно встановлено! 16:30 — вибір авто, 19:00 — маршрути на завтра.');
+  Logger.log('Усі старі тригери розсилок у Google Apps Script успішно видалено. Тепер розсилки веде виключно Telegram-бот.');
 }
 
 function sendCarSelectionReminders() {
@@ -1325,10 +1307,29 @@ function deleteClient(id) {
   return { status: 'error', message: 'Клієнта не знайдено' };
 }
 
+function ensureEmployeeHeaders(sheet) {
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var required = ['Авто', 'Телефон', 'Telegram', 'ПІБ'];
+  var added = false;
+  
+  required.forEach(function(req) {
+    if (headers.indexOf(req) === -1) {
+      var colIndex = headers.length + 1;
+      sheet.getRange(1, colIndex).setValue(req);
+      headers.push(req);
+      added = true;
+    }
+  });
+  return headers;
+}
+
 function get_employees() {
   var ss = getSpreadsheet();
   var sheet = ss.getSheetByName('Користувачі');
   if (!sheet) return { status: 'success', data: [] };
+  
+  ensureEmployeeHeaders(sheet);
   
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return { status: 'success', data: [] };
@@ -1338,12 +1339,16 @@ function get_employees() {
   var result = rows.map(function(row) {
     var obj = {};
     headers.forEach(function(header, index) { obj[header] = row[index]; });
-    // Normalize role string if needed
+    
+    // Normalize role and map names/telegram to standard keys
     obj['Роль'] = (obj['Роль'] || '').toLowerCase().trim();
+    obj['ПІБ'] = obj['ПІБ'] || obj["Ім'я"] || '';
+    obj['Telegram'] = obj['Telegram'] || obj['Telegram_ID'] || '';
+    
     // Use Login as ID if ID is missing
     if (!obj['ID']) obj['ID'] = obj['Логін'];
     return obj;
-  }).filter(function(row) { return row['ID']; });
+  }).filter(function(row) { return row['ID'] || row['ПІБ']; });
   
   return { status: 'success', data: result };
 }
@@ -1356,8 +1361,8 @@ function saveEmployee(payload) {
     sheet.appendRow(['Логін', 'Пароль', 'ПІБ', 'Роль', 'Авто', 'Телефон', 'Telegram']);
   }
   
+  var headers = ensureEmployeeHeaders(sheet);
   var data = sheet.getDataRange().getValues();
-  var headers = data[0];
   var loginIndex = headers.indexOf('Логін');
   
   var isNew = !payload.id;
@@ -1367,11 +1372,11 @@ function saveEmployee(payload) {
     var newRow = headers.map(function(h) {
       if (h === 'Логін') return login;
       if (h === 'Пароль') return '1234'; // Default password
-      if (h === 'ПІБ') return payload.name;
+      if (h === 'ПІБ' || h === "Ім'я") return payload.name;
       if (h === 'Роль') return payload.role;
       if (h === 'Авто') return payload.car;
       if (h === 'Телефон') return payload.phone;
-      if (h === 'Telegram') return payload.telegram;
+      if (h === 'Telegram' || h === 'Telegram_ID') return payload.telegram;
       return '';
     });
     sheet.appendRow(newRow);
@@ -1385,16 +1390,16 @@ function saveEmployee(payload) {
     }
     if (rowIndex > -1) {
       headers.forEach(function(h, idx) {
-        // don't overwrite password
         if (h === 'Пароль') return; 
-        var val = '';
+        var val = null;
         if (h === 'Логін') val = payload.id;
-        if (h === 'ПІБ') val = payload.name;
+        if (h === 'ПІБ' || h === "Ім'я") val = payload.name;
         if (h === 'Роль') val = payload.role;
         if (h === 'Авто') val = payload.car;
         if (h === 'Телефон') val = payload.phone;
-        if (h === 'Telegram') val = payload.telegram;
-        if (['Логін', 'ПІБ', 'Роль', 'Авто', 'Телефон', 'Telegram'].indexOf(h) !== -1) {
+        if (h === 'Telegram' || h === 'Telegram_ID') val = payload.telegram;
+        
+        if (val !== null) {
           sheet.getRange(rowIndex, idx + 1).setValue(val);
         }
       });

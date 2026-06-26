@@ -1061,6 +1061,7 @@ function getDailyCrews() {
 // ====== АВТОМАТИЧНІ РОЗСИЛКИ ======
 
 function setupNotifications() {
+  // Видаляємо всі старі тригери розсилок, щоб уникнути дублювання з Python-ботом
   var triggers = ScriptApp.getProjectTriggers();
   for (var i = 0; i < triggers.length; i++) {
     var handlerName = triggers[i].getHandlerFunction();
@@ -1068,22 +1069,7 @@ function setupNotifications() {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
-  
-  ScriptApp.newTrigger('sendCarSelectionReminders')
-           .timeBased()
-           .everyDays(1)
-           .atHour(11)
-           .nearMinute(0)
-           .create();
-           
-  ScriptApp.newTrigger('sendTodayRoutes')
-           .timeBased()
-           .everyDays(1)
-           .atHour(11)
-           .nearMinute(30)
-           .create();
-           
-  Logger.log('Тригери успішно встановлено!');
+  Logger.log('Усі старі тригери розсилок у Google Apps Script успішно видалено. Тепер розсилки веде виключно Telegram-бот.');
 }
 
 function sendCarSelectionReminders() {
@@ -1108,12 +1094,21 @@ function sendCarSelectionReminders() {
   }
 }
 
-function sendTodayRoutes() {
+function sendTomorrowRoutes() {
   var today = new Date();
-  var todayStr = Utilities.formatDate(today, 'Europe/Kiev', 'yyyy-MM-dd');
+  var tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var tomorrowStr = Utilities.formatDate(tomorrow, 'Europe/Kiev', 'dd.MM.yyyy');
+  var tomorrowStrISO = Utilities.formatDate(tomorrow, 'Europe/Kiev', 'yyyy-MM-dd');
   
-  var deliveries = getDeliveries().filter(function(d) { return d['Дата'] === todayStr; });
-  var dailyCrews = getDailyCrews().filter(function(c) { return c['Дата'] === todayStr; });
+  var allDeliveries = getDeliveries();
+  var deliveries = allDeliveries.filter(function(d) {
+    return d['Дата'] === tomorrowStr || d['Дата'] === tomorrowStrISO;
+  });
+  var allCrews = getDailyCrews();
+  var dailyCrews = allCrews.filter(function(c) {
+    return c['Дата'] === tomorrowStr || c['Дата'] === tomorrowStrISO;
+  });
   
   var carDeliveries = {};
   deliveries.forEach(function(d) {
@@ -1122,41 +1117,19 @@ function sendTodayRoutes() {
   });
   
   dailyCrews.forEach(function(crew) {
-    var workerName = "Невідомий комірник";
-    var workerTgId = "";
-    
-    if (workerId === 'general') {
-      workerName = 'Комірник';
-    } else if (usersSheet) {
-      var data = usersSheet.getDataRange().getValues();
-      var headers = data[0];
-      var tgCol = headers.indexOf('Telegram_ID');
-      var nameCol = headers.indexOf('ПІБ');
-      var idCol = headers.indexOf('ID');
-      
-      if (tgCol !== -1) {
-        for (var i = 1; i < data.length; i++) {
-          var uId = (idCol !== -1 && data[i][idCol]) ? data[i][idCol] : data[i][tgCol];
-          if (String(uId) === String(workerId) || String(data[i][tgCol]) === String(workerId)) {
-            workerName = nameCol !== -1 ? data[i][nameCol] : ('Комірник ' + workerId);
-            workerTgId = data[i][tgCol];
-            break;
-          }
-        }
-      }
-    }  var tgId = crew['Telegram_ID'];
+    var tgId = crew['Telegram_ID'];
     var carId = crew['ID_Авто'];
     if (!tgId || !carId) return;
     
-    var routeMsg = '🗺 Твій маршрут на сьогодні (' + todayStr + ') для Авто ' + carId + ':\n\n';
+    var routeMsg = '🗺 Твій маршрут на завтра (' + tomorrowStr + ') для Авто ' + carId + ':\n\n';
     var dels = carDeliveries[carId] || [];
     
     if (dels.length === 0) {
-      routeMsg += 'На сьогодні доставок поки немає. Відпочивай! 😎';
+      routeMsg += 'На завтра доставок поки немає. Відпочивай! 😎';
     } else {
       dels.sort(function(a, b) { return a['Час'].localeCompare(b['Час']); });
       dels.forEach(function(d, index) {
-        var comp = d['Ім\'я_одержувача'] ? d['Ім\'я_одержувача'] : '';
+        var comp = d["Ім'я_одержувача"] ? d["Ім'я_одержувача"] : '';
         routeMsg += (index + 1) + '. ⏰ ' + d['Час'] + '\n';
         if (comp) routeMsg += '🏢 ' + comp + '\n';
         routeMsg += '📍 ' + d['Адреса'] + '\n';
@@ -1168,8 +1141,17 @@ function sendTodayRoutes() {
     
     try {
       sendTelegramMessage(tgId, routeMsg);
-    } catch (e) {}
+    } catch (e) {
+      Logger.log('Помилка відправки маршруту водію ' + tgId + ': ' + e);
+    }
   });
+  
+  Logger.log('Розсилка маршрутів на завтра (' + tomorrowStr + ') завершена. Водіїв у розкладі: ' + dailyCrews.length);
+}
+
+// Стара функція — залишена для сумісності
+function sendTodayRoutes() {
+  sendTomorrowRoutes();
 }
 
 // ==========================================
@@ -1325,10 +1307,29 @@ function deleteClient(id) {
   return { status: 'error', message: 'Клієнта не знайдено' };
 }
 
+function ensureEmployeeHeaders(sheet) {
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var required = ['Авто', 'Телефон', 'Telegram', 'ПІБ'];
+  var added = false;
+  
+  required.forEach(function(req) {
+    if (headers.indexOf(req) === -1) {
+      var colIndex = headers.length + 1;
+      sheet.getRange(1, colIndex).setValue(req);
+      headers.push(req);
+      added = true;
+    }
+  });
+  return headers;
+}
+
 function get_employees() {
   var ss = getSpreadsheet();
   var sheet = ss.getSheetByName('Користувачі');
   if (!sheet) return { status: 'success', data: [] };
+  
+  ensureEmployeeHeaders(sheet);
   
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return { status: 'success', data: [] };
@@ -1338,12 +1339,16 @@ function get_employees() {
   var result = rows.map(function(row) {
     var obj = {};
     headers.forEach(function(header, index) { obj[header] = row[index]; });
-    // Normalize role string if needed
+    
+    // Normalize role and map names/telegram to standard keys
     obj['Роль'] = (obj['Роль'] || '').toLowerCase().trim();
+    obj['ПІБ'] = obj['ПІБ'] || obj["Ім'я"] || '';
+    obj['Telegram'] = obj['Telegram'] || obj['Telegram_ID'] || '';
+    
     // Use Login as ID if ID is missing
     if (!obj['ID']) obj['ID'] = obj['Логін'];
     return obj;
-  }).filter(function(row) { return row['ID']; });
+  }).filter(function(row) { return row['ID'] || row['ПІБ']; });
   
   return { status: 'success', data: result };
 }
@@ -1356,8 +1361,8 @@ function saveEmployee(payload) {
     sheet.appendRow(['Логін', 'Пароль', 'ПІБ', 'Роль', 'Авто', 'Телефон', 'Telegram']);
   }
   
+  var headers = ensureEmployeeHeaders(sheet);
   var data = sheet.getDataRange().getValues();
-  var headers = data[0];
   var loginIndex = headers.indexOf('Логін');
   
   var isNew = !payload.id;
@@ -1367,11 +1372,11 @@ function saveEmployee(payload) {
     var newRow = headers.map(function(h) {
       if (h === 'Логін') return login;
       if (h === 'Пароль') return '1234'; // Default password
-      if (h === 'ПІБ') return payload.name;
+      if (h === 'ПІБ' || h === "Ім'я") return payload.name;
       if (h === 'Роль') return payload.role;
       if (h === 'Авто') return payload.car;
       if (h === 'Телефон') return payload.phone;
-      if (h === 'Telegram') return payload.telegram;
+      if (h === 'Telegram' || h === 'Telegram_ID') return payload.telegram;
       return '';
     });
     sheet.appendRow(newRow);
@@ -1385,16 +1390,16 @@ function saveEmployee(payload) {
     }
     if (rowIndex > -1) {
       headers.forEach(function(h, idx) {
-        // don't overwrite password
         if (h === 'Пароль') return; 
-        var val = '';
+        var val = null;
         if (h === 'Логін') val = payload.id;
-        if (h === 'ПІБ') val = payload.name;
+        if (h === 'ПІБ' || h === "Ім'я") val = payload.name;
         if (h === 'Роль') val = payload.role;
         if (h === 'Авто') val = payload.car;
         if (h === 'Телефон') val = payload.phone;
-        if (h === 'Telegram') val = payload.telegram;
-        if (['Логін', 'ПІБ', 'Роль', 'Авто', 'Телефон', 'Telegram'].indexOf(h) !== -1) {
+        if (h === 'Telegram' || h === 'Telegram_ID') val = payload.telegram;
+        
+        if (val !== null) {
           sheet.getRange(rowIndex, idx + 1).setValue(val);
         }
       });
