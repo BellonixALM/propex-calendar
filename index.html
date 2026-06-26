@@ -1232,6 +1232,18 @@ body.light-theme .card-address { color: #111827; }
               <label for="form-client-note">Примітки</label>
               <textarea id="form-client-note" class="form-control" rows="3" placeholder="Додаткова інформація..."></textarea>
             </div>
+            <div class="form-group full-width" style="margin-top:15px; border-top:1px solid var(--border-color); padding-top:15px;">
+              <label for="form-client-logo-input" id="label-client-logo-input">Логотип компанії (зображення)</label>
+              <div style="display:flex; align-items:center; gap:15px; margin-top:8px;">
+                <div id="client-logo-preview" style="width:64px; height:64px; border-radius:50%; border:2px dashed var(--border-color); display:flex; align-items:center; justify-content:center; overflow:hidden; background:var(--bg-secondary); flex-shrink:0;">
+                  <span style="font-size:12px; color:var(--text-muted);">Немає</span>
+                </div>
+                <div style="flex-grow:1;">
+                  <input type="file" id="form-client-logo-input" accept="image/*" class="form-control" style="font-size:12px; padding:6px 12px;" onchange="handleImageUpload(this, 'client-logo-preview', 'form-client-logo-base64')">
+                  <input type="hidden" id="form-client-logo-base64">
+                </div>
+              </div>
+            </div>
           </div>
         </form>
       </div>
@@ -1286,11 +1298,23 @@ body.light-theme .card-address { color: #111827; }
               <label for="form-emp-phone">Телефон</label>
               <input type="text" id="form-emp-phone" class="form-control" placeholder="+380...">
             </div>
-            <div class="form-group">
-              <label for="form-emp-telegram">Telegram ID (для бота)</label>
-              <input type="text" id="form-emp-telegram" class="form-control" placeholder="123456789">
-            </div>
-          </div>
+             <div class="form-group">
+               <label for="form-emp-telegram">Telegram ID (для бота)</label>
+               <input type="text" id="form-emp-telegram" class="form-control" placeholder="123456789">
+             </div>
+             <div class="form-group full-width" style="margin-top:15px; border-top:1px solid var(--border-color); padding-top:15px;">
+               <label for="form-emp-photo-input">Фото співробітника</label>
+               <div style="display:flex; align-items:center; gap:15px; margin-top:8px;">
+                 <div id="emp-photo-preview" style="width:64px; height:64px; border-radius:50%; border:2px dashed var(--border-color); display:flex; align-items:center; justify-content:center; overflow:hidden; background:var(--bg-secondary); flex-shrink:0;">
+                   <span style="font-size:12px; color:var(--text-muted);">Немає</span>
+                 </div>
+                 <div style="flex-grow:1;">
+                   <input type="file" id="form-emp-photo-input" accept="image/*" class="form-control" style="font-size:12px; padding:6px 12px;" onchange="handleImageUpload(this, 'emp-photo-preview', 'form-emp-photo-base64')">
+                   <input type="hidden" id="form-emp-photo-base64">
+                 </div>
+               </div>
+             </div>
+           </div>
         </form>
       </div>
       <div class="modal-footer" style="display: flex; justify-content: space-between;">
@@ -3244,12 +3268,14 @@ function renderClients() {
           card.style.cursor = 'pointer';
           card.onclick = () => openClientModal(c);
           
+          const avatarHtml = c['Логотип'] ? 
+            `<img src="${c['Логотип']}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); flex-shrink: 0;" />` :
+            `<div style="width: 48px; height: 48px; border-radius: 50%; background: ${avatarColor}; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0;">${firstLetter}</div>`;
+
           card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
               <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 48px; height: 48px; border-radius: 50%; background: ${avatarColor}; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0;">
-                  ${firstLetter}
-                </div>
+                ${avatarHtml}
                 <div>
                   <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text-color);">${name}</h3>
                   <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">${typeLabel}</div>
@@ -4019,11 +4045,23 @@ function openClientModal(client = null) {
       document.getElementById('group-client-note').style.display = 'none';
       document.getElementById('form-client-has-note').checked = false;
     }
+    
+    // Populate logo base64
+    const logoBase64 = client['Логотип'] || '';
+    document.getElementById('form-client-logo-base64').value = logoBase64;
+    const preview = document.getElementById('client-logo-preview');
+    if (logoBase64) {
+      preview.innerHTML = `<img src="${logoBase64}" style="width:100%; height:100%; object-fit:cover;" />`;
+    } else {
+      preview.innerHTML = `<span style="font-size:12px; color:var(--text-muted);">Немає</span>`;
+    }
   } else {
     document.getElementById('form-client-id').value = '';
     document.getElementById('form-client-address').value = '';
     document.getElementById('group-client-note').style.display = 'none';
     document.getElementById('form-client-has-note').checked = false;
+    document.getElementById('form-client-logo-base64').value = '';
+    document.getElementById('client-logo-preview').innerHTML = `<span style="font-size:12px; color:var(--text-muted);">Немає</span>`;
   }
   
   const extraList = document.getElementById('extra-contacts-list');
@@ -4045,13 +4083,31 @@ function toggleClientFields() {
   const type = document.getElementById('form-client-type').value;
   const contactGroup = document.getElementById('group-client-contact');
   const extraContactsGroup = document.getElementById('extra-contacts-container');
+  const labelLogo = document.getElementById('label-client-logo-input');
   if (type === 'company') {
     contactGroup.style.display = 'block';
     if (extraContactsGroup) extraContactsGroup.style.display = 'block';
+    if (labelLogo) labelLogo.textContent = 'Логотип компанії (зображення)';
   } else {
     contactGroup.style.display = 'none';
     if (extraContactsGroup) extraContactsGroup.style.display = 'none';
+    if (labelLogo) labelLogo.textContent = 'Фото клієнта (зображення)';
   }
+}
+
+function handleImageUpload(input, previewId, hiddenInputId) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result;
+    document.getElementById(hiddenInputId).value = base64;
+    
+    const preview = document.getElementById(previewId);
+    preview.innerHTML = `<img src="${base64}" style="width:100%; height:100%; object-fit:cover;" />`;
+  };
+  reader.readAsDataURL(file);
 }
 
 function addExtraContact(contactObj = null) {
@@ -4151,8 +4207,20 @@ function openEmployeeModal(emp = null) {
     document.getElementById('form-emp-car').value = emp['Авто'] || '';
     document.getElementById('form-emp-phone').value = emp['Телефон'] || '';
     document.getElementById('form-emp-telegram').value = emp['Telegram'] || '';
+    
+    // Populate photo
+    const photoBase64 = emp['Фото'] || '';
+    document.getElementById('form-emp-photo-base64').value = photoBase64;
+    const preview = document.getElementById('emp-photo-preview');
+    if (photoBase64) {
+      preview.innerHTML = `<img src="${photoBase64}" style="width:100%; height:100%; object-fit:cover;" />`;
+    } else {
+      preview.innerHTML = `<span style="font-size:12px; color:var(--text-muted);">Немає</span>`;
+    }
   } else {
     document.getElementById('form-emp-id').value = '';
+    document.getElementById('form-emp-photo-base64').value = '';
+    document.getElementById('emp-photo-preview').innerHTML = `<span style="font-size:12px; color:var(--text-muted);">Немає</span>`;
   }
   document.getElementById('employee-modal').classList.add('show');
 }
@@ -4169,7 +4237,8 @@ function saveEmployee() {
     role: document.getElementById('form-emp-role').value,
     car: document.getElementById('form-emp-car').value,
     phone: document.getElementById('form-emp-phone').value,
-    telegram: document.getElementById('form-emp-telegram').value
+    telegram: document.getElementById('form-emp-telegram').value,
+    photo: document.getElementById('form-emp-photo-base64').value
   };
   
   if (!payload.name || !payload.role) {
@@ -4332,10 +4401,18 @@ function renderEmployees() {
 
       card.innerHTML = `
         ${deleteBtn}
-        <div style="font-size: 11px; font-weight: 700; color: ${themeColor}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
-          <span>${roleIcon}</span> <span>${roleLabel}</span>
+        <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px;">
+          ${e['Фото'] ? 
+            `<img src="${e['Фото']}" style="width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 2px solid ${themeColor};" />` :
+            `<div style="width: 46px; height: 46px; border-radius: 50%; background: ${themeColor}20; color: ${themeColor}; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700;">${(e['ПІБ'] || 'С').charAt(0).toUpperCase()}</div>`
+          }
+          <div>
+            <div style="font-size: 10px; font-weight: 700; color: ${themeColor}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; display: flex; align-items: center; gap: 4px;">
+              <span>${roleIcon}</span> <span>${roleLabel}</span>
+            </div>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-color); font-family: var(--font-title);">${e['ПІБ'] || '-'}</h3>
+          </div>
         </div>
-        <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: var(--text-color); font-family: var(--font-title);">${e['ПІБ'] || '-'}</h3>
         ${e['Авто'] && (rLower === 'водій' || rLower === 'driver') ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>🚗</span> <span>Авто: <b>${e['Авто']}</b></span></div>` : ''}
         ${e['Телефон'] ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>📱</span> <span>${e['Телефон']}</span></div>` : ''}
         ${e['Telegram'] ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>✈️</span> <span>${e['Telegram']}</span></div>` : ''}

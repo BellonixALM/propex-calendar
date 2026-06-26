@@ -1310,7 +1310,7 @@ function deleteClient(id) {
 function ensureEmployeeHeaders(sheet) {
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
-  var required = ['Авто', 'Телефон', 'Telegram', 'ПІБ'];
+  var required = ['Авто', 'Телефон', 'Telegram', 'ПІБ', 'Фото'];
   var added = false;
   
   required.forEach(function(req) {
