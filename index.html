@@ -3477,7 +3477,7 @@ window.switchMainTab = function(tabId) {
     } else if (tabId === 'analytics') {
         renderAnalytics();
     } else if (tabId === 'employees') {
-        if(typeof renderEmployees === 'function') renderEmployees();
+        if(typeof showEmployeeDepartments === 'function') showEmployeeDepartments();
     } else if (tabId === 'clients') {
         if(typeof renderClients === 'function') renderClients();
     }
