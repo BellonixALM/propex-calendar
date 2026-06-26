@@ -4158,7 +4158,8 @@ function saveClient() {
     whatsapp: document.getElementById('form-client-whatsapp').value,
     address: document.getElementById('form-client-address').value,
     notes: document.getElementById('form-client-note').value,
-    extra_contacts: JSON.stringify(extraContacts)
+    extra_contacts: JSON.stringify(extraContacts),
+    logo: document.getElementById('form-client-logo-base64').value
   };
   
   if (!payload.name) {
