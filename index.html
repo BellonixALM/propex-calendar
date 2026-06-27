@@ -906,14 +906,22 @@ body.light-theme .login-error {
         <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; color: var(--text-muted);">
           <span>Розробка:</span>
           <a href="https://github.com/bellonixalm" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; text-decoration: none; font-weight: 700; color: var(--text-color); transition: var(--transition);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: translateY(-1.5px);">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="url(#bellonix-grad-logo)" />
-              <path d="M2 17L12 22L22 17" stroke="url(#bellonix-grad-logo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M2 12L12 17L22 12" stroke="url(#bellonix-grad-logo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <svg width="20" height="20" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: translateY(-1px);">
+              <!-- Top Loop -->
+              <circle cx="50" cy="36" r="18" stroke="url(#bellonix-logo-gradient)" stroke-width="5.5" />
+              <!-- Bottom Loop -->
+              <circle cx="50" cy="64" r="18" stroke="url(#bellonix-logo-gradient)" stroke-width="5.5" />
+              <!-- Left Loop -->
+              <circle cx="36" cy="50" r="18" stroke="url(#bellonix-logo-gradient)" stroke-width="5.5" />
+              <!-- Right Loop -->
+              <circle cx="64" cy="50" r="18" stroke="url(#bellonix-logo-gradient)" stroke-width="5.5" />
+              <!-- Center Hub -->
+              <circle cx="50" cy="50" r="5" fill="#112349" />
               <defs>
-                <linearGradient id="bellonix-grad-logo" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#b01c24" />
-                  <stop offset="1" stop-color="#112349" />
+                <linearGradient id="bellonix-logo-gradient" x1="20" y1="80" x2="80" y2="20" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#112349" />
+                  <stop offset="60%" stop-color="#1b3b6f" />
+                  <stop offset="100%" stop-color="#9db2c0" />
                 </linearGradient>
               </defs>
             </svg>
