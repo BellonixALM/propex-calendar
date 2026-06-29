@@ -166,6 +166,17 @@ function doPost(e) {
       var result = saveClient(data.data);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'get_clients') {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getClients() }))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'registerClient') {
+      var result = registerClient(data.data);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'approveClient') {
+      var result = approveClient(data.data.id, data.data.status);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'saveEmployee') {
       var result = saveEmployee(data.data);
       return ContentService.createTextOutput(JSON.stringify(result))
@@ -1269,6 +1280,8 @@ function saveClient(payload) {
       if (key === 'Примітки') return payload.notes;
       if (key === 'Додаткові_Контакти') return payload.extra_contacts || '';
       if (key === 'Логотип') return payload.logo || '';
+      if (key === 'Client_Telegram_ID') return payload.Client_Telegram_ID || payload.client_telegram_id || '';
+      if (key === 'Status_Реєстрації') return payload.Status_Реєстрації || payload.status_реєстрації || '';
       return '';
     });
     sheet.appendRow(newRow);
@@ -1298,9 +1311,11 @@ function saveClient(payload) {
         if (key === 'Примітки') val = payload.notes;
         if (key === 'Додаткові_Контакти') val = payload.extra_contacts || '';
         if (key === 'Логотип') val = payload.logo || '';
+        if (key === 'Client_Telegram_ID') val = payload.Client_Telegram_ID || payload.client_telegram_id || '';
+        if (key === 'Status_Реєстрації') val = payload.Status_Реєстрації || payload.status_реєстрації || '';
         
         // We allow overwriting with empty string for extra_contacts to clear them
-        if (val !== '' || key === 'Додаткові_Контакти' || key === 'Логотип') {
+        if (val !== '' || key === 'Додаткові_Контакти' || key === 'Логотип' || key === 'Client_Telegram_ID' || key === 'Status_Реєстрації') {
           sheet.getRange(rowIndex, idx + 1).setValue(val);
         }
       });
@@ -1491,4 +1506,113 @@ function register_driver(data) {
     return { status: 'error', message: e.toString() };
   }
 }
+
+function registerClient(payload) {
+  try {
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Клієнти');
+    if (!sheet) {
+      sheet = ss.insertSheet('Клієнти');
+      sheet.appendRow(['ID', 'Тип', 'Назва', 'Контакт', 'Телефон', 'Email', 'Telegram', 'Viber', 'WhatsApp', 'Примітки', 'Додаткові_Контакти', 'Логотип', 'Client_Telegram_ID', 'Status_Реєстрації']);
+    }
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return h.toString().trim(); });
+    
+    // Ensure Client_Telegram_ID and Status_Реєстрації exist
+    var tgIdIdx = headers.indexOf('Client_Telegram_ID');
+    if (tgIdIdx === -1) {
+      headers.push('Client_Telegram_ID');
+      sheet.getRange(1, headers.length).setValue('Client_Telegram_ID');
+      tgIdIdx = headers.length - 1;
+    }
+    var statusIdx = headers.indexOf('Status_Реєстрації');
+    if (statusIdx === -1) {
+      headers.push('Status_Реєстрації');
+      sheet.getRange(1, headers.length).setValue('Status_Реєстрації');
+      statusIdx = headers.length - 1;
+    }
+    
+    var phoneIdx = headers.indexOf('Телефон');
+    var idIdx = headers.indexOf('ID');
+    
+    // Normalize payload phone number (remove +, spaces, etc.)
+    var searchPhone = payload.phone.toString().replace(/[^0-9]/g, '');
+    if (searchPhone.length > 9) {
+      searchPhone = searchPhone.slice(-9); // Match last 9 digits to handle country code variation
+    }
+    
+    // Search for existing client by phone number
+    var rowIndex = -1;
+    for (var i = 1; i < data.length; i++) {
+      var rowPhone = data[i][phoneIdx].toString().replace(/[^0-9]/g, '');
+      if (rowPhone) {
+        if (rowPhone.length > 9) rowPhone = rowPhone.slice(-9);
+        if (rowPhone === searchPhone) {
+          rowIndex = i + 1;
+          break;
+        }
+      }
+    }
+    
+    if (rowIndex > -1) {
+      // Client already exists in CRM by phone number!
+      // Auto-approve and link their Telegram ID!
+      sheet.getRange(rowIndex, tgIdIdx + 1).setValue(payload.telegram_id);
+      sheet.getRange(rowIndex, statusIdx + 1).setValue('Підтверджено');
+      return { status: 'success', is_new: false, approved: true };
+    } else {
+      // Client does not exist in CRM yet. Create a new row in pending status
+      var newId = 'CLI-' + new Date().getTime();
+      var newRow = headers.map(function(h) {
+        if (h === 'ID') return newId;
+        if (h === 'Тип') return 'Фізична особа';
+        if (h === 'Назва') return payload.name;
+        if (h === 'Контакт') return payload.name;
+        if (h === 'Телефон') return payload.phone;
+        if (h === 'Client_Telegram_ID') return payload.telegram_id;
+        if (h === 'Status_Реєстрації') return 'Очікує підтвердження';
+        if (h === 'Примітки') return 'Самореєстрація через Telegram: ' + (payload.company || '');
+        return '';
+      });
+      sheet.appendRow(newRow);
+      return { status: 'success', is_new: true, approved: false };
+    }
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function approveClient(clientId, status) {
+  try {
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Клієнти');
+    if (!sheet) return { status: 'error', message: 'Sheet not found' };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return h.toString().trim(); });
+    
+    var idIdx = headers.indexOf('ID');
+    var statusIdx = headers.indexOf('Status_Реєстрації');
+    var tgIdIdx = headers.indexOf('Client_Telegram_ID');
+    
+    var rowIndex = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][idIdx] === clientId) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+    
+    if (rowIndex > -1) {
+      sheet.getRange(rowIndex, statusIdx + 1).setValue(status);
+      var tgId = sheet.getRange(rowIndex, tgIdIdx + 1).getValue().toString();
+      return { status: 'success', telegram_id: tgId };
+    }
+    return { status: 'error', message: 'Client not found' };
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
 

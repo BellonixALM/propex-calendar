@@ -1721,6 +1721,10 @@ body.light-theme .login-error {
         this._callAPI('deleteEmployee', { id: employeeId });
         return this;
       };
+      ScriptRunBridge.prototype.approveClient = function(clientId, status) {
+        this._callAPI('approveClient', { id: clientId, status: status });
+        return this;
+      };
       window.propexApi = new ScriptRunBridge();
       console.log("💎 Custom propexApi Bridge successfully initialized!");
     })();
@@ -1937,16 +1941,7 @@ body.light-theme .login-error {
           })
           .getDrivers();
 
-        propexApi
-          .withSuccessHandler(function(response) {
-            state.clients = (response && response.status === 'success') ? response.data : (response || []);
-            if (typeof renderClients === 'function') renderClients();
-          })
-          .withFailureHandler(function(err) {
-            console.error("Failed to load clients:", err);
-            state.clients = [];
-          })
-          .getClients();
+        loadClientsData();
 
         propexApi
           .withSuccessHandler(function(response) {
@@ -1962,6 +1957,38 @@ body.light-theme .login-error {
             state.employees = [];
           })
           .getEmployees();
+    }
+
+    function loadClientsData() {
+      propexApi
+        .withSuccessHandler(function(response) {
+          state.clients = (response && response.status === 'success') ? response.data : (response || []);
+          if (typeof renderClients === 'function') renderClients();
+        })
+        .withFailureHandler(function(err) {
+          console.error("Failed to load clients:", err);
+          state.clients = [];
+        })
+        .getClients();
+    }
+
+    function handleApproveClient(clientId, status) {
+      if (!confirm(`Ви дійсно бажаєте ${status === 'Підтверджено' ? 'схвалити' : 'відхилити'} реєстрацію цього клієнта?`)) {
+        return;
+      }
+      showLoader();
+      propexApi.withSuccessHandler(res => {
+        hideLoader();
+        if (res && res.status === 'success') {
+          showNotification('Дію успішно виконано!', 'success');
+          loadClientsData();
+        } else {
+          showNotification('Помилка: ' + (res ? res.message : 'Невідома помилка'), 'error');
+        }
+      }).withFailureHandler(err => {
+        hideLoader();
+        showNotification('Помилка сервера: ' + err.toString(), 'error');
+      }).approveClient(clientId, status);
     }
     function renderDriversHeader() {
     }
@@ -3374,6 +3401,30 @@ function renderClients() {
             deleteBtn = `<button style="background: transparent; border: 1px solid var(--border-color); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: #ef4444; cursor: pointer; transition: all 0.2s;" onclick="event.stopPropagation(); deleteClient('${c['ID']}')" title="Видалити"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>`;
           }
 
+          let registrationBadgeHtml = '';
+          const regStatus = c['Status_Реєстрації'] || '';
+          const tgChatId = c['Client_Telegram_ID'] || '';
+          
+          if (regStatus === 'Очікує підтвердження') {
+            registrationBadgeHtml = `
+              <div style="margin-top: 5px; margin-bottom: 15px; padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #f59e0b; font-weight: 700;">
+                  <i data-lucide="user-check" style="width:16px;height:16px;"></i> Реєстрація в Telegram-боті
+                </div>
+                <div style="display: flex; gap: 8px;" onclick="event.stopPropagation()">
+                  <button style="flex:1; background:#10b981; color:white; border:none; padding:8px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; transition: all 0.2s;" onclick="handleApproveClient('${c['ID']}', 'Підтверджено')">Схвалити</button>
+                  <button style="flex:1; background:#ef4444; color:white; border:none; padding:8px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; transition: all 0.2s;" onclick="handleApproveClient('${c['ID']}', 'Відхилено')">Відхилити</button>
+                </div>
+              </div>
+            `;
+          } else if (regStatus === 'Підтверджено' && tgChatId) {
+            registrationBadgeHtml = `
+              <div style="margin-top: 5px; margin-bottom: 15px; padding: 6px 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #10b981; font-weight: 700;">
+                <i data-lucide="check-circle" style="width:14px;height:14px;"></i> Telegram Бот Активовано
+              </div>
+            `;
+          }
+
           const card = document.createElement('div');
           card.className = 'dash-card dash-dark client-card-hover';
           card.style.padding = '20px';
@@ -3408,6 +3459,8 @@ function renderClients() {
             <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; flex-grow: 1;">
               ${infoHtml || '<div style="font-size: 14px; color: var(--text-muted);">Немає контактної інформації</div>'}
             </div>
+
+            ${registrationBadgeHtml}
 
             <div style="display: flex; gap: 12px; margin-top: auto;" onclick="event.stopPropagation()">
               ${msgBtnHtml}
