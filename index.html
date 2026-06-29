@@ -3432,10 +3432,11 @@ function renderClients() {
           }
 
           let registrationBadgeHtml = '';
-          const regStatus = c['Status_Реєстрації'] || '';
-          const tgChatId = c['Client_Telegram_ID'] || '';
+          const regStatus = c['Status_Реєстрації'] || c['status_реєстрації'] || c['Статус_Реєстрації'] || c['статус_реєстрації'] || '';
+          const tgChatId = c['Client_Telegram_ID'] || c['client_telegram_id'] || c['Telegram_ID_Клієнта'] || c['telegram_id_клієнта'] || '';
+          const normalizedStatus = regStatus.toString().toLowerCase().trim();
           
-          if (regStatus === 'Очікує підтвердження') {
+          if (normalizedStatus === 'очікує підтвердження' || normalizedStatus === 'очікує') {
             registrationBadgeHtml = `
               <div style="margin-top: 5px; margin-bottom: 15px; padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #f59e0b; font-weight: 700;">
@@ -3447,7 +3448,7 @@ function renderClients() {
                 </div>
               </div>
             `;
-          } else if (regStatus === 'Підтверджено' && tgChatId) {
+          } else if (normalizedStatus === 'підтверджено' && tgChatId) {
             registrationBadgeHtml = `
               <div style="margin-top: 5px; margin-bottom: 15px; padding: 6px 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #10b981; font-weight: 700;">
                 <i data-lucide="check-circle" style="width:14px;height:14px;"></i> Telegram Бот Активовано
