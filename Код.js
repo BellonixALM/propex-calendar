@@ -287,6 +287,18 @@ function getClients() {
     // Return empty array if no sheet
     return [];
   }
+  
+  var currentValues = sheet.getDataRange().getValues();
+  var currentHeaders = currentValues[0].map(function(h) { return h.toString().trim(); });
+  if (currentHeaders.indexOf('Client_Telegram_ID') === -1) {
+    currentHeaders.push('Client_Telegram_ID');
+    sheet.getRange(1, currentHeaders.length).setValue('Client_Telegram_ID');
+  }
+  if (currentHeaders.indexOf('Status_Реєстрації') === -1) {
+    currentHeaders.push('Status_Реєстрації');
+    sheet.getRange(1, currentHeaders.length).setValue('Status_Реєстрації');
+  }
+  
   var data = sheet.getDataRange().getDisplayValues();
   if (data.length <= 1) return [];
   var headers = data[0];
@@ -300,8 +312,10 @@ function getClients() {
         obj['ID'] = val;
       } else if (h === 'назва' || h === 'ім\'я' || h === 'name' || h === 'название') {
         obj['Назва'] = val;
-      } else if (h === 'контакт' || h === 'телефон' || h === 'phone') {
+      } else if (h === 'контакт') {
         obj['Контакт'] = val;
+      } else if (h === 'телефон' || h === 'phone') {
+        obj['Телефон'] = val;
       } else {
         obj[header] = val;
       }
