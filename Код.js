@@ -1548,6 +1548,7 @@ function registerClient(payload) {
     }
     
     var phoneIdx = headers.indexOf('Телефон');
+    var extraContactsIdx = headers.indexOf('Додаткові_Контакти');
     var idIdx = headers.indexOf('ID');
     
     // Normalize payload phone number (remove +, spaces, etc.)
@@ -1556,10 +1557,11 @@ function registerClient(payload) {
       searchPhone = searchPhone.slice(-9); // Match last 9 digits to handle country code variation
     }
     
-    // Search for existing client by phone number
+    // Search for existing client by phone number (main column or extra contacts)
     var rowIndex = -1;
     for (var i = 1; i < data.length; i++) {
-      var rowPhone = data[i][phoneIdx].toString().replace(/[^0-9]/g, '');
+      // 1. Check main Телефон column
+      var rowPhone = data[i][phoneIdx] ? data[i][phoneIdx].toString().replace(/[^0-9]/g, '') : '';
       if (rowPhone) {
         if (rowPhone.length > 9) rowPhone = rowPhone.slice(-9);
         if (rowPhone === searchPhone) {
@@ -1567,6 +1569,31 @@ function registerClient(payload) {
           break;
         }
       }
+      
+      // 2. Check Додаткові_Контакти column
+      if (extraContactsIdx > -1 && data[i][extraContactsIdx]) {
+        try {
+          var extraStr = data[i][extraContactsIdx].toString().trim();
+          if (extraStr && (extraStr.indexOf('[') === 0 || extraStr.indexOf('{') === 0)) {
+            var contacts = JSON.parse(extraStr);
+            if (Array.isArray(contacts)) {
+              for (var j = 0; j < contacts.length; j++) {
+                var cPhone = contacts[j].phone ? contacts[j].phone.toString().replace(/[^0-9]/g, '') : '';
+                if (cPhone) {
+                  if (cPhone.length > 9) cPhone = cPhone.slice(-9);
+                  if (cPhone === searchPhone) {
+                    rowIndex = i + 1;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore JSON parse errors for corrupt cells
+        }
+      }
+      if (rowIndex > -1) break;
     }
     
     if (rowIndex > -1) {
