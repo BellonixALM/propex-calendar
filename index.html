@@ -3454,6 +3454,12 @@ function renderClients() {
                 <i data-lucide="check-circle" style="width:14px;height:14px;"></i> Telegram Бот Активовано
               </div>
             `;
+          } else {
+            registrationBadgeHtml = `
+              <div style="margin-top: 5px; margin-bottom: 15px; padding: 6px 12px; background: rgba(156, 163, 175, 0.05); border: 1px solid rgba(156, 163, 175, 0.15); border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); font-weight: 600;">
+                <i data-lucide="message-circle-off" style="width:14px;height:14px;"></i> Telegram не підключено
+              </div>
+            `;
           }
 
           const card = document.createElement('div');
