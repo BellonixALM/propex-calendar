@@ -4122,8 +4122,8 @@ function renderAnalytics() {
     document.getElementById('analytics-gasoline-uah').innerText = '...';
 
     // Fetch actual odometer and fuel data
-    const startDateStr = formatDateISO(ranges.curr.start);
-    const endDateStr = formatDateISO(ranges.curr.end);
+    const startDateStr = ranges.curr.start;
+    const endDateStr = ranges.curr.end;
     
     propexApi
       .withSuccessHandler(function(response) {
