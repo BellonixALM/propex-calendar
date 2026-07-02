@@ -58,7 +58,10 @@ function doGet(e) {
     var result = {};
     
     try {
-      if (action === 'login') {
+      if (action === 'inspect') {
+        return ContentService.createTextOutput(testInspectOdometer())
+          .setMimeType(ContentService.MimeType.TEXT);
+      } else if (action === 'login') {
         result = authenticateUser(payload.login, payload.password);
       } else if (action === 'getDeliveries') {
         result = { status: 'success', data: getDeliveries() };
@@ -83,6 +86,8 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'get_employees') {
         result = get_employees();
+      } else if (action === 'getOdometerData') {
+        result = getOdometerData(payload.startDate, payload.endDate);
       } else if (action === 'saveClient') {
         result = saveClient(payload);
       } else if (action === 'deleteClient') {
@@ -123,6 +128,9 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'get_employees') {
       return ContentService.createTextOutput(JSON.stringify(get_employees()))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'getOdometerData') {
+      return ContentService.createTextOutput(JSON.stringify(getOdometerData(data.data.startDate, data.data.endDate)))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'get_deliveries') {
       return ContentService.createTextOutput(JSON.stringify(getDeliveries()))
@@ -1654,6 +1662,151 @@ function approveClient(clientId, status) {
   } catch (e) {
     return { status: 'error', message: e.toString() };
   }
+}
+
+function testInspectOdometer() {
+  try {
+    var ss = SpreadsheetApp.openById('17r2oSP52TFIAiGegGTWlHsxRmHN7iEX2W5M4aYUKM54');
+    var sheets = ss.getSheets();
+    var log = [];
+    
+    for (var sIdx = 0; sIdx < sheets.length; sIdx++) {
+      var s = sheets[sIdx];
+      log.push('Sheet: ' + s.getName());
+      var data = s.getDataRange().getValues();
+      log.push('Dimensions: ' + data.length + ' rows, ' + (data[0] ? data[0].length : 0) + ' cols');
+      
+      for (var r = 0; r < data.length; r++) {
+        for (var c = 0; c < data[r].length; c++) {
+          var val = data[r][c].toString();
+          if (val.indexOf('Попович') > -1 || val.indexOf('Олександр') > -1 || val.indexOf('ПОВ') > -1) {
+            log.push('Found match at Row ' + (r+1) + ', Col ' + (c+1) + ' (' + s.getName() + '): ' + val);
+            // Log the whole row for context
+            log.push('Row content: ' + JSON.stringify(data[r]));
+          }
+        }
+      }
+    }
+    return log.join('\n');
+  } catch(e) {
+    return 'Error: ' + e.toString();
+  }
+}
+
+function getOdometerData(startDateStr, endDateStr) {
+  try {
+    var ss = SpreadsheetApp.openById('17r2oSP52TFIAiGegGTWlHsxRmHN7iEX2W5M4aYUKM54');
+    var sheets = ss.getSheets();
+    
+    var start = startDateStr ? parseDateString(startDateStr) : null;
+    var end = endDateStr ? parseDateString(endDateStr) : null;
+    
+    var carMileages = {};
+    var dieselLiters = 0;
+    var dieselUah = 0;
+    var gasolineLiters = 0;
+    var gasolineUah = 0;
+    
+    // List of known diesel vehicles
+    var dieselCars = ['volkswagen crafter', 'man', 'renault d18', 'renault dokker', 'hyundai ex-8'];
+    var electricCars = ['audi e-tron'];
+    
+    sheets.forEach(function(s) {
+      var name = s.getName().trim();
+      var nameLower = name.toLowerCase();
+      // Skip helper sheets
+      if (name === 'Заправки' || name === 'Аркуш2') return;
+      
+      var data = s.getDataRange().getValues();
+      if (data.length <= 1) return;
+      
+      var headers = data[0].map(function(h) { return h.toString().trim(); });
+      var dateIdx = headers.indexOf('Дата');
+      var kmIdx = headers.indexOf('Пробіг за день (км)');
+      var litIdx = headers.indexOf('Добова витрата палива (л)');
+      var uahIdx = headers.indexOf('Вартість пробігу (грн)');
+      
+      if (dateIdx === -1) return;
+      
+      var totalKm = 0;
+      var totalLit = 0;
+      var totalUah = 0;
+      
+      for (var i = 1; i < data.length; i++) {
+        var row = data[i];
+        var rowDateStr = row[dateIdx];
+        if (!rowDateStr) continue;
+        
+        var rowDate = new Date(rowDateStr);
+        // Date range filter
+        if (start && rowDate < start) continue;
+        if (end && rowDate > end) continue;
+        
+        // Sum values
+        if (kmIdx > -1) {
+          var km = parseFloat(row[kmIdx]) || 0;
+          totalKm += km;
+        }
+        if (litIdx > -1) {
+          var lit = parseFloat(row[litIdx]) || 0;
+          totalLit += lit;
+        }
+        if (uahIdx > -1) {
+          var uah = parseFloat(row[uahIdx]) || 0;
+          totalUah += uah;
+        }
+      }
+      
+      // Save car mileage
+      if (totalKm > 0) {
+        carMileages[name] = totalKm;
+      }
+      
+      // Classify fuel type
+      var isDiesel = false;
+      var isElectric = false;
+      
+      dieselCars.forEach(function(dc) {
+        if (nameLower.indexOf(dc) > -1) isDiesel = true;
+      });
+      electricCars.forEach(function(ec) {
+        if (nameLower.indexOf(ec) > -1) isElectric = true;
+      });
+      
+      if (isElectric) {
+        // Skip fuel calculations for electric
+      } else if (isDiesel) {
+        dieselLiters += totalLit;
+        dieselUah += totalUah;
+      } else {
+        // Assume Gasoline for new/unmapped combustion engine cars
+        gasolineLiters += totalLit;
+        gasolineUah += totalUah;
+      }
+    });
+    
+    return {
+      status: 'success',
+      data: {
+        carMileages: carMileages,
+        dieselLiters: Math.round(dieselLiters * 10) / 10,
+        dieselUah: Math.round(dieselUah),
+        gasolineLiters: Math.round(gasolineLiters * 10) / 10,
+        gasolineUah: Math.round(gasolineUah)
+      }
+    };
+    
+  } catch(e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function parseDateString(str) {
+  if (str.indexOf('.') > -1) {
+    var parts = str.split('.');
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+  }
+  return new Date(str);
 }
 
 

@@ -1224,7 +1224,7 @@ body.light-theme .login-error {
         </div>
       </div>
         
-        <div class="dash-cards-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="dash-cards-grid" style="grid-template-columns: repeat(4, 1fr);">
           <div class="dash-card dash-dark">
             <div class="dash-title">Найактивніше авто</div>
             <div class="dash-value" id="analytics-top-car-name">-</div>
@@ -1236,9 +1236,14 @@ body.light-theme .login-error {
             <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-top-manager-count">0 доставок</div>
           </div>
           <div class="dash-card dash-dark">
-            <div class="dash-title">Відсоток успішності (Success Rate)</div>
-            <div class="dash-value" id="analytics-success-rate">0%</div>
-            <div class="dash-trend" id="analytics-success-trend"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+            <div class="dash-title">Витрати дизелю</div>
+            <div class="dash-value" id="analytics-diesel-liters" style="color: #ef4444; font-weight: 800; font-size: 28px;">0 л</div>
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-diesel-uah">0 грн</div>
+          </div>
+          <div class="dash-card dash-dark">
+            <div class="dash-title">Витрати бензину</div>
+            <div class="dash-value" id="analytics-gasoline-liters" style="color: #ef4444; font-weight: 800; font-size: 28px;">0 л</div>
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-gasoline-uah">0 грн</div>
           </div>
         </div>
         
@@ -1735,6 +1740,10 @@ body.light-theme .login-error {
       };
       ScriptRunBridge.prototype.approveClient = function(clientId, status) {
         this._callAPI('approveClient', { id: clientId, status: status });
+        return this;
+      };
+      ScriptRunBridge.prototype.getOdometerData = function(startDate, endDate) {
+        this._callAPI('getOdometerData', { startDate: startDate, endDate: endDate });
         return this;
       };
       window.propexApi = new ScriptRunBridge();
@@ -4089,22 +4098,6 @@ function renderAnalytics() {
     const currDels = filterDeliveriesByDateRange(state.deliveries, ranges.curr.start, ranges.curr.end);
     const prevDels = filterDeliveriesByDateRange(state.deliveries, ranges.prev.start, ranges.prev.end);
     
-    // Top Car (Mock mileage)
-    const carCounts = {};
-    currDels.forEach(d => {
-        const key = d['ID_Авто'] || 'Невідомий';
-        carCounts[key] = (carCounts[key] || 0) + 1;
-    });
-    const sortedCars = Object.keys(carCounts).map(k => ({ name: k, count: carCounts[k] })).sort((a,b) => b.count - a.count);
-    if (sortedCars.length > 0) {
-        document.getElementById('analytics-top-car-name').innerText = window.getCarName(sortedCars[0].name);
-        const mockKm = sortedCars[0].count * 15;
-        document.getElementById('analytics-top-car-km').innerText = `${mockKm} км / ${sortedCars[0].count} доставок`;
-    } else {
-        document.getElementById('analytics-top-car-name').innerText = '-';
-        document.getElementById('analytics-top-car-km').innerText = '0 км / 0 доставок';
-    }
-    
     // Top Manager
     const mgrCounts = {};
     currDels.forEach(d => {
@@ -4120,22 +4113,101 @@ function renderAnalytics() {
         document.getElementById('analytics-top-manager-count').innerText = '0 доставок';
     }
     
-    // Success Rate
-    const deliveredCurr = currDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
-    const deliveredPrev = prevDels.filter(d => d['Статус_оплати'] === 'Виконано').length;
-    const currRate = currDels.length ? Math.round((deliveredCurr / currDels.length) * 100) : 0;
-    const prevRate = prevDels.length ? Math.round((deliveredPrev / prevDels.length) * 100) : 0;
+    // Reset fuel and car km UI to loading state first
+    document.getElementById('analytics-top-car-name').innerText = 'Завантаження...';
+    document.getElementById('analytics-top-car-km').innerText = 'Завантаження...';
+    document.getElementById('analytics-diesel-liters').innerText = '...';
+    document.getElementById('analytics-diesel-uah').innerText = '...';
+    document.getElementById('analytics-gasoline-liters').innerText = '...';
+    document.getElementById('analytics-gasoline-uah').innerText = '...';
+
+    // Fetch actual odometer and fuel data
+    const startDateStr = formatDateISO(ranges.curr.start);
+    const endDateStr = formatDateISO(ranges.curr.end);
     
-    document.getElementById('analytics-success-rate').innerText = currRate + '%';
-    
-    const diff = currRate - prevRate;
-    const tr = document.getElementById('analytics-success-trend');
-    if (diff > 0) tr.innerHTML = `<span class="trend-up">+${diff}% &uarr;</span> з минулого періоду`;
-    else if (diff < 0) tr.innerHTML = `<span class="trend-down">${diff}% &darr;</span> з минулого періоду`;
-    else tr.innerHTML = `<span style="color:#6b7280">Без змін</span>`;
+    propexApi
+      .withSuccessHandler(function(response) {
+         if (response && response.status === 'success') {
+             const odo = response.data;
+             
+             // 1. Top Car based on actual mileage
+             const mileages = odo.carMileages || {};
+             let topCar = null;
+             let maxKm = 0;
+             Object.keys(mileages).forEach(k => {
+                 if (mileages[k] > maxKm) {
+                     maxKm = mileages[k];
+                     topCar = k;
+                 }
+             });
+             
+             if (topCar) {
+                 document.getElementById('analytics-top-car-name').innerText = window.getCarName(topCar);
+                 // Calculate delivery count for this top car
+                 const topCarDels = currDels.filter(d => {
+                     const carName = window.getCarName(d['ID_Авто']);
+                     return carName.toLowerCase() === topCar.toLowerCase() || d['ID_Авто'] === topCar;
+                 }).length;
+                 document.getElementById('analytics-top-car-km').innerText = `${Math.round(maxKm)} км / ${topCarDels} доставок`;
+             } else {
+                 // Fallback if no mileage recorded in odometer sheet
+                 const carCounts = {};
+                 currDels.forEach(d => {
+                     const key = d['ID_Авто'] || 'Невідомий';
+                     carCounts[key] = (carCounts[key] || 0) + 1;
+                 });
+                 const sortedCars = Object.keys(carCounts).map(k => ({ name: k, count: carCounts[k] })).sort((a,b) => b.count - a.count);
+                 if (sortedCars.length > 0) {
+                     document.getElementById('analytics-top-car-name').innerText = window.getCarName(sortedCars[0].name);
+                     const mockKm = sortedCars[0].count * 15;
+                     document.getElementById('analytics-top-car-km').innerText = `${mockKm} км (розрах.) / ${sortedCars[0].count} доставок`;
+                 } else {
+                     document.getElementById('analytics-top-car-name').innerText = '-';
+                     document.getElementById('analytics-top-car-km').innerText = '0 км / 0 доставок';
+                 }
+             }
+             
+             // 2. Fuel metrics
+             document.getElementById('analytics-diesel-liters').innerText = `${odo.dieselLiters} л`;
+             document.getElementById('analytics-diesel-uah').innerText = `${odo.dieselUah.toLocaleString('uk-UA')} грн`;
+             
+             document.getElementById('analytics-gasoline-liters').innerText = `${odo.gasolineLiters} л`;
+             document.getElementById('analytics-gasoline-uah').innerText = `${odo.gasolineUah.toLocaleString('uk-UA')} грн`;
+         } else {
+             console.error("Failed to load odometer data:", response);
+             fallbackAnalyticsUI(currDels);
+         }
+      })
+      .withFailureHandler(function(err) {
+         console.error("Error fetching odometer analytics:", err);
+         fallbackAnalyticsUI(currDels);
+      })
+      .getOdometerData(startDateStr, endDateStr);
     
     // Comparative Chart (Daily grouped)
     renderComparativeChart(currDels, prevDels, ranges.curr.start, ranges.curr.end, ranges.prev.start, ranges.prev.end);
+}
+
+// Fallback function when odometer sync fails or is offline
+function fallbackAnalyticsUI(currDels) {
+    const carCounts = {};
+    currDels.forEach(d => {
+        const key = d['ID_Авто'] || 'Невідомий';
+        carCounts[key] = (carCounts[key] || 0) + 1;
+    });
+    const sortedCars = Object.keys(carCounts).map(k => ({ name: k, count: carCounts[k] })).sort((a,b) => b.count - a.count);
+    if (sortedCars.length > 0) {
+        document.getElementById('analytics-top-car-name').innerText = window.getCarName(sortedCars[0].name);
+        const mockKm = sortedCars[0].count * 15;
+        document.getElementById('analytics-top-car-km').innerText = `${mockKm} км (розрах.) / ${sortedCars[0].count} доставок`;
+    } else {
+        document.getElementById('analytics-top-car-name').innerText = '-';
+        document.getElementById('analytics-top-car-km').innerText = '0 км / 0 доставок';
+    }
+    document.getElementById('analytics-diesel-liters').innerText = '0 л';
+    document.getElementById('analytics-diesel-uah').innerText = '0 грн';
+    document.getElementById('analytics-gasoline-liters').innerText = '0 л';
+    document.getElementById('analytics-gasoline-uah').innerText = '0 грн';
 }
 
 function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe) {
