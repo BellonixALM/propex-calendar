@@ -2184,12 +2184,21 @@ body.light-theme .login-error {
     function applyRoleRestrictions() {
       const user = state.currentUser;
       if (!user) return;
+      
+      // Reset sidebar navigation items display states first
+      document.getElementById('nav-dashboard').style.display = 'flex';
+      document.getElementById('nav-clients').style.display = 'flex';
+      document.getElementById('nav-settings').style.display = 'flex';
+      document.getElementById('nav-tracking').style.display = 'flex';
+      
       const isAdmin = ['admin', 'director', 'керівник'].includes(String(user.role).toLowerCase());
       document.querySelectorAll('.admin-only').forEach(el => {
          el.style.display = isAdmin ? 'flex' : 'none';
       });
+      
       const banner = document.getElementById('director-mode-banner');
       const addBtn = document.getElementById('add-delivery-btn');
+      
       if (user.role === 'director') {
         banner.style.display = 'block';
         banner.className = 'director-banner';
@@ -2202,6 +2211,19 @@ body.light-theme .login-error {
         document.getElementById('update-status-btn').style.display = 'inline-block';
         document.getElementById('edit-delivery-btn').style.display = 'inline-block';
       } else if (user.role === 'logist') {
+        // Logists only get access to the Tracking tab
+        document.getElementById('nav-dashboard').style.display = 'none';
+        document.getElementById('nav-analytics').style.display = 'none';
+        document.getElementById('nav-clients').style.display = 'none';
+        document.getElementById('nav-settings').style.display = 'none';
+        document.getElementById('nav-employees').style.display = 'none';
+        document.getElementById('nav-tracking').style.display = 'flex';
+        
+        // Auto-switch to tracking tab
+        setTimeout(function() {
+          switchMainTab('tracking');
+        }, 50);
+
         banner.style.display = 'block';
         banner.className = 'director-banner';
         banner.style.background = 'linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)';
