@@ -337,7 +337,7 @@ function getDrivers() {
   if (!ss) {
     throw new Error("Не вдалося знайти зв'язок з Google Таблицею. Переконайтеся, що скрипт прикріплений до таблиці або вкажіть SPREADSHEET_ID в Code.gs.");
   }
-  var sheet = ss.getSheetByName('Екіпажі') || ss.getSheetByName('Водії');
+  var sheet = ss.getSheetByName('Користувачі');
   if (!sheet) {
     return [
       { 'ID_Авто': '1', 'Ім\'я': 'Іван Коваленко (Тест)', 'Фото': '' },
@@ -347,68 +347,50 @@ function getDrivers() {
     ];
   }
   
-  var data = sheet.getDataRange().getDisplayValues();
-  if (data.length <= 1) {
-    return [
-      { 'ID_Авто': '1', 'Ім\'я': 'Іван Коваленко (Тест)', 'Фото': '' },
-      { 'ID_Авто': '2', 'Ім\'я': 'Олександр Бондар (Тест)', 'Фото': '' },
-      { 'ID_Авто': '3', 'Ім\'я': 'Петро Шевченко (Тест)', 'Фото': '' },
-      { 'ID_Авто': '4', 'Ім\'я': 'Дмитро Кравченко (Тест)', 'Фото': '' }
-    ];
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  
+  var headers = data[0].map(function(h) { return h.toString().trim().toLowerCase(); });
+  var roleIdx = headers.indexOf('роль');
+  var nameIdx = headers.indexOf('піб');
+  var fallbackNameIdx = headers.indexOf('ім\'я');
+  var autoIdx = headers.indexOf('авто');
+  var photoIdx = headers.indexOf('фото');
+  
+  var drivers = [];
+  
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var role = row[roleIdx] ? row[roleIdx].toString().trim() : '';
+    if (role.toLowerCase() !== 'водій') continue;
+    
+    var name = row[nameIdx] ? row[nameIdx].toString().trim() : '';
+    if (!name && fallbackNameIdx > -1) {
+      name = row[fallbackNameIdx] ? row[fallbackNameIdx].toString().trim() : '';
+    }
+    if (!name) continue;
+    
+    var autoStr = row[autoIdx] ? row[autoIdx].toString().toLowerCase() : '';
+    var photo = row[photoIdx] ? row[photoIdx].toString() : '';
+    
+    // Map vehicle names to IDs
+    var vehicleIds = [];
+    if (autoStr.indexOf('hyundai ex-8') > -1 || autoStr.indexOf('hyundai') > -1) vehicleIds.push('1');
+    if (autoStr.indexOf('man') > -1) vehicleIds.push('2');
+    if (autoStr.indexOf('volkswagen crafter') > -1 || autoStr.indexOf('crafter') > -1 || autoStr.indexOf('volkswagen') > -1) vehicleIds.push('3');
+    if (autoStr.indexOf('renault dokker') > -1 || autoStr.indexOf('dokker') > -1) vehicleIds.push('4');
+    if (autoStr.indexOf('renault d18') > -1 || autoStr.indexOf('d18') > -1) vehicleIds.push('5');
+    
+    vehicleIds.forEach(function(vid) {
+      drivers.push({
+        'ID_Авто': vid,
+        'Ім\'я': name,
+        'Фото': photo
+      });
+    });
   }
   
-  var headers = data[0];
-  var rows = data.slice(1);
-  
-  var photoCol = -1;
-  headers.forEach(function(header, idx) {
-    var h = header.toString().trim().toLowerCase();
-    if (h === 'фото' || h === 'аватар' || h === 'зображення') {
-      photoCol = idx;
-    }
-  });
-
-  return rows.map(function(row, i) {
-    var obj = {};
-    headers.forEach(function(header, index) {
-      var val = row[index];
-      var h = header.toString().trim().toLowerCase();
-      
-      // Standardize driver keys
-      if (h === 'id_авто' || h === 'id' || h === 'водій_id' || h === 'код' || h === 'номер') {
-        obj['ID_Авто'] = val;
-      } else if (h === 'ім\'я' || h === 'піб' || h === 'водій' || h === 'ім’я' || h === 'фіо') {
-        obj['Ім\'я'] = val;
-      } else if (h === 'фото' || h === 'аватар' || h === 'зображення') {
-        obj['Фото'] = val;
-      } else if (h === 'telegram_id' || h === 'chat_id' || h === 'telegram' || h === 'id_телеграм') {
-        obj['Telegram_ID'] = val;
-      } else {
-        obj[header] = val;
-      }
-    });
-    
-    // Fallbacks if some headers didn't match standard names
-    if (!obj['ID_Automobile'] && obj['ID_Авто']) obj['ID_Automobile'] = obj['ID_Авто'];
-    if (!obj['ID_Авто'] && obj['ID']) obj['ID_Авто'] = obj['ID'];
-    if (!obj['Ім\'я'] && obj['ПІБ']) obj['Ім\'я'] = obj['ПІБ'];
-    if (!obj['Ім\'я'] && obj['Водій']) obj['Ім\'я'] = obj['Водій'];
-    
-    // Auto-fetch Telegram Profile Photo if empty and Telegram_ID present
-    if (!obj['Фото'] && obj['Telegram_ID']) {
-      var base64Avatar = fetchTelegramAvatarAsBase64(obj['Telegram_ID']);
-      if (base64Avatar) {
-        obj['Фото'] = base64Avatar;
-        // Save to spreadsheet
-        var rowNum = i + 2; // +1 for header, +1 for 1-based index
-        if (photoCol !== -1) {
-          sheet.getRange(rowNum, photoCol + 1).setValue(base64Avatar);
-        }
-      }
-    }
-    
-    return obj;
-  });
+  return drivers;
 }
 
 function addDelivery(deliveryData) {
