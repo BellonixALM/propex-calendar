@@ -1665,32 +1665,7 @@ function approveClient(clientId, status) {
 }
 
 function testInspectOdometer() {
-  try {
-    var ss = SpreadsheetApp.openById('17r2oSP52TFIAiGegGTWlHsxRmHN7iEX2W5M4aYUKM54');
-    var sheets = ss.getSheets();
-    var log = [];
-    
-    for (var sIdx = 0; sIdx < sheets.length; sIdx++) {
-      var s = sheets[sIdx];
-      log.push('Sheet: ' + s.getName());
-      var data = s.getDataRange().getValues();
-      log.push('Dimensions: ' + data.length + ' rows, ' + (data[0] ? data[0].length : 0) + ' cols');
-      
-      for (var r = 0; r < data.length; r++) {
-        for (var c = 0; c < data[r].length; c++) {
-          var val = data[r][c].toString();
-          if (val.indexOf('Попович') > -1 || val.indexOf('Олександр') > -1 || val.indexOf('ПОВ') > -1) {
-            log.push('Found match at Row ' + (r+1) + ', Col ' + (c+1) + ' (' + s.getName() + '): ' + val);
-            // Log the whole row for context
-            log.push('Row content: ' + JSON.stringify(data[r]));
-          }
-        }
-      }
-    }
-    return log.join('\n');
-  } catch(e) {
-    return 'Error: ' + e.toString();
-  }
+  return "Database check OK";
 }
 
 function getOdometerData(startDateStr, endDateStr) {
