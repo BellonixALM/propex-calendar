@@ -1645,6 +1645,7 @@ function getOdometerData(startDateStr, endDateStr) {
     
     var carMileages = {};
     var carTrips = {};
+    var carFuels = {};
     var dieselLiters = 0;
     var dieselUah = 0;
     var gasolineLiters = 0;
@@ -1714,10 +1715,11 @@ function getOdometerData(startDateStr, endDateStr) {
         }
       }
       
-      // Save car mileage & trips
-      if (totalKm > 0 || totalTrips > 0) {
+      // Save car mileage, trips & fuels
+      if (totalKm > 0 || totalTrips > 0 || totalLit > 0) {
         carMileages[name] = totalKm;
         carTrips[name] = totalTrips;
+        carFuels[name] = Math.round(totalLit * 10) / 10;
       }
       
       // Classify fuel type
@@ -1748,6 +1750,7 @@ function getOdometerData(startDateStr, endDateStr) {
       data: {
         carMileages: carMileages,
         carTrips: carTrips,
+        carFuels: carFuels,
         dieselLiters: Math.round(dieselLiters * 10) / 10,
         dieselUah: Math.round(dieselUah),
         gasolineLiters: Math.round(gasolineLiters * 10) / 10,

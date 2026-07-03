@@ -1253,6 +1253,28 @@ body.light-theme .login-error {
             <canvas id="comparativeChart"></canvas>
           </div>
         </div>
+        
+        <div class="dash-panel" style="margin-top: 20px;">
+          <h3 class="panel-title">Порівняльна аналітика автопарку</h3>
+          <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 15px;">
+            <div style="flex: 1; min-width: 320px;">
+              <h4 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                <span>📊</span> Пробіг та поїздки по авто
+              </h4>
+              <div class="chart-container" style="height: 280px; position: relative;">
+                <canvas id="fleetActivityChart"></canvas>
+              </div>
+            </div>
+            <div style="flex: 1; min-width: 320px;">
+              <h4 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                <span>🔥</span> Витрати палива по авто (л)
+              </h4>
+              <div class="chart-container" style="height: 280px; position: relative;">
+                <canvas id="fleetFuelChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       </div>
       <!-- End Analytics Tab -->
@@ -4202,6 +4224,9 @@ function renderAnalytics() {
              
              document.getElementById('analytics-gasoline-liters').innerText = `${odo.gasolineLiters} л`;
              document.getElementById('analytics-gasoline-uah').innerText = `${odo.gasolineUah.toLocaleString('uk-UA')} грн`;
+             
+             // 3. Render Fleet Charts
+             renderFleetCharts(odo);
          } else {
              console.error("Failed to load odometer data:", response);
              fallbackAnalyticsUI(currDels);
@@ -4215,6 +4240,127 @@ function renderAnalytics() {
     
     // Comparative Chart (Daily grouped)
     renderComparativeChart(currDels, prevDels, ranges.curr.start, ranges.curr.end, ranges.prev.start, ranges.prev.end);
+}
+
+let fleetActivityChartInstance = null;
+let fleetFuelChartInstance = null;
+
+function renderFleetCharts(odo) {
+    const mileages = odo.carMileages || {};
+    const tripsMap = odo.carTrips || {};
+    const fuelsMap = odo.carFuels || {};
+    
+    // Get unique list of cars across all maps
+    const cars = Array.from(new Set([
+        ...Object.keys(mileages),
+        ...Object.keys(tripsMap),
+        ...Object.keys(fuelsMap)
+    ])).filter(c => !c.toLowerCase().includes('самов')); // Exclude "самовивіз"
+    
+    const labels = cars.map(c => window.getCarName(c));
+    const mileageData = cars.map(c => mileages[c] || 0);
+    const tripsData = cars.map(c => tripsMap[c] || 0);
+    const fuelData = cars.map(c => fuelsMap[c] || 0);
+    
+    // 1. Fleet Activity Chart (Grouped Bar Chart: Mileage and Trips)
+    const ctxActivity = document.getElementById('fleetActivityChart');
+    if (ctxActivity) {
+        if (fleetActivityChartInstance) {
+            fleetActivityChartInstance.destroy();
+        }
+        fleetActivityChartInstance = new Chart(ctxActivity.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Пробіг (км)',
+                        data: mileageData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Поїздки',
+                        data: tripsData,
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: '#10b981',
+                        borderWidth: 1,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#9ca3af', font: { family: 'Outfit' } }
+                    },
+                    y: {
+                        position: 'left',
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#9ca3af', font: { family: 'Outfit' } },
+                        title: { display: true, text: 'Кілометраж (км)', color: '#9ca3af' }
+                    },
+                    y1: {
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { color: '#9ca3af', font: { family: 'Outfit' } },
+                        title: { display: true, text: 'Кількість поїздок', color: '#9ca3af' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#f3f4f6', font: { family: 'Outfit' } }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 2. Fleet Fuel Chart (Bar Chart)
+    const ctxFuel = document.getElementById('fleetFuelChart');
+    if (ctxFuel) {
+        if (fleetFuelChartInstance) {
+            fleetFuelChartInstance.destroy();
+        }
+        
+        fleetFuelChartInstance = new Chart(ctxFuel.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Витрати (л)',
+                    data: fuelData,
+                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                    borderColor: '#ef4444',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#9ca3af', font: { family: 'Outfit' } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#9ca3af', font: { family: 'Outfit' } }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#f3f4f6', font: { family: 'Outfit' } }
+                    }
+                }
+            }
+        });
+    }
 }
 
 // Fallback function when odometer sync fails or is offline
