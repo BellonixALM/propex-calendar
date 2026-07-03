@@ -1644,6 +1644,7 @@ function getOdometerData(startDateStr, endDateStr) {
     var end = endDateStr ? parseDateString(endDateStr) : null;
     
     var carMileages = {};
+    var carTrips = {};
     var dieselLiters = 0;
     var dieselUah = 0;
     var gasolineLiters = 0;
@@ -1667,12 +1668,14 @@ function getOdometerData(startDateStr, endDateStr) {
       var kmIdx = headers.indexOf('Пробіг за день (км)');
       var litIdx = headers.indexOf('Добова витрата палива (л)');
       var uahIdx = headers.indexOf('Вартість пробігу (грн)');
+      var tripsIdx = headers.indexOf('Кількість поїздок');
       
       if (dateIdx === -1) return;
       
       var totalKm = 0;
       var totalLit = 0;
       var totalUah = 0;
+      var totalTrips = 0;
       
       for (var i = 1; i < data.length; i++) {
         var row = data[i];
@@ -1680,9 +1683,17 @@ function getOdometerData(startDateStr, endDateStr) {
         if (!rowDateStr) continue;
         
         var rowDate = new Date(rowDateStr);
-        // Date range filter
-        if (start && rowDate < start) continue;
-        if (end && rowDate > end) continue;
+        // Normalize dates to midnight to prevent timezone issues
+        var d = new Date(rowDate.getFullYear(), rowDate.getMonth(), rowDate.getDate());
+        
+        if (start) {
+          var sNorm = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+          if (d < sNorm) continue;
+        }
+        if (end) {
+          var eNorm = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+          if (d > eNorm) continue;
+        }
         
         // Sum values
         if (kmIdx > -1) {
@@ -1697,11 +1708,16 @@ function getOdometerData(startDateStr, endDateStr) {
           var uah = parseFloat(row[uahIdx]) || 0;
           totalUah += uah;
         }
+        if (tripsIdx > -1) {
+          var trips = parseInt(row[tripsIdx]) || 0;
+          totalTrips += trips;
+        }
       }
       
-      // Save car mileage
-      if (totalKm > 0) {
+      // Save car mileage & trips
+      if (totalKm > 0 || totalTrips > 0) {
         carMileages[name] = totalKm;
+        carTrips[name] = totalTrips;
       }
       
       // Classify fuel type
@@ -1731,6 +1747,7 @@ function getOdometerData(startDateStr, endDateStr) {
       status: 'success',
       data: {
         carMileages: carMileages,
+        carTrips: carTrips,
         dieselLiters: Math.round(dieselLiters * 10) / 10,
         dieselUah: Math.round(dieselUah),
         gasolineLiters: Math.round(gasolineLiters * 10) / 10,

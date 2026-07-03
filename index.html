@@ -4151,27 +4151,35 @@ function renderAnalytics() {
          if (response && response.status === 'success') {
              const odo = response.data;
              
-             // 1. Top Car based on actual mileage
+             // 1. Top Car based on trips or mileage from odometer sheet
              const mileages = odo.carMileages || {};
+             const tripsMap = odo.carTrips || {};
              let topCar = null;
-             let maxKm = 0;
-             Object.keys(mileages).forEach(k => {
-                 if (mileages[k] > maxKm) {
-                     maxKm = mileages[k];
+             let maxTrips = 0;
+             Object.keys(tripsMap).forEach(k => {
+                 if (tripsMap[k] > maxTrips) {
+                     maxTrips = tripsMap[k];
                      topCar = k;
                  }
              });
              
+             if (!topCar) {
+                 let maxKm = 0;
+                 Object.keys(mileages).forEach(k => {
+                     if (mileages[k] > maxKm) {
+                         maxKm = mileages[k];
+                         topCar = k;
+                     }
+                 });
+             }
+             
              if (topCar) {
                  document.getElementById('analytics-top-car-name').innerText = window.getCarName(topCar);
-                 // Calculate delivery count for this top car
-                 const topCarDels = currDels.filter(d => {
-                     const carName = window.getCarName(d['ID_Авто']);
-                     return carName.toLowerCase() === topCar.toLowerCase() || d['ID_Авто'] === topCar;
-                 }).length;
-                 document.getElementById('analytics-top-car-km').innerText = `${Math.round(maxKm)} км / ${topCarDels} доставок`;
+                 const km = mileages[topCar] || 0;
+                 const trips = tripsMap[topCar] || 0;
+                 document.getElementById('analytics-top-car-km').innerText = `${Math.round(km)} км / ${trips} поїздок`;
              } else {
-                 // Fallback if no mileage recorded in odometer sheet
+                 // Fallback if no mileage/trips recorded in odometer sheet
                  const carCounts = {};
                  currDels.forEach(d => {
                      const key = d['ID_Авто'] || 'Невідомий';
@@ -4181,10 +4189,10 @@ function renderAnalytics() {
                  if (sortedCars.length > 0) {
                      document.getElementById('analytics-top-car-name').innerText = window.getCarName(sortedCars[0].name);
                      const mockKm = sortedCars[0].count * 15;
-                     document.getElementById('analytics-top-car-km').innerText = `${mockKm} км (розрах.) / ${sortedCars[0].count} доставок`;
+                     document.getElementById('analytics-top-car-km').innerText = `${mockKm} км (розрах.) / ${sortedCars[0].count} поїздок`;
                  } else {
                      document.getElementById('analytics-top-car-name').innerText = '-';
-                     document.getElementById('analytics-top-car-km').innerText = '0 км / 0 доставок';
+                     document.getElementById('analytics-top-car-km').innerText = '0 км / 0 поїздок';
                  }
              }
              
