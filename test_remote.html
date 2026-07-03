@@ -48,6 +48,27 @@
     document.addEventListener('DOMContentLoaded', initTheme);
 
 // --- MAP LOGIC ---
+window.getCarLogoSvg = function(carName, size = 24, color = 'white', bgColor = 'transparent') {
+  const name = (carName || '').toLowerCase();
+  
+  if (name.includes('volkswagen') || name.includes('vw')) {
+    // Volkswagen SVG
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><circle cx="50" cy="50" r="45" fill="none" stroke="${color}" stroke-width="7"/><path d="M 24 23 L 50 58 L 76 23" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="bevel" stroke-linecap="square"/><path d="M 20 54 L 35 90 L 50 58 L 65 90 L 80 54" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="bevel" stroke-linecap="square"/></svg>`;
+  } else if (name.includes('renault')) {
+    // Renault SVG
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><path d="M 50 10 L 75 50 L 50 90 L 25 50 Z" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="round"/><path d="M 50 25 L 65 50 L 50 75 L 35 50 Z" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="round"/></svg>`;
+  } else if (name.includes('hyundai')) {
+    // Hyundai SVG
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><ellipse cx="50" cy="50" rx="45" ry="30" fill="none" stroke="${color}" stroke-width="6"/><path d="M 35 35 L 30 65 M 65 35 L 60 65 M 32 50 L 62 50" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  } else if (name.includes('man')) {
+    // MAN SVG
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="background:${bgColor}; border-radius:50%;"><text x="50" y="62" fill="${color}" font-family="'Outfit', sans-serif" font-size="34" font-weight="900" text-anchor="middle">MAN</text></svg>`;
+  } else {
+    // Generic truck SVG
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background:${bgColor}; border-radius:50%;"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`;
+  }
+};
+
 window.getCarName = function(carId) {
   if (!carId || carId === 'Не призначено' || carId === 'Самовивіз') return carId;
   const map = {
@@ -152,7 +173,10 @@ async function openGlobalMap() {
   // Calculate idle cars (from drivers)
   const activeCarIds = Object.keys(carRoutes);
   const idleCars = (state.drivers || []).filter(d => !activeCarIds.includes(String(d['ID_Авто'])));
-  const idleCarNames = idleCars.map(d => window.getCarName(d['ID_Авто'])).join(', ');
+  const idleCarLogosHtml = idleCars.map(d => {
+    const carName = window.getCarName(d['ID_Авто']);
+    return `<div title="${carName}" style="display:inline-flex; align-items:center; justify-content:center; margin: 0 4px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); padding: 4px; background:rgba(30,30,35,0.9); box-shadow:0 2px 6px rgba(0,0,0,0.6);">${window.getCarLogoSvg(carName, 20, '#d1d5db')}</div>`;
+  }).join('');
   
   // Place idle cars at base
   const baseIconHtml = `
@@ -164,7 +188,7 @@ async function openGlobalMap() {
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       </div>
     </div>
-    ${idleCarNames ? `<div style="position:absolute; bottom:-20px; left:-50%; white-space:nowrap; background:rgba(30,30,35,0.9); color:var(--text-muted); font-size:10px; padding:3px 6px; border-radius:4px; border: 1px solid rgba(255,255,255,0.05); transform:translateX(-25%); z-index: 101;">В гаражі: ${idleCarNames}</div>` : ''}
+    ${idleCars.length > 0 ? `<div style="position:absolute; bottom:-34px; left:50%; transform:translateX(-50%); z-index: 101; display:flex; align-items:center;">${idleCarLogosHtml}</div>` : ''}
   `;
   const baseIcon = L.divIcon({
     className: 'custom-map-icon',
@@ -364,9 +388,14 @@ async function openGlobalMap() {
       
       const pulsingCss = isProblem ? 'animation: mapPulse 2s infinite ease-in-out;' : '';
       
+      const carNameForLogo = route.model;
+      const logoSvg = window.getCarLogoSvg(carNameForLogo, 20, routeColor, 'white');
+      
       const iconHtml = `
-        <div style="background:${routeColor}; width:20px; height:20px; border-radius:50%; border:2px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:white; font-size:11px; font-weight:800; ${pulsingCss}">${index + 1}</div>
-        <div style="position:absolute; top:-28px; left:-50%; white-space:nowrap; background:rgba(30,30,35,0.9); color:white; font-size:10px; padding:3px 8px; border-radius:6px; font-weight:600; border:1px solid ${routeColor}; transform:translateX(-25%);">${route.model} (№${index + 1})</div>
+        <div style="position:relative; display:flex; flex-direction:column; align-items:center;">
+          <div style="background:${routeColor}; width:20px; height:20px; border-radius:50%; border:2px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:white; font-size:11px; font-weight:800; ${pulsingCss} z-index:10;">${index + 1}</div>
+          <div style="position:absolute; top:-22px; z-index:11; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">${logoSvg}</div>
+        </div>
       `;
 
       const customIcon = L.divIcon({
@@ -385,9 +414,11 @@ async function openGlobalMap() {
     });
 
     // Add filter button for this car
+    const btnLogo = window.getCarLogoSvg(route.model, 16, routeColor);
     filtersHtml += `
       <label class="btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid ${routeColor}40;">
         <input type="checkbox" id="map-cb-${carId}" class="map-car-checkbox" value="${carId}" checked onchange="toggleMapCar('${carId}')" style="cursor:pointer; accent-color: ${routeColor};">
+        ${btnLogo}
         <span style="font-weight: 700; color: var(--text-color);">${route.model} <span style="color:var(--text-muted);">(${distanceKm.toFixed(1)} км)</span></span>
       </label>
     `;
@@ -666,8 +697,8 @@ body.light-theme .input-search {
   <style>
     .delivery-card.cancelled {
       border-left-color: #9ca3af;
-      background: linear-gradient(135deg, rgba(156, 163, 175, 0.1) 0%, #1c1f26 100%);
-      opacity: 0.7;
+      background: linear-gradient(135deg, rgba(156, 163, 175, 0.05) 0%, #1c1f26 100%);
+      opacity: 0.4;
     }
     .month-mini-card.cancelled {
       border-left-color: #9ca3af;
@@ -681,7 +712,14 @@ body.light-theme .input-search {
     body.light-theme .delivery-card.cancelled {
       background: #f3f4f6;
       border-left-color: #9ca3af;
-      opacity: 0.7;
+      opacity: 0.4;
+    }
+    /* Окремі фікси для екрану логіну, щоб текст завжди був білим на темному фоні */
+    .login-input {
+      color: #ffffff !important;
+    }
+    .login-input::placeholder {
+      color: rgba(255, 255, 255, 0.5) !important;
     }
   </style>
 </head>
@@ -1727,9 +1765,7 @@ body.light-theme .input-search {
       safeCreateIcons();
     }
     function handleLogin() {
-      alert('handleLogin triggered');
       try {
-        console.log("handleLogin triggered");
         const username = document.getElementById('login-username').value.trim();
         const password = document.getElementById('login-password').value.trim();
         const errorMsg = document.getElementById('login-error-msg');
@@ -2010,6 +2046,15 @@ body.light-theme .input-search {
         String(d['Дата']).trim() === ds && 
         String(d['ID_Авто']).trim() === 'Самовивіз'
       );
+    }
+
+    function isDriverOnRoute(carId, dateStr) {
+      if (!carId || !dateStr || !state.deliveries) return false;
+      return state.deliveries.some(d => {
+        if (String(d['ID_Авто']) !== String(carId) || d['Дата'] !== dateStr) return false;
+        const lowerStatus = String(d['Статус'] || '').trim().toLowerCase();
+        return ['в процесі', 'завантажено', 'в дорозі', 'на маршруті', 'виконано', 'виконана', 'завершено'].includes(lowerStatus);
+      });
     }
 
     function getFilteredDeliveries(dateObj, specificCar = null) {
@@ -2314,10 +2359,17 @@ body.light-theme .input-search {
         dayDeliveries.slice(0, maxVisible).forEach(del => {
           const miniCard = document.createElement('div');
           let statusClass = 'planned';
-          if (del['Статус'] === 'В процесі') statusClass = 'in-progress';
-          else if (del['Статус'] === 'Виконано') statusClass = 'completed';
-          else if (del['Статус'] === 'Аварія на дорозі' || del['Статус'] === 'Проблема') statusClass = 'problem';
-          else if (del['Статус'] === 'Скасовано') statusClass = 'cancelled';
+          const rawStatus = (del['Статус'] || '').trim();
+          const lowerStatus = rawStatus.toLowerCase();
+          if (['в процесі', 'завантажено', 'в дорозі', 'на маршруті'].includes(lowerStatus)) statusClass = 'in-progress';
+          else if (['виконано', 'виконана', 'завершено'].includes(lowerStatus)) statusClass = 'completed';
+          else if (lowerStatus.includes('аварія') || lowerStatus.includes('проблема')) statusClass = 'problem';
+          else if (lowerStatus.includes('скасовано') || lowerStatus.includes('скасована')) statusClass = 'cancelled';
+          
+          const whStatus = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
+          if (statusClass === 'planned' && whStatus === 'Зібрано' && isDriverOnRoute(del['ID_Авто'], del['Дата'])) {
+            statusClass = 'in-progress';
+          }
           let isIncidentAffected = false;
           if (statusClass !== 'completed' && statusClass !== 'problem') {
             if (hasCarIncidentOnDate(del['ID_Авто'], del['Дата'])) {
@@ -2392,6 +2444,13 @@ body.light-theme .input-search {
           else if (['виконано', 'виконана'].includes(lowerStatus)) statusClass = 'completed';
           else if (lowerStatus.includes('аварія') || lowerStatus.includes('проблема')) statusClass = 'problem';
           else if (lowerStatus.includes('скасовано') || lowerStatus.includes('скасована')) statusClass = 'cancelled';
+          
+          const whStatus = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
+          let smartOnRoute = false;
+          if (statusClass === 'planned' && whStatus === 'Зібрано' && isDriverOnRoute(del['ID_Авто'], del['Дата'])) {
+            statusClass = 'in-progress';
+            smartOnRoute = true;
+          }
           let isIncidentAffected = false;
           if (statusClass !== 'completed' && statusClass !== 'problem') {
             if (hasCarIncidentOnDate(del['ID_Automobile'] || del['ID_Авто'], del['Дата'])) {
@@ -2418,7 +2477,7 @@ body.light-theme .input-search {
               <div style="font-size: 11px; color: var(--text-muted);">Оплата:</div>
               <div style="font-size: 12px; font-weight: 700;">${del['Статус_оплати'] || 'Невідомо'}</div>
             </div>
-            <div class="list-badge-status ${statusClass}">${del['Статус']}</div>
+            <div class="list-badge-status ${statusClass}">${smartOnRoute ? 'В дорозі 🚛' : del['Статус']}</div>
           `;
           row.addEventListener('click', () => showDetails(del));
           groupDiv.appendChild(row);
@@ -2435,6 +2494,13 @@ body.light-theme .input-search {
       else if (['виконано', 'виконана'].includes(lowerStatus)) statusClass = 'completed';
       else if (lowerStatus.includes('аварія') || lowerStatus.includes('проблема')) statusClass = 'problem';
       else if (lowerStatus.includes('скасовано') || lowerStatus.includes('скасована')) statusClass = 'cancelled';
+      
+      const whStatusForSmart = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
+      let smartOnRoute = false;
+      if (statusClass === 'planned' && whStatusForSmart === 'Зібрано' && isDriverOnRoute(del['ID_Авто'], del['Дата'])) {
+        statusClass = 'in-progress';
+        smartOnRoute = true;
+      }
       let isIncidentAffected = false;
       if (statusClass !== 'completed' && statusClass !== 'problem') {
         if (hasCarIncidentOnDate(del['ID_Авто'], del['Дата'])) {
@@ -2475,7 +2541,11 @@ body.light-theme .input-search {
       } else if (whStatus === 'В процесі збору' || whStatus === 'Збирається') {
         whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
       } else if (whStatus === 'Зібрано') {
-        whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
+        if (smartOnRoute) {
+          whIcon = '<span class="wh-icon" title="Передано водію (в дорозі)" style="color:var(--accent-blue); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
+        } else {
+          whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
+        }
       } else if (isWhProblem) {
         whIcon = '<span class="wh-icon" title="Проблема зі збіркою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
       }
@@ -2594,9 +2664,9 @@ body.light-theme .input-search {
         return;
       }
       
-      const deliveryId = currentDetailDelivery['ID'];
-      if (!deliveryId) {
-        alert("Ця доставка не має унікального ідентифікатора (можливо, вона була створена до оновлення системи або вручну в таблиці). Анулюйте її безпосередньо в Google Таблиці.");
+      const deliveryId = String(currentDetailDelivery['ID'] || currentDetailDelivery['ID_Замовлення'] || '');
+      if (!deliveryId || deliveryId === 'undefined' || deliveryId === 'null') {
+        alert("Ця доставка має пошкоджений ID ('undefined'). Видаліть її або анулюйте безпосередньо в Google Таблиці!");
         return;
       }
       
@@ -2629,7 +2699,11 @@ body.light-theme .input-search {
     function submitStatusUpdate() {
       if (!currentDetailDelivery) return;
       const newStatus = document.getElementById('det-status-select').value;
-      const deliveryId = currentDetailDelivery['ID'];
+      const deliveryId = String(currentDetailDelivery['ID'] || currentDetailDelivery['ID_Замовлення'] || '');
+      if (!deliveryId || deliveryId === 'undefined' || deliveryId === 'null') {
+        alert("Ця доставка не має унікального ідентифікатора. Змініть статус безпосередньо в Google Таблиці.");
+        return;
+      }
       let comment = '';
       if (newStatus === 'Аварія на дорозі' || newStatus === 'Проблема') {
         comment = prompt("Будь ласка, вкажіть причину виникнення проблеми:", "Зламався автомобіль");
@@ -2691,7 +2765,9 @@ body.light-theme .input-search {
           String(d['ID_Авто']) === String(car) && 
           d['Дата'] === formattedDate && 
           d['Час'] === time &&
-          d['Адреса'] !== address
+          d['Адреса'] !== address &&
+          d['Статус'] !== 'Скасовано' &&
+          d['Статус'] !== 'Аварія на дорозі'
         );
         if (isOccupied) {
           alert(`Помилка! Цей часовий слот (${time}) для ${window.getCarName(car)} вже зайнятий іншою доставкою за іншою адресою!`);
@@ -2834,7 +2910,9 @@ body.light-theme .input-search {
         String(d['ID_Авто']) === String(targetCar) && 
         d['Дата'] === targetDate && 
         d['Час'] === targetTime &&
-        d['Адреса'] !== del['Адреса']
+        d['Адреса'] !== del['Адреса'] &&
+        d['Статус'] !== 'Скасовано' &&
+        d['Статус'] !== 'Аварія на дорозі'
       );
       if (isOccupied) {
         alert(`Цей часовий слот (${targetTime}) для ${window.getCarName(targetCar)} вже зайнятий іншою доставкою за іншою адресою!`);

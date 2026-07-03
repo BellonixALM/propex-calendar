@@ -2472,10 +2472,9 @@ body.light-theme .login-error {
       // Заголовки авто 1–4
       visibleCars.forEach(carId => {
         const currentDateStr = formatDateStr(state.currentDate);
-        const dynamicDriver = (state.dailyCrews && Array.isArray(state.dailyCrews))
+        const driver = (state.dailyCrews && Array.isArray(state.dailyCrews))
           ? state.dailyCrews.find(c => String(c['ID_Авто']) === String(carId) && c['Дата'] === currentDateStr)
           : null;
-        const driver = dynamicDriver || ((state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => d['ID_Авто'] == carId) : null);
         const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає водія';
         const initial = name ? name.charAt(0) : '?';
         const carHeader = document.createElement('div');

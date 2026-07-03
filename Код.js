@@ -338,14 +338,7 @@ function getDrivers() {
     throw new Error("Не вдалося знайти зв'язок з Google Таблицею. Переконайтеся, що скрипт прикріплений до таблиці або вкажіть SPREADSHEET_ID в Code.gs.");
   }
   var sheet = ss.getSheetByName('Користувачі');
-  if (!sheet) {
-    return [
-      { 'ID_Авто': '1', 'Ім\'я': 'Іван Коваленко (Тест)', 'Фото': '' },
-      { 'ID_Авто': '2', 'Ім\'я': 'Олександр Бондар (Тест)', 'Фото': '' },
-      { 'ID_Авто': '3', 'Ім\'я': 'Петро Шевченко (Тест)', 'Фото': '' },
-      { 'ID_Авто': '4', 'Ім\'я': 'Дмитро Кравченко (Тест)', 'Фото': '' }
-    ];
-  }
+  if (!sheet) return [];
   
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
@@ -354,8 +347,10 @@ function getDrivers() {
   var roleIdx = headers.indexOf('роль');
   var nameIdx = headers.indexOf('піб');
   var fallbackNameIdx = headers.indexOf('ім\'я');
-  var autoIdx = headers.indexOf('авто');
   var photoIdx = headers.indexOf('фото');
+  var telegramIdx = headers.indexOf('telegram');
+  if (telegramIdx === -1) telegramIdx = headers.indexOf('telegram_id');
+  if (telegramIdx === -1) telegramIdx = headers.indexOf('id_телеграм');
   
   var drivers = [];
   
@@ -370,23 +365,13 @@ function getDrivers() {
     }
     if (!name) continue;
     
-    var autoStr = row[autoIdx] ? row[autoIdx].toString().toLowerCase() : '';
-    var photo = row[photoIdx] ? row[photoIdx].toString() : '';
+    var photo = (photoIdx > -1 && row[photoIdx]) ? row[photoIdx].toString() : '';
+    var tgId = (telegramIdx > -1 && row[telegramIdx]) ? row[telegramIdx].toString().trim() : '';
     
-    // Map vehicle names to IDs
-    var vehicleIds = [];
-    if (autoStr.indexOf('hyundai ex-8') > -1 || autoStr.indexOf('hyundai') > -1) vehicleIds.push('1');
-    if (autoStr.indexOf('man') > -1) vehicleIds.push('2');
-    if (autoStr.indexOf('volkswagen crafter') > -1 || autoStr.indexOf('crafter') > -1 || autoStr.indexOf('volkswagen') > -1) vehicleIds.push('3');
-    if (autoStr.indexOf('renault dokker') > -1 || autoStr.indexOf('dokker') > -1) vehicleIds.push('4');
-    if (autoStr.indexOf('renault d18') > -1 || autoStr.indexOf('d18') > -1) vehicleIds.push('5');
-    
-    vehicleIds.forEach(function(vid) {
-      drivers.push({
-        'ID_Авто': vid,
-        'Ім\'я': name,
-        'Фото': photo
-      });
+    drivers.push({
+      'Ім\'я': name,
+      'Фото': photo,
+      'Telegram_ID': tgId
     });
   }
   
