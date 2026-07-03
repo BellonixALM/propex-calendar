@@ -4262,6 +4262,37 @@ function renderFleetCharts(odo) {
     const tripsData = cars.map(c => tripsMap[c] || 0);
     const fuelData = cars.map(c => fuelsMap[c] || 0);
     
+    // Dynamic text color to support both Light and Dark themes
+    const activeColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim() || '#1f2937';
+    
+    // Custom inline plugin to draw labels directly on top of the bars
+    const inlineDatalabelsPlugin = {
+        id: 'inlineDatalabels',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            ctx.save();
+            ctx.font = 'bold 11px Outfit';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillStyle = activeColor;
+            
+            chart.data.datasets.forEach((dataset, i) => {
+                const meta = chart.getDatasetMeta(i);
+                meta.data.forEach((bar, index) => {
+                    const val = dataset.data[index];
+                    if (val === null || val === undefined || val === 0) return;
+                    
+                    let suffix = '';
+                    if (dataset.label.includes('Пробіг')) suffix = ' км';
+                    else if (dataset.label.includes('Витрати')) suffix = ' л';
+                    
+                    ctx.fillText(val + suffix, bar.x, bar.y - 4);
+                });
+            });
+            ctx.restore();
+        }
+    };
+    
     // 1. Fleet Activity Chart (Grouped Bar Chart: Mileage and Trips)
     const ctxActivity = document.getElementById('fleetActivityChart');
     if (ctxActivity) {
@@ -4270,6 +4301,7 @@ function renderFleetCharts(odo) {
         }
         fleetActivityChartInstance = new Chart(ctxActivity.getContext('2d'), {
             type: 'bar',
+            plugins: [inlineDatalabelsPlugin],
             data: {
                 labels: labels,
                 datasets: [
@@ -4297,24 +4329,24 @@ function renderFleetCharts(odo) {
                 scales: {
                     x: {
                         grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#9ca3af', font: { family: 'Outfit' } }
+                        ticks: { color: activeColor, font: { family: 'Outfit' } }
                     },
                     y: {
                         position: 'left',
                         grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#9ca3af', font: { family: 'Outfit' } },
-                        title: { display: true, text: 'Кілометраж (км)', color: '#9ca3af' }
+                        ticks: { color: activeColor, font: { family: 'Outfit' } },
+                        title: { display: true, text: 'Кілометраж (км)', color: activeColor }
                     },
                     y1: {
                         position: 'right',
                         grid: { drawOnChartArea: false },
-                        ticks: { color: '#9ca3af', font: { family: 'Outfit' } },
-                        title: { display: true, text: 'Кількість поїздок', color: '#9ca3af' }
+                        ticks: { color: activeColor, font: { family: 'Outfit' } },
+                        title: { display: true, text: 'Кількість поїздок', color: activeColor }
                     }
                 },
                 plugins: {
                     legend: {
-                        labels: { color: '#f3f4f6', font: { family: 'Outfit' } }
+                        labels: { color: activeColor, font: { family: 'Outfit' } }
                     }
                 }
             }
@@ -4330,6 +4362,7 @@ function renderFleetCharts(odo) {
         
         fleetFuelChartInstance = new Chart(ctxFuel.getContext('2d'), {
             type: 'bar',
+            plugins: [inlineDatalabelsPlugin],
             data: {
                 labels: labels,
                 datasets: [{
@@ -4346,16 +4379,16 @@ function renderFleetCharts(odo) {
                 scales: {
                     x: {
                         grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#9ca3af', font: { family: 'Outfit' } }
+                        ticks: { color: activeColor, font: { family: 'Outfit' } }
                     },
                     y: {
                         grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#9ca3af', font: { family: 'Outfit' } }
+                        ticks: { color: activeColor, font: { family: 'Outfit' } }
                     }
                 },
                 plugins: {
                     legend: {
-                        labels: { color: '#f3f4f6', font: { family: 'Outfit' } }
+                        labels: { color: activeColor, font: { family: 'Outfit' } }
                     }
                 }
             }
