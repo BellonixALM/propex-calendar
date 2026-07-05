@@ -2417,9 +2417,9 @@ body.light-theme .login-error {
         addBtn.style.display = 'inline-flex';
       }
       
-      // Hide add button in Dashboard and Analytics tabs
+      // Hide add button in Dashboard, Analytics, and Employees tabs
       const activeTab = document.querySelector('.main-tab-view.active');
-      if (activeTab && (activeTab.id === 'dashboard-view' || activeTab.id === 'analytics-cargo-view' || activeTab.id === 'analytics-passenger-view')) {
+      if (activeTab && (activeTab.id === 'dashboard-view' || activeTab.id === 'analytics-cargo-view' || activeTab.id === 'analytics-passenger-view' || activeTab.id === 'employees-view')) {
          if (addBtn) addBtn.style.display = 'none';
       }
     }
@@ -3957,7 +3957,7 @@ window.switchMainTab = function(tabId) {
     // Toggle add button visibility
     const addBtn = document.getElementById('add-delivery-btn');
     if (addBtn) {
-        if (tabId === 'dashboard' || tabId === 'analytics-cargo' || tabId === 'analytics-passenger') {
+        if (tabId === 'dashboard' || tabId === 'analytics-cargo' || tabId === 'analytics-passenger' || tabId === 'employees') {
             addBtn.style.display = 'none';
         } else {
             if (typeof applyRoleRestrictions === 'function') applyRoleRestrictions();
@@ -5164,6 +5164,10 @@ function deleteClient(id) {
 }
 
 function openEmployeeModal(emp = null) {
+  if (!emp) {
+    alert("Створення нових співробітників виконується виключно автономно через реєстрацію в Telegram-боті!");
+    return;
+  }
   document.getElementById('employee-form').reset();
   if (emp && emp['ID']) {
     document.getElementById('form-emp-id').value = emp['ID'] || '';

@@ -1390,7 +1390,10 @@ function saveEmployee(payload) {
   var loginIndex = headers.indexOf('Логін');
   
   var isNew = !payload.id;
-  var login = payload.id || ('user' + new Date().getTime());
+  if (isNew) {
+    return { status: 'error', message: 'Створення нових співробітників виконується виключно автономно через реєстрацію в Telegram-боті!' };
+  }
+  var login = payload.id;
   
   if (isNew) {
     var newRow = headers.map(function(h) {
@@ -1459,7 +1462,37 @@ function register_driver(data) {
     if (!sheet) return { status: 'error', message: 'Sheet Користувачі not found' };
     
     var name = data.name || "Невідомий Водій";
-    var telegram_id = data.telegram_id || "";
+    var telegram_id = String(data.telegram_id || "").trim();
+    
+    if (telegram_id) {
+      var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      var tgColIdx = headers.indexOf('Telegram');
+      if (tgColIdx === -1) tgColIdx = headers.indexOf('Telegram_ID');
+      
+      if (tgColIdx !== -1) {
+        var sheetData = sheet.getDataRange().getValues();
+        var foundRowIdx = -1;
+        for (var r = 1; r < sheetData.length; r++) {
+          if (String(sheetData[r][tgColIdx]).trim() === telegram_id) {
+            foundRowIdx = r + 1;
+            break;
+          }
+        }
+        
+        if (foundRowIdx > -1) {
+          var setCellVal = function(colName, val) {
+            var idx = headers.indexOf(colName);
+            if (idx !== -1) {
+              sheet.getRange(foundRowIdx, idx + 1).setValue(val);
+            }
+          };
+          setCellVal('ПІБ', name);
+          setCellVal('Роль', data.role || "driver");
+          if (data.phone) setCellVal('Телефон', data.phone);
+          return { status: 'success', message: 'Driver updated (already exists)' };
+        }
+      }
+    }
     
     // Generate unique ID and logic
     var id = Utilities.getUuid();
