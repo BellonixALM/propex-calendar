@@ -882,6 +882,17 @@ body.light-theme .login-error {
     .login-input::placeholder {
       color: rgba(255, 255, 255, 0.5) !important;
     }
+    .analytics-charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    @media (max-width: 1024px) {
+      .analytics-charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -967,7 +978,8 @@ body.light-theme .login-error {
     <div class="nav-group-title">General</div>
     <nav class="sidebar-nav">
       <a class="nav-item" id="nav-dashboard" onclick="switchMainTab('dashboard')" title="Дашборд"><i data-lucide="layout-dashboard"></i> <span class="nav-item-text">Дашборд</span></a>
-      <a class="nav-item admin-only" id="nav-analytics" onclick="switchMainTab('analytics')" style="display:none;" title="Аналітика"><i data-lucide="bar-chart-2"></i> <span class="nav-item-text">Аналітика</span></a>
+      <a class="nav-item admin-only" id="nav-analytics-cargo" onclick="switchMainTab('analytics-cargo')" style="display:none;" title="Логістика та склад"><i data-lucide="truck"></i> <span class="nav-item-text">Логістика та склад</span></a>
+      <a class="nav-item admin-only" id="nav-analytics-passenger" onclick="switchMainTab('analytics-passenger')" style="display:none;" title="Аналітика відділу продажів"><i data-lucide="trending-up"></i> <span class="nav-item-text">Аналітика продажів</span></a>
       <a class="nav-item active" id="nav-tracking" onclick="switchMainTab('tracking')" title="Трекінг"><i data-lucide="map"></i> <span class="nav-item-text">Трекінг</span></a>
       <a class="nav-item" id="nav-clients" onclick="switchMainTab('clients')" title="Клієнти / Компанії"><i data-lucide="users"></i> <span class="nav-item-text">Клієнти / Компанії</span></a>
       <a class="nav-item admin-only" id="nav-employees" onclick="switchMainTab('employees')" style="display:none;" title="Співробітники"><i data-lucide="contact"></i> <span class="nav-item-text">Співробітники</span></a>
@@ -1200,17 +1212,17 @@ body.light-theme .login-error {
       </div>
       <!-- End Dashboard Tab -->
       
-      <!-- Analytics Tab -->
-      <div id="analytics-view" class="main-tab-view" style="padding-right: 10px;">
+      <!-- Cargo Analytics Tab -->
+      <div id="analytics-cargo-view" class="main-tab-view" style="padding-right: 10px;">
       <div class="control-bar" style="margin-bottom: 24px;">
         <div class="date-navigation">
           <button class="btn btn-secondary btn-icon" onclick="navigateAnalytics(-1)" title="Попередній період">
             <i data-lucide="chevron-left" style="width:18px;height:18px;"></i>
           </button>
-          <div class="date-display" onclick="document.getElementById('analytics-datepicker-ana').showPicker()">
+          <div class="date-display" onclick="document.getElementById('analytics-datepicker-ana-cargo').showPicker()">
             <i data-lucide="calendar" style="width:16px;height:16px;color:var(--accent-blue);"></i>
             <span class="analytics-date-label" style="min-width:140px;">Завантаження...</span>
-            <input type="date" id="analytics-datepicker-ana" class="datepicker-input" onchange="onAnalyticsDateSelect(this.value)">
+            <input type="date" id="analytics-datepicker-ana-cargo" class="datepicker-input" onchange="onAnalyticsDateSelect(this.value)">
           </div>
           <button class="btn btn-secondary btn-icon" onclick="navigateAnalytics(1)" title="Наступний період">
             <i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
@@ -1218,44 +1230,71 @@ body.light-theme .login-error {
         </div>
         
         <div class="view-selector">
-          <button class="view-btn analytics-view-btn" id="btn-analytics-month-ana" onclick="switchAnalyticsPeriod('month')">Місяць</button>
-          <button class="view-btn analytics-view-btn" id="btn-analytics-week-ana" onclick="switchAnalyticsPeriod('week')">Тиждень</button>
-          <button class="view-btn analytics-view-btn" id="btn-analytics-day-ana" onclick="switchAnalyticsPeriod('day')">День</button>
+          <button class="view-btn analytics-view-btn" id="btn-analytics-month-ana-cargo" onclick="switchAnalyticsPeriod('month')">Місяць</button>
+          <button class="view-btn analytics-view-btn" id="btn-analytics-week-ana-cargo" onclick="switchAnalyticsPeriod('week')">Тиждень</button>
+          <button class="view-btn analytics-view-btn" id="btn-analytics-day-ana-cargo" onclick="switchAnalyticsPeriod('day')">День</button>
         </div>
       </div>
         
         <div class="dash-cards-grid" style="grid-template-columns: 2fr 2fr 1fr 1fr;">
           <div class="dash-card dash-dark">
-            <div class="dash-title">Найактивніше авто</div>
+            <div class="dash-title">Найактивніший вантажний транспорт</div>
             <div class="dash-value" id="analytics-top-car-name" style="font-size: 24px; font-weight: 800;">-</div>
             <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-top-car-km">0 км / 0 доставок</div>
           </div>
           <div class="dash-card dash-dark">
-            <div class="dash-title">Менеджер періоду</div>
+            <div class="dash-title">Водій періоду</div>
             <div class="dash-value" id="analytics-top-manager-name" style="font-size: 24px; font-weight: 800;">-</div>
-            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-top-manager-count">0 доставок</div>
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-top-manager-count">0 рейсів</div>
           </div>
           <div class="dash-card dash-dark">
-            <div class="dash-title">Витрати дизелю (усі авто)</div>
+            <div class="dash-title">ДП (вантажний транспорт)</div>
             <div class="dash-value" id="analytics-diesel-liters" style="color: var(--propex-red); font-weight: 800; font-size: 24px;">0 л</div>
             <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-diesel-uah">0 грн</div>
           </div>
           <div class="dash-card dash-dark">
-            <div class="dash-title">Витрати бензину (усі авто)</div>
+            <div class="dash-title">Бензин (вантажний транспорт)</div>
             <div class="dash-value" id="analytics-gasoline-liters" style="color: var(--propex-red); font-weight: 800; font-size: 24px;">0 л</div>
             <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-gasoline-uah">0 грн</div>
           </div>
         </div>
         
-        <div class="dash-panel" style="margin-top: 20px;">
-          <h3 class="panel-title">Порівняльний графік доставок</h3>
-          <div class="chart-container" style="height: 300px; position: relative; width: 100%;">
-            <canvas id="comparativeChart"></canvas>
+        <div class="analytics-charts-grid">
+          <!-- Card 1: Deliveries Count -->
+          <div class="dash-panel">
+            <h3 class="panel-title">Динаміка відвантажень зі складу</h3>
+            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
+              <canvas id="comparativeChart"></canvas>
+            </div>
+          </div>
+          
+          <!-- Card 2: Trips Count -->
+          <div class="dash-panel">
+            <h3 class="panel-title">Кількість рейсів вантажного транспорту</h3>
+            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
+              <canvas id="fleetTripsLineChart"></canvas>
+            </div>
+          </div>
+          
+          <!-- Card 3: Fuel Consumption -->
+          <div class="dash-panel">
+            <h3 class="panel-title">Витрати палива вантажним транспортом</h3>
+            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
+              <canvas id="fleetFuelLineChart"></canvas>
+            </div>
+          </div>
+          
+          <!-- Card 4: Mileage -->
+          <div class="dash-panel">
+            <h3 class="panel-title">Пробіг вантажного транспорту</h3>
+            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
+              <canvas id="fleetMileageLineChart"></canvas>
+            </div>
           </div>
         </div>
-        
+
         <div class="dash-panel" style="margin-top: 20px;">
-          <h3 class="panel-title">Порівняльна аналітика автопарку</h3>
+          <h3 class="panel-title">Порівняльна аналітика вантажного автопарку</h3>
           <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 15px;">
             <div style="flex: 1; min-width: 320px;">
               <h4 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
@@ -1276,8 +1315,112 @@ body.light-theme .login-error {
           </div>
         </div>
       </div>
+      <!-- End Cargo Analytics Tab -->
+
+      <!-- Passenger Analytics Tab -->
+      <div id="analytics-passenger-view" class="main-tab-view" style="padding-right: 10px;">
+      <div class="control-bar" style="margin-bottom: 24px;">
+        <div class="date-navigation">
+          <button class="btn btn-secondary btn-icon" onclick="navigateAnalytics(-1)" title="Попередній період">
+            <i data-lucide="chevron-left" style="width:18px;height:18px;"></i>
+          </button>
+          <div class="date-display" onclick="document.getElementById('analytics-datepicker-ana-passenger').showPicker()">
+            <i data-lucide="calendar" style="width:16px;height:16px;color:var(--accent-blue);"></i>
+            <span class="analytics-date-label" style="min-width:140px;">Завантаження...</span>
+            <input type="date" id="analytics-datepicker-ana-passenger" class="datepicker-input" onchange="onAnalyticsDateSelect(this.value)">
+          </div>
+          <button class="btn btn-secondary btn-icon" onclick="navigateAnalytics(1)" title="Наступний період">
+            <i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
+          </button>
+        </div>
+        
+        <div class="view-selector">
+          <button class="view-btn analytics-view-btn" id="btn-analytics-month-ana-passenger" onclick="switchAnalyticsPeriod('month')">Місяць</button>
+          <button class="view-btn analytics-view-btn" id="btn-analytics-week-ana-passenger" onclick="switchAnalyticsPeriod('week')">Тиждень</button>
+          <button class="view-btn analytics-view-btn" id="btn-analytics-day-ana-passenger" onclick="switchAnalyticsPeriod('day')">День</button>
+        </div>
       </div>
-      <!-- End Analytics Tab -->
+        
+        <div class="dash-cards-grid" style="grid-template-columns: 2fr 2fr 1fr 1fr;">
+          <div class="dash-card dash-dark">
+            <div class="dash-title">Лідер продажів (менеджер)</div>
+            <div class="dash-value" id="analytics-top-manager-name-passenger" style="font-size: 24px; font-weight: 800;">-</div>
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-top-manager-count-passenger">0 доставок</div>
+          </div>
+          <div class="dash-card dash-dark">
+            <div class="dash-title">Мобільність: найактивніше службове авто</div>
+            <div class="dash-value" id="analytics-top-car-name-passenger" style="font-size: 24px; font-weight: 800;">-</div>
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-top-car-km-passenger">0 км / 0 доставок</div>
+          </div>
+          <div class="dash-card dash-dark">
+            <div class="dash-title">ДП (службові авто)</div>
+            <div class="dash-value" id="analytics-diesel-liters-passenger" style="color: var(--propex-red); font-weight: 800; font-size: 24px;">0 л</div>
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-diesel-uah-passenger">0 грн</div>
+          </div>
+          <div class="dash-card dash-dark">
+            <div class="dash-title">Бензин (службові авто)</div>
+            <div class="dash-value" id="analytics-gasoline-liters-passenger" style="color: var(--propex-red); font-weight: 800; font-size: 24px;">0 л</div>
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-gasoline-uah-passenger">0 грн</div>
+          </div>
+        </div>
+        
+        <div class="analytics-charts-grid">
+          <!-- Card 1: Deliveries Count -->
+          <div class="dash-panel">
+            <h3 class="panel-title">Кількість оформлених замовлень (менеджери)</h3>
+            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
+              <canvas id="comparativeChartPassenger"></canvas>
+            </div>
+          </div>
+          
+          <!-- Card 2: Trips Count -->
+          <div class="dash-panel">
+            <h3 class="panel-title">Службові поїздки менеджерів (рейси)</h3>
+            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
+              <canvas id="fleetTripsLineChartPassenger"></canvas>
+            </div>
+          </div>
+          
+          <!-- Card 3: Fuel Consumption -->
+          <div class="dash-panel">
+            <h3 class="panel-title">Витрати палива службовими авто</h3>
+            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
+              <canvas id="fleetFuelLineChartPassenger"></canvas>
+            </div>
+          </div>
+          
+          <!-- Card 4: Mileage -->
+          <div class="dash-panel">
+            <h3 class="panel-title">Пробіг службових авто (км)</h3>
+            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
+              <canvas id="fleetMileageLineChartPassenger"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-panel" style="margin-top: 20px;">
+          <h3 class="panel-title">Порівняльна аналітика мобільності менеджерів</h3>
+          <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 15px;">
+            <div style="flex: 1; min-width: 320px;">
+              <h4 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                <span>📊</span> Пробіг та поїздки по авто
+              </h4>
+              <div class="chart-container" style="height: 280px; position: relative;">
+                <canvas id="fleetActivityChartPassenger"></canvas>
+              </div>
+            </div>
+            <div style="flex: 1; min-width: 320px;">
+              <h4 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                <span>🔥</span> Витрати палива по авто (л)
+              </h4>
+              <div class="chart-container" style="height: 280px; position: relative;">
+                <canvas id="fleetFuelChartPassenger"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End Passenger Analytics Tab -->
 
     </div>
   </div>
@@ -1922,7 +2065,8 @@ body.light-theme .login-error {
           updateAnalyticsDateLabel();
           renderCalendar();
           if (document.getElementById('dashboard-view').classList.contains('active')) renderDashboard();
-          if (document.getElementById('analytics-view').classList.contains('active')) renderAnalytics();
+          if (document.getElementById('analytics-cargo-view') && document.getElementById('analytics-cargo-view').classList.contains('active')) renderAnalytics('cargo');
+          if (document.getElementById('analytics-passenger-view') && document.getElementById('analytics-passenger-view').classList.contains('active')) renderAnalytics('passenger');
           updateDateLabel();
         })
         .getDeliveries();
@@ -2235,7 +2379,8 @@ body.light-theme .login-error {
       } else if (user.role === 'logist') {
         // Logists only get access to the Tracking tab
         document.getElementById('nav-dashboard').style.display = 'none';
-        document.getElementById('nav-analytics').style.display = 'none';
+        if (document.getElementById('nav-analytics-cargo')) document.getElementById('nav-analytics-cargo').style.display = 'none';
+        if (document.getElementById('nav-analytics-passenger')) document.getElementById('nav-analytics-passenger').style.display = 'none';
         document.getElementById('nav-clients').style.display = 'none';
         document.getElementById('nav-settings').style.display = 'none';
         document.getElementById('nav-employees').style.display = 'none';
@@ -2274,7 +2419,7 @@ body.light-theme .login-error {
       
       // Hide add button in Dashboard and Analytics tabs
       const activeTab = document.querySelector('.main-tab-view.active');
-      if (activeTab && (activeTab.id === 'dashboard-view' || activeTab.id === 'analytics-view')) {
+      if (activeTab && (activeTab.id === 'dashboard-view' || activeTab.id === 'analytics-cargo-view' || activeTab.id === 'analytics-passenger-view')) {
          if (addBtn) addBtn.style.display = 'none';
       }
     }
@@ -3779,7 +3924,7 @@ function renderClients() {
       window.addEventListener('DOMContentLoaded', initApp);
     }
 let statusChartInstance = null;
-let comparativeChartInstance = null;
+let comparativeChartInstance = { cargo: null, passenger: null };
 
 window.onerror = function(msg, url, lineNo, columnNo, error) {
   alert("JS Error: " + msg + "\nLine: " + lineNo);
@@ -3788,7 +3933,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
 
 window.switchMainTab = function(tabId) {
     // Hide all
-    ['tracking', 'dashboard', 'analytics', 'employees', 'clients', 'settings'].forEach(id => {
+    ['tracking', 'dashboard', 'analytics-cargo', 'analytics-passenger', 'employees', 'clients', 'settings'].forEach(id => {
         const el = document.getElementById(id + '-view');
         if (el) el.classList.remove('active');
         const navEl = document.getElementById('nav-' + id);
@@ -3812,7 +3957,7 @@ window.switchMainTab = function(tabId) {
     // Toggle add button visibility
     const addBtn = document.getElementById('add-delivery-btn');
     if (addBtn) {
-        if (tabId === 'dashboard' || tabId === 'analytics') {
+        if (tabId === 'dashboard' || tabId === 'analytics-cargo' || tabId === 'analytics-passenger') {
             addBtn.style.display = 'none';
         } else {
             if (typeof applyRoleRestrictions === 'function') applyRoleRestrictions();
@@ -3821,8 +3966,10 @@ window.switchMainTab = function(tabId) {
     
     if (tabId === 'dashboard') {
         renderDashboard();
-    } else if (tabId === 'analytics') {
-        renderAnalytics();
+    } else if (tabId === 'analytics-cargo') {
+        renderAnalytics('cargo');
+    } else if (tabId === 'analytics-passenger') {
+        renderAnalytics('passenger');
     } else if (tabId === 'employees') {
         if(typeof showEmployeeDepartments === 'function') showEmployeeDepartments();
     } else if (tabId === 'clients') {
@@ -4130,142 +4277,264 @@ function renderTopList(elementId, dels, groupByField, prefix, suffix) {
     document.getElementById(elementId).innerHTML = html;
 }
 
+let fleetActivityChartInstance = { cargo: null, passenger: null };
+let fleetFuelChartInstance = { cargo: null, passenger: null };
+let lineChartInstances = { cargo: {}, passenger: {} };
+
 window.updateAnalyticsUI = function() {
-    renderAnalytics();
+    if (document.getElementById('analytics-cargo-view').classList.contains('active')) {
+        renderAnalytics('cargo');
+    } else if (document.getElementById('analytics-passenger-view').classList.contains('active')) {
+        renderAnalytics('passenger');
+    }
 };
 
-function renderAnalytics() {
+function renderAnalytics(type) {
+    type = type || 'cargo';
     if (!state || !state.deliveries) return;
+    
+    const getElIdHyphen = (baseId) => {
+        return type === 'passenger' ? baseId + '-passenger' : baseId;
+    };
     
     const ranges = getRanges();
     const currDels = filterDeliveriesByDateRange(state.deliveries, ranges.curr.start, ranges.curr.end);
     const prevDels = filterDeliveriesByDateRange(state.deliveries, ranges.prev.start, ranges.prev.end);
     
-    // Top Manager
-    const mgrCounts = {};
-    currDels.forEach(d => {
-        const key = d['ID_Менеджера'] || 'Невідомий';
-        mgrCounts[key] = (mgrCounts[key] || 0) + 1;
-    });
-    const sortedMgrs = Object.keys(mgrCounts).map(k => ({ name: k, count: mgrCounts[k] })).sort((a,b) => b.count - a.count);
-    if (sortedMgrs.length > 0) {
-        document.getElementById('analytics-top-manager-name').innerText = sortedMgrs[0].name;
-        document.getElementById('analytics-top-manager-count').innerText = `${sortedMgrs[0].count} доставок`;
+    // Top Manager / Top Driver
+    if (type === 'cargo') {
+        const driverCounts = {};
+        currDels.forEach(d => {
+            const dateStr = String(d['Дата'] || '').replace(/^'/, '').trim();
+            const carId = d['ID_Авто'];
+            if (!carId || carId === 'Самовивіз') return;
+            const driverObj = (state.dailyCrews && Array.isArray(state.dailyCrews))
+                ? state.dailyCrews.find(c => String(c['ID_Авто']) === String(carId) && c['Дата'] === dateStr)
+                : null;
+            const driverName = (driverObj && driverObj["Ім'я"]) ? driverObj["Ім'я"] : null;
+            if (driverName) {
+                driverCounts[driverName] = (driverCounts[driverName] || 0) + 1;
+            }
+        });
+        const sortedDrivers = Object.keys(driverCounts).map(k => ({ name: k, count: driverCounts[k] })).sort((a,b) => b.count - a.count);
+        if (sortedDrivers.length > 0) {
+            document.getElementById('analytics-top-manager-name').innerText = sortedDrivers[0].name;
+            document.getElementById('analytics-top-manager-count').innerText = `${sortedDrivers[0].count} рейсів`;
+        } else {
+            document.getElementById('analytics-top-manager-name').innerText = '-';
+            document.getElementById('analytics-top-manager-count').innerText = '0 рейсів';
+        }
     } else {
-        document.getElementById('analytics-top-manager-name').innerText = '-';
-        document.getElementById('analytics-top-manager-count').innerText = '0 доставок';
+        const mgrCounts = {};
+        currDels.forEach(d => {
+            const key = d['ID_Менеджера'] || 'Невідомий';
+            mgrCounts[key] = (mgrCounts[key] || 0) + 1;
+        });
+        const sortedMgrs = Object.keys(mgrCounts).map(k => ({ name: k, count: mgrCounts[k] })).sort((a,b) => b.count - a.count);
+        if (sortedMgrs.length > 0) {
+            document.getElementById('analytics-top-manager-name-passenger').innerText = sortedMgrs[0].name;
+            document.getElementById('analytics-top-manager-count-passenger').innerText = `${sortedMgrs[0].count} доставок`;
+        } else {
+            document.getElementById('analytics-top-manager-name-passenger').innerText = '-';
+            document.getElementById('analytics-top-manager-count-passenger').innerText = '0 доставок';
+        }
     }
     
     // Reset fuel and car km UI to loading state first
-    document.getElementById('analytics-top-car-name').innerText = 'Завантаження...';
-    document.getElementById('analytics-top-car-km').innerText = 'Завантаження...';
-    document.getElementById('analytics-diesel-liters').innerText = '...';
-    document.getElementById('analytics-diesel-uah').innerText = '...';
-    document.getElementById('analytics-gasoline-liters').innerText = '...';
-    document.getElementById('analytics-gasoline-uah').innerText = '...';
+    document.getElementById(getElIdHyphen('analytics-top-car-name')).innerText = 'Завантаження...';
+    document.getElementById(getElIdHyphen('analytics-top-car-km')).innerText = 'Завантаження...';
+    document.getElementById(getElIdHyphen('analytics-diesel-liters')).innerText = '...';
+    document.getElementById(getElIdHyphen('analytics-diesel-uah')).innerText = '...';
+    document.getElementById(getElIdHyphen('analytics-gasoline-liters')).innerText = '...';
+    document.getElementById(getElIdHyphen('analytics-gasoline-uah')).innerText = '...';
 
-    // Fetch actual odometer and fuel data
-    const startDateStr = ranges.curr.start;
+    // Fetch actual odometer and fuel data for BOTH current and previous periods
+    const startDateStr = ranges.prev.start;
     const endDateStr = ranges.curr.end;
     
     propexApi
       .withSuccessHandler(function(response) {
          if (response && response.status === 'success') {
-             const odo = response.data;
-             
-             // 1. Top Car based on trips or mileage from odometer sheet
-             const mileages = odo.carMileages || {};
-             const tripsMap = odo.carTrips || {};
-             let topCar = null;
-             let maxTrips = 0;
-             Object.keys(tripsMap).forEach(k => {
-                 if (tripsMap[k] > maxTrips) {
-                     maxTrips = tripsMap[k];
-                     topCar = k;
-                 }
-             });
-             
-             if (!topCar) {
-                 let maxKm = 0;
-                 Object.keys(mileages).forEach(k => {
-                     if (mileages[k] > maxKm) {
-                         maxKm = mileages[k];
-                         topCar = k;
-                     }
-                 });
-             }
-             
-             if (topCar) {
-                 document.getElementById('analytics-top-car-name').innerText = window.getCarName(topCar);
-                 const km = mileages[topCar] || 0;
-                 const trips = tripsMap[topCar] || 0;
-                 document.getElementById('analytics-top-car-km').innerText = `${Math.round(km)} км / ${trips} поїздок`;
-             } else {
-                 // Fallback if no mileage/trips recorded in odometer sheet
-                 const carCounts = {};
-                 currDels.forEach(d => {
-                     const key = d['ID_Авто'] || 'Невідомий';
-                     carCounts[key] = (carCounts[key] || 0) + 1;
-                 });
-                 const sortedCars = Object.keys(carCounts).map(k => ({ name: k, count: carCounts[k] })).sort((a,b) => b.count - a.count);
-                 if (sortedCars.length > 0) {
-                     document.getElementById('analytics-top-car-name').innerText = window.getCarName(sortedCars[0].name);
-                     const mockKm = sortedCars[0].count * 15;
-                     document.getElementById('analytics-top-car-km').innerText = `${mockKm} км (розрах.) / ${sortedCars[0].count} поїздок`;
-                 } else {
-                     document.getElementById('analytics-top-car-name').innerText = '-';
-                     document.getElementById('analytics-top-car-km').innerText = '0 км / 0 поїздок';
-                 }
-             }
-             
-             // 2. Fuel metrics
-             document.getElementById('analytics-diesel-liters').innerText = `${odo.dieselLiters} л`;
-             document.getElementById('analytics-diesel-uah').innerText = `${odo.dieselUah.toLocaleString('uk-UA')} грн`;
-             
-             document.getElementById('analytics-gasoline-liters').innerText = `${odo.gasolineLiters} л`;
-             document.getElementById('analytics-gasoline-uah').innerText = `${odo.gasolineUah.toLocaleString('uk-UA')} грн`;
-             
-             // 3. Render Fleet Charts
-             renderFleetCharts(odo);
-         } else {
-             console.error("Failed to load odometer data:", response);
-             fallbackAnalyticsUI(currDels);
-         }
-      })
-      .withFailureHandler(function(err) {
-         console.error("Error fetching odometer analytics:", err);
-         fallbackAnalyticsUI(currDels);
-      })
-      .getOdometerData(startDateStr, endDateStr);
-    
-    // Comparative Chart (Daily grouped)
-    renderComparativeChart(currDels, prevDels, ranges.curr.start, ranges.curr.end, ranges.prev.start, ranges.prev.end);
+              const odo = response.data;
+              let allLogs = odo.dailyRecords || [];
+              
+              // Client-side filtering of logs
+              const currStartStr = ranges.curr.start;
+              const currEndStr = ranges.curr.end;
+              
+              let carMileages = {};
+              let carTrips = {};
+              let carFuels = {};
+              let dieselLiters = 0;
+              let dieselUah = 0;
+              let gasolineLiters = 0;
+              let gasolineUah = 0;
+              
+              const dieselCars = ['volkswagen crafter', 'man', 'renault d18', 'renault dokker', 'hyundai ex-8'];
+              
+              // Process current period records for dashboard counters and bar charts
+              if (allLogs.length > 0) {
+                  allLogs.forEach(log => {
+                      const logDateStr = log.date;
+                      if (logDateStr >= currStartStr && logDateStr <= currEndStr) {
+                          const car = log.car;
+                          carMileages[car] = (carMileages[car] || 0) + (log.mileage || 0);
+                          carTrips[car] = (carTrips[car] || 0) + (log.trips || 0);
+                          carFuels[car] = (carFuels[car] || 0) + (log.fuel || 0);
+                          
+                          const carLower = car.toLowerCase();
+                          let isDiesel = false;
+                          dieselCars.forEach(dc => {
+                              if (carLower.indexOf(dc) > -1) isDiesel = true;
+                          });
+                          
+                          if (carLower.indexOf('audi e-tron') > -1) {
+                              // Skip electric
+                          } else if (isDiesel) {
+                               dieselLiters += (log.fuel || 0);
+                               dieselUah += (log.uah || 0);
+                          } else {
+                               gasolineLiters += (log.fuel || 0);
+                               gasolineUah += (log.uah || 0);
+                          }
+                      }
+                  });
+              }
+              
+              // Compute Top Driver for cargo period
+              if (type === 'cargo') {
+                  let driverMileages = {};
+                  let driverTrips = {};
+                  if (allLogs.length > 0) {
+                      allLogs.forEach(log => {
+                          const logDateStr = log.date;
+                          if (logDateStr >= currStartStr && logDateStr <= currEndStr) {
+                              const car = log.car || '';
+                              const carLower = car.toLowerCase();
+                              if (carLower.indexOf('audi e-tron') > -1) return; // skip electric passenger
+                              const dName = log.driver || '';
+                              if (dName && dName !== 'Невідомий') {
+                                  driverMileages[dName] = (driverMileages[dName] || 0) + (log.mileage || 0);
+                                  driverTrips[dName] = (driverTrips[dName] || 0) + (log.trips || 0);
+                              }
+                          }
+                      });
+                  }
+                  let topDriver = null;
+                  let maxDriverTrips = 0;
+                  Object.keys(driverTrips).forEach(k => {
+                      if (driverTrips[k] > maxDriverTrips) {
+                          maxDriverTrips = driverTrips[k];
+                          topDriver = k;
+                      } else if (driverTrips[k] === maxDriverTrips && maxDriverTrips > 0) {
+                          if ((driverMileages[k] || 0) > (driverMileages[topDriver] || 0)) {
+                              topDriver = k;
+                          }
+                      }
+                  });
+                  if (!topDriver && Object.keys(driverMileages).length > 0) {
+                      let maxDriverKm = 0;
+                      Object.keys(driverMileages).forEach(k => {
+                          if (driverMileages[k] > maxDriverKm) {
+                              maxDriverKm = driverMileages[k];
+                              topDriver = k;
+                          }
+                      });
+                  }
+                  if (topDriver) {
+                      document.getElementById('analytics-top-manager-name').innerText = topDriver;
+                      const km = driverMileages[topDriver] || 0;
+                      const trips = driverTrips[topDriver] || 0;
+                      document.getElementById('analytics-top-manager-count').innerText = `${Math.round(km)} км / ${trips} замовлень`;
+                  } else {
+                      document.getElementById('analytics-top-manager-name').innerText = '-';
+                      document.getElementById('analytics-top-manager-count').innerText = '0 км / 0 замовлень';
+                  }
+              }
+
+              // Compute top car for current period
+              let topCar = null;
+              let maxTrips = 0;
+              Object.keys(carTrips).forEach(k => {
+                  if (carTrips[k] > maxTrips) {
+                      maxTrips = carTrips[k];
+                      topCar = k;
+                  }
+              });
+              if (!topCar) {
+                  let maxKm = 0;
+                  Object.keys(carMileages).forEach(k => {
+                      if (carMileages[k] > maxKm) {
+                          maxKm = carMileages[k];
+                          topCar = k;
+                      }
+                  });
+              }
+              
+              if (topCar) {
+                  document.getElementById(getElIdHyphen('analytics-top-car-name')).innerText = window.getCarName(topCar);
+                  const km = carMileages[topCar] || 0;
+                  const trips = carTrips[topCar] || 0;
+                  document.getElementById(getElIdHyphen('analytics-top-car-km')).innerText = `${Math.round(km)} км / ${trips} поїздок`;
+              } else {
+                  document.getElementById(getElIdHyphen('analytics-top-car-name')).innerText = '-';
+                  document.getElementById(getElIdHyphen('analytics-top-car-km')).innerText = '0 км / 0 поїздок';
+              }
+              
+              // Update fuel card UI with current period values
+              document.getElementById(getElIdHyphen('analytics-diesel-liters')).innerText = `${Math.round(dieselLiters * 10) / 10} л`;
+              document.getElementById(getElIdHyphen('analytics-diesel-uah')).innerText = `${Math.round(dieselUah).toLocaleString('uk-UA')} грн`;
+              document.getElementById(getElIdHyphen('analytics-gasoline-liters')).innerText = `${Math.round(gasolineLiters * 10) / 10} л`;
+              document.getElementById(getElIdHyphen('analytics-gasoline-uah')).innerText = `${Math.round(gasolineUah).toLocaleString('uk-UA')} грн`;
+              
+              // Round fuels
+              Object.keys(carFuels).forEach(k => {
+                  carFuels[k] = Math.round(carFuels[k] * 10) / 10;
+              });
+              
+              // Render Fleet Bar Charts
+              renderFleetCharts({
+                  carMileages: carMileages,
+                  carTrips: carTrips,
+                  carFuels: carFuels
+              }, type);
+              
+              // Render new 3 comparative line charts
+              renderComparativeFleetLineCharts(allLogs, ranges, type);
+          } else {
+              console.error("Failed to load odometer data:", response);
+              fallbackAnalyticsUI(currDels, type);
+          }
+       })
+       .withFailureHandler(function(err) {
+          console.error("Error fetching odometer analytics:", err);
+          fallbackAnalyticsUI(currDels, type);
+       })
+       .getOdometerData(startDateStr, endDateStr);
+     
+    // Comparative Chart for Deliveries Count (Daily grouped)
+    renderComparativeChart(currDels, prevDels, ranges.curr.start, ranges.curr.end, ranges.prev.start, ranges.prev.end, type);
 }
 
-let fleetActivityChartInstance = null;
-let fleetFuelChartInstance = null;
-
-function renderFleetCharts(odo) {
+function renderFleetCharts(odo, type) {
+    type = type || 'cargo';
     const mileages = odo.carMileages || {};
     const tripsMap = odo.carTrips || {};
     const fuelsMap = odo.carFuels || {};
     
-    // Get unique list of cars across all maps
     const cars = Array.from(new Set([
         ...Object.keys(mileages),
         ...Object.keys(tripsMap),
         ...Object.keys(fuelsMap)
-    ])).filter(c => !c.toLowerCase().includes('самов')); // Exclude "самовивіз"
+    ])).filter(c => !c.toLowerCase().includes('самов'));
     
     const labels = cars.map(c => window.getCarName(c));
     const mileageData = cars.map(c => mileages[c] || 0);
     const tripsData = cars.map(c => tripsMap[c] || 0);
     const fuelData = cars.map(c => fuelsMap[c] || 0);
     
-    // Dynamic text color to support both Light and Dark themes
-    const activeColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim() || '#1f2937';
+    const activeColor = getComputedStyle(document.body).getPropertyValue('--text-color').trim() || '#1f2937';
     
-    // Custom inline plugin to draw labels directly on top of the bars
     const inlineDatalabelsPlugin = {
         id: 'inlineDatalabels',
         afterDatasetsDraw(chart) {
@@ -4293,13 +4562,14 @@ function renderFleetCharts(odo) {
         }
     };
     
-    // 1. Fleet Activity Chart (Grouped Bar Chart: Mileage and Trips)
-    const ctxActivity = document.getElementById('fleetActivityChart');
+    // Grouped activity chart
+    const canvasIdActivity = type === 'passenger' ? 'fleetActivityChartPassenger' : 'fleetActivityChart';
+    const ctxActivity = document.getElementById(canvasIdActivity);
     if (ctxActivity) {
-        if (fleetActivityChartInstance) {
-            fleetActivityChartInstance.destroy();
+        if (fleetActivityChartInstance[type]) {
+            fleetActivityChartInstance[type].destroy();
         }
-        fleetActivityChartInstance = new Chart(ctxActivity.getContext('2d'), {
+        fleetActivityChartInstance[type] = new Chart(ctxActivity.getContext('2d'), {
             type: 'bar',
             plugins: [inlineDatalabelsPlugin],
             data: {
@@ -4353,14 +4623,14 @@ function renderFleetCharts(odo) {
         });
     }
     
-    // 2. Fleet Fuel Chart (Bar Chart)
-    const ctxFuel = document.getElementById('fleetFuelChart');
+    // Fuel consumption chart
+    const canvasIdFuel = type === 'passenger' ? 'fleetFuelChartPassenger' : 'fleetFuelChart';
+    const ctxFuel = document.getElementById(canvasIdFuel);
     if (ctxFuel) {
-        if (fleetFuelChartInstance) {
-            fleetFuelChartInstance.destroy();
+        if (fleetFuelChartInstance[type]) {
+            fleetFuelChartInstance[type].destroy();
         }
-        
-        fleetFuelChartInstance = new Chart(ctxFuel.getContext('2d'), {
+        fleetFuelChartInstance[type] = new Chart(ctxFuel.getContext('2d'), {
             type: 'bar',
             plugins: [inlineDatalabelsPlugin],
             data: {
@@ -4396,8 +4666,173 @@ function renderFleetCharts(odo) {
     }
 }
 
-// Fallback function when odometer sync fails or is offline
-function fallbackAnalyticsUI(currDels) {
+function renderComparativeLineChart(canvasId, currValues, prevValues, labels, datasetLabel, valueSuffix, colorHex, type) {
+    type = type || 'cargo';
+    if (!lineChartInstances[type]) {
+        lineChartInstances[type] = {};
+    }
+    if (lineChartInstances[type][canvasId]) {
+        lineChartInstances[type][canvasId].destroy();
+    }
+    
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    
+    const activeColor = getComputedStyle(document.body).getPropertyValue('--text-color').trim() || '#1f2937';
+    const ctx = canvas.getContext('2d');
+    
+    lineChartInstances[type][canvasId] = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Поточний період',
+                    data: currValues,
+                    borderColor: colorHex,
+                    backgroundColor: colorHex + '1a',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Минулий період',
+                    data: prevValues,
+                    borderColor: '#6b7280',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: activeColor }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: activeColor }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { color: activeColor, font: { family: 'Outfit' } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.raw + valueSuffix;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderComparativeFleetLineCharts(allLogs, ranges, type) {
+    type = type || 'cargo';
+    const currDates = [];
+    let cur = new Date(ranges.curr.start);
+    const end = new Date(ranges.curr.end);
+    let safety = 0;
+    while (cur <= end && safety < 31) {
+        currDates.push(cur.toISOString().split('T')[0]);
+        cur.setDate(cur.getDate() + 1);
+        safety++;
+    }
+    
+    const getDailySum = (dateStr, field) => {
+        let sum = 0;
+        allLogs.forEach(log => {
+            if (log.date === dateStr) {
+                sum += log[field] || 0;
+            }
+        });
+        return sum;
+    };
+    
+    const currTrips = currDates.map(d => getDailySum(d, 'trips'));
+    const prevTrips = currDates.map((d, index) => {
+        const targetDate = new Date(ranges.prev.start);
+        targetDate.setDate(targetDate.getDate() + index);
+        return getDailySum(targetDate.toISOString().split('T')[0], 'trips');
+    });
+    
+    const currFuel = currDates.map(d => Math.round(getDailySum(d, 'fuel') * 10) / 10);
+    const prevFuel = currDates.map((d, index) => {
+        const targetDate = new Date(ranges.prev.start);
+        targetDate.setDate(targetDate.getDate() + index);
+        return Math.round(getDailySum(targetDate.toISOString().split('T')[0], 'fuel') * 10) / 10;
+    });
+    
+    const currMileage = currDates.map(d => Math.round(getDailySum(d, 'mileage')));
+    const prevMileage = currDates.map((d, index) => {
+        const targetDate = new Date(ranges.prev.start);
+        targetDate.setDate(targetDate.getDate() + index);
+        return Math.round(getDailySum(targetDate.toISOString().split('T')[0], 'mileage'));
+    });
+    
+    const labels = currDates.map(d => {
+        const parts = d.split('-');
+        return `${parts[2]}.${parts[1]}`;
+    });
+    
+    const tripsId = type === 'passenger' ? 'fleetTripsLineChartPassenger' : 'fleetTripsLineChart';
+    const fuelId = type === 'passenger' ? 'fleetFuelLineChartPassenger' : 'fleetFuelLineChart';
+    const mileageId = type === 'passenger' ? 'fleetMileageLineChartPassenger' : 'fleetMileageLineChart';
+    
+    renderComparativeLineChart(tripsId, currTrips, prevTrips, labels, 'Кількість поїздок', '', '#8b5cf6', type);
+    renderComparativeLineChart(fuelId, currFuel, prevFuel, labels, 'Витрати палива', ' л', '#ef4444', type);
+    renderComparativeLineChart(mileageId, currMileage, prevMileage, labels, 'Пробіг авто', ' км', '#3b82f6', type);
+}
+
+window.updateChartsThemeColor = function() {
+    const activeColor = getComputedStyle(document.body).getPropertyValue('--text-color').trim() || '#1f2937';
+    const allCharts = [
+        comparativeChartInstance.cargo,
+        comparativeChartInstance.passenger,
+        fleetActivityChartInstance.cargo,
+        fleetActivityChartInstance.passenger,
+        fleetFuelChartInstance.cargo,
+        fleetFuelChartInstance.passenger,
+        lineChartInstances.cargo ? lineChartInstances.cargo['fleetTripsLineChart'] : null,
+        lineChartInstances.cargo ? lineChartInstances.cargo['fleetFuelLineChart'] : null,
+        lineChartInstances.cargo ? lineChartInstances.cargo['fleetMileageLineChart'] : null,
+        lineChartInstances.passenger ? lineChartInstances.passenger['fleetTripsLineChartPassenger'] : null,
+        lineChartInstances.passenger ? lineChartInstances.passenger['fleetFuelLineChartPassenger'] : null,
+        lineChartInstances.passenger ? lineChartInstances.passenger['fleetMileageLineChartPassenger'] : null
+    ];
+    allCharts.forEach(chart => {
+        if (!chart) return;
+        
+        if (chart.options.scales) {
+            Object.keys(chart.options.scales).forEach(scaleId => {
+                const scale = chart.options.scales[scaleId];
+                if (scale.ticks) scale.ticks.color = activeColor;
+                if (scale.title) scale.title.color = activeColor;
+            });
+        }
+        
+        if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+            chart.options.plugins.legend.labels.color = activeColor;
+        }
+        
+        chart.update();
+    });
+};
+
+function fallbackAnalyticsUI(currDels, type) {
+    type = type || 'cargo';
+    const getElIdHyphen = (baseId) => {
+        return type === 'passenger' ? baseId + '-passenger' : baseId;
+    };
     const carCounts = {};
     currDels.forEach(d => {
         const key = d['ID_Авто'] || 'Невідомий';
@@ -4405,25 +4840,25 @@ function fallbackAnalyticsUI(currDels) {
     });
     const sortedCars = Object.keys(carCounts).map(k => ({ name: k, count: carCounts[k] })).sort((a,b) => b.count - a.count);
     if (sortedCars.length > 0) {
-        document.getElementById('analytics-top-car-name').innerText = window.getCarName(sortedCars[0].name);
+        document.getElementById(getElIdHyphen('analytics-top-car-name')).innerText = window.getCarName(sortedCars[0].name);
         const mockKm = sortedCars[0].count * 15;
-        document.getElementById('analytics-top-car-km').innerText = `${mockKm} км (розрах.) / ${sortedCars[0].count} доставок`;
+        document.getElementById(getElIdHyphen('analytics-top-car-km')).innerText = `${mockKm} км (розрах.) / ${sortedCars[0].count} доставок`;
     } else {
-        document.getElementById('analytics-top-car-name').innerText = '-';
-        document.getElementById('analytics-top-car-km').innerText = '0 км / 0 доставок';
+        document.getElementById(getElIdHyphen('analytics-top-car-name')).innerText = '-';
+        document.getElementById(getElIdHyphen('analytics-top-car-km')).innerText = '0 км / 0 доставок';
     }
-    document.getElementById('analytics-diesel-liters').innerText = '0 л';
-    document.getElementById('analytics-diesel-uah').innerText = '0 грн';
-    document.getElementById('analytics-gasoline-liters').innerText = '0 л';
-    document.getElementById('analytics-gasoline-uah').innerText = '0 грн';
+    document.getElementById(getElIdHyphen('analytics-diesel-liters')).innerText = '0 л';
+    document.getElementById(getElIdHyphen('analytics-diesel-uah')).innerText = '0 грн';
+    document.getElementById(getElIdHyphen('analytics-gasoline-liters')).innerText = '0 л';
+    document.getElementById(getElIdHyphen('analytics-gasoline-uah')).innerText = '0 грн';
 }
 
-function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe) {
+function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe, type) {
+    type = type || 'cargo';
     const currDates = [];
     let cur = new Date(cs);
     const end = new Date(ce);
     
-    // Limit to 31 days max to prevent memory crashes on huge ranges
     let safety = 0;
     while (cur <= end && safety < 31) {
         currDates.push(cur.toISOString().split('T')[0]);
@@ -4460,15 +4895,17 @@ function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe) {
         return `${parts[2]}.${parts[1]}`;
     });
     
-    if (comparativeChartInstance) {
-        comparativeChartInstance.destroy();
+    if (comparativeChartInstance[type]) {
+        comparativeChartInstance[type].destroy();
     }
     
-    const canvas = document.getElementById('comparativeChart');
+    const canvasId = type === 'passenger' ? 'comparativeChartPassenger' : 'comparativeChart';
+    const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     
+    const activeColor = getComputedStyle(document.body).getPropertyValue('--text-color').trim() || '#1f2937';
     const ctx = canvas.getContext('2d');
-    comparativeChartInstance = new Chart(ctx, {
+    comparativeChartInstance[type] = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
@@ -4497,11 +4934,11 @@ function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af', stepSize: 1 } },
-                x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: activeColor, stepSize: 1 } },
+                x: { grid: { display: false }, ticks: { color: activeColor } }
             },
             plugins: {
-                legend: { labels: { color: '#fff' } }
+                legend: { labels: { color: activeColor } }
             }
         }
     });

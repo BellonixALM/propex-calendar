@@ -1650,6 +1650,7 @@ function getOdometerData(startDateStr, endDateStr) {
     var dieselUah = 0;
     var gasolineLiters = 0;
     var gasolineUah = 0;
+    var dailyRecords = [];
     
     // List of known diesel vehicles
     var dieselCars = ['volkswagen crafter', 'man', 'renault d18', 'renault dokker', 'hyundai ex-8'];
@@ -1666,6 +1667,7 @@ function getOdometerData(startDateStr, endDateStr) {
       
       var headers = data[0].map(function(h) { return h.toString().trim(); });
       var dateIdx = headers.indexOf('Дата');
+      var driverIdx = headers.indexOf('Менеджер');
       var kmIdx = headers.indexOf('Пробіг за день (км)');
       var litIdx = headers.indexOf('Добова витрата палива (л)');
       var uahIdx = headers.indexOf('Вартість пробігу (грн)');
@@ -1697,22 +1699,38 @@ function getOdometerData(startDateStr, endDateStr) {
         }
         
         // Sum values
+        var km = 0, lit = 0, uah = 0, trips = 0;
+        var driverName = '';
+        if (driverIdx > -1) {
+          driverName = String(row[driverIdx] || '').trim();
+        }
         if (kmIdx > -1) {
-          var km = parseFloat(row[kmIdx]) || 0;
+          km = parseFloat(row[kmIdx]) || 0;
           totalKm += km;
         }
         if (litIdx > -1) {
-          var lit = parseFloat(row[litIdx]) || 0;
+          lit = parseFloat(row[litIdx]) || 0;
           totalLit += lit;
         }
         if (uahIdx > -1) {
-          var uah = parseFloat(row[uahIdx]) || 0;
+          uah = parseFloat(row[uahIdx]) || 0;
           totalUah += uah;
         }
         if (tripsIdx > -1) {
-          var trips = parseInt(row[tripsIdx]) || 0;
+          trips = parseInt(row[tripsIdx]) || 0;
           totalTrips += trips;
         }
+        
+        var dateStr = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+        dailyRecords.push({
+          date: dateStr,
+          car: name,
+          driver: driverName,
+          mileage: km,
+          trips: trips,
+          fuel: lit,
+          uah: uah
+        });
       }
       
       // Save car mileage, trips & fuels
@@ -1754,7 +1772,8 @@ function getOdometerData(startDateStr, endDateStr) {
         dieselLiters: Math.round(dieselLiters * 10) / 10,
         dieselUah: Math.round(dieselUah),
         gasolineLiters: Math.round(gasolineLiters * 10) / 10,
-        gasolineUah: Math.round(gasolineUah)
+        gasolineUah: Math.round(gasolineUah),
+        dailyRecords: dailyRecords
       }
     };
     
