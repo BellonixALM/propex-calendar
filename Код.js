@@ -98,6 +98,8 @@ function doGet(e) {
         result = deleteEmployee(payload.id);
       } else if (action === 'resetEmployeePassword') {
         result = resetEmployeePassword(payload.id);
+      } else if (action === 'cleanupExistingLogins') {
+        result = cleanupExistingLogins();
       } else {
         result = { status: 'error', message: 'Unknown action: ' + action };
       }
@@ -1538,7 +1540,7 @@ function register_driver(data) {
     // Generate unique ID and logic
     var id = Utilities.getUuid();
     var role = data.role || "driver";
-    var login = generateNextLogin(role, sheet);
+    var login = name.trim();
     var password = String(Math.floor(100000 + Math.random() * 900000));
     
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -1936,6 +1938,44 @@ function resetEmployeePassword(loginId) {
     }
     
   } catch(e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function cleanupExistingLogins() {
+  try {
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Користувачі');
+    if (!sheet) return { status: 'error', message: 'Аркуш "Користувачі" не знайдено' };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return h.toString().trim(); });
+    var loginIdx = headers.indexOf('Логін');
+    var roleIdx = headers.indexOf('Роль');
+    var nameIdx = headers.indexOf('ПІБ');
+    if (nameIdx === -1) nameIdx = headers.indexOf("Ім'я");
+    
+    if (loginIdx === -1) {
+      return { status: 'error', message: 'Некоректні заголовки таблиці користувачів' };
+    }
+    
+    for (var i = 1; i < data.length; i++) {
+      var currentLogin = String(data[i][loginIdx]).trim();
+      var role = roleIdx !== -1 ? String(data[i][roleIdx]).trim() : '';
+      var name = nameIdx !== -1 ? String(data[i][nameIdx]).trim() : '';
+      if (!name) name = currentLogin;
+      
+      // Keep admin as admin
+      if (currentLogin === 'admin' || role.toLowerCase() === 'admin') {
+        sheet.getRange(i + 1, loginIdx + 1).setValue('admin');
+        continue;
+      }
+      
+      sheet.getRange(i + 1, loginIdx + 1).setValue(name);
+    }
+    
+    return { status: 'success', message: 'Усі логіни успішно оновлено на імена співробітників!' };
+  } catch (e) {
     return { status: 'error', message: e.toString() };
   }
 }
