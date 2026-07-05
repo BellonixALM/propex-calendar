@@ -1565,7 +1565,21 @@ function register_driver(data) {
     sheet.appendRow(newRow);
     
     if (telegram_id && telegram_id !== '-' && telegram_id !== '') {
-      var welcomeText = "🎉 <b>Реєстрацію успішно підтверджено!</b>\n\nВи отримали доступ до CRM-системи Propex.\n\n👤 Логін: <code>" + login + "</code>\n🔑 Пароль: <code>" + password + "</code>\n\n<i>Збережіть ці дані для входу в систему. Ви можете змінити свій пароль у будь-який час.</i>";
+      var roleLower = String(role || '').toLowerCase();
+      var isWebUser = roleLower.indexOf('керівник') > -1 || 
+                       roleLower.indexOf('director') > -1 || 
+                       roleLower.indexOf('менеджер') > -1 || 
+                       roleLower.indexOf('manager') > -1 || 
+                       roleLower.indexOf('логіст') > -1 || 
+                       roleLower.indexOf('logist') > -1 || 
+                       roleLower.indexOf('адмін') > -1;
+      
+      var welcomeText;
+      if (isWebUser) {
+        welcomeText = "🎉 <b>Реєстрацію успішно підтверджено!</b>\n\nВи отримали доступ до CRM-системи Propex.\n\n👤 Логін: <code>" + login + "</code>\n🔑 Пароль: <code>" + password + "</code>\n\n<i>Збережіть ці дані для входу в систему. Ви можете змінити свій пароль у будь-який час.</i>";
+      } else {
+        welcomeText = "🎉 <b>Реєстрацію успішно підтверджено!</b>\n\nДякуємо за реєстрацію. Тепер ви можете повноцінно користуватися Telegram-ботом.";
+      }
       sendTelegramMessage(telegram_id, welcomeText);
     }
     
