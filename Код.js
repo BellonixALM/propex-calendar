@@ -1459,6 +1459,41 @@ function deleteEmployee(id) {
   return { status: 'error', message: 'Співробітника не знайдено' };
 }
 
+function generateNextLogin(role, sheet) {
+  var prefix = 'user';
+  var roleLower = String(role || '').toLowerCase();
+  
+  if (roleLower.indexOf('керівник') > -1 || roleLower.indexOf('director') > -1 || roleLower.indexOf('адмін') > -1) {
+    prefix = 'director';
+  } else if (roleLower.indexOf('менеджер') > -1 || roleLower.indexOf('manager') > -1) {
+    prefix = 'manager';
+  } else if (roleLower.indexOf('водій') > -1 || roleLower.indexOf('driver') > -1) {
+    prefix = 'driver';
+  } else if (roleLower.indexOf('комірник') > -1 || roleLower.indexOf('warehouse') > -1) {
+    prefix = 'warehouse';
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(function(h) { return h.toString().trim(); });
+  var loginIdx = headers.indexOf('Логін');
+  if (loginIdx === -1) return prefix + '1';
+  
+  var maxIndex = 0;
+  var regex = new RegExp('^' + prefix + '(\\d+)$');
+  for (var i = 1; i < data.length; i++) {
+    var cellVal = String(data[i][loginIdx]).trim();
+    var match = cellVal.match(regex);
+    if (match) {
+      var num = parseInt(match[1], 10);
+      if (num > maxIndex) {
+        maxIndex = num;
+      }
+    }
+  }
+  
+  return prefix + (maxIndex + 1);
+}
+
 function register_driver(data) {
   try {
     var ss = getSpreadsheet();
@@ -1502,9 +1537,9 @@ function register_driver(data) {
     
     // Generate unique ID and logic
     var id = Utilities.getUuid();
-    var login = "driver_" + telegram_id;
-    var password = "driver_" + Math.floor(1000 + Math.random() * 9000); // e.g. driver_4521
     var role = data.role || "driver";
+    var login = generateNextLogin(role, sheet);
+    var password = String(Math.floor(100000 + Math.random() * 900000));
     
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     var newRow = new Array(headers.length).fill('');
@@ -1528,6 +1563,11 @@ function register_driver(data) {
     if (data.phone) setVal(['Телефон'], data.phone);
     
     sheet.appendRow(newRow);
+    
+    if (telegram_id && telegram_id !== '-' && telegram_id !== '') {
+      var welcomeText = "🎉 <b>Реєстрацію успішно підтверджено!</b>\n\nВи отримали доступ до CRM-системи Propex.\n\n👤 Логін: <code>" + login + "</code>\n🔑 Пароль: <code>" + password + "</code>\n\n<i>Збережіть ці дані для входу в систему. Ви можете змінити свій пароль у будь-який час.</i>";
+      sendTelegramMessage(telegram_id, welcomeText);
+    }
     
     return { status: 'success', message: 'Driver registered' };
   } catch (e) {
