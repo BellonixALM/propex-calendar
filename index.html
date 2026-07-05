@@ -16,6 +16,10 @@
       const isLight = document.body.classList.toggle('light-theme');
       localStorage.setItem('propex_theme', isLight ? 'light' : 'dark');
       updateThemeIcon(isLight);
+      if (typeof renderAnalytics === 'function') {
+        renderAnalytics('cargo');
+        renderAnalytics('passenger');
+      }
     }
     
     function updateThemeIcon(isLight) {
@@ -4631,7 +4635,7 @@ function renderFleetCharts(odo, type) {
             ctx.font = 'bold 11px Outfit';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
-            ctx.fillStyle = activeColor;
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-color').trim() || '#1f2937';
             
             chart.data.datasets.forEach((dataset, i) => {
                 const meta = chart.getDatasetMeta(i);
