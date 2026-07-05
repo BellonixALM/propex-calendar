@@ -1128,9 +1128,26 @@ body.light-theme .login-error {
       
       <div id="settings-view" class="main-tab-view" style="padding-right: 10px;">
         <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">Налаштування</h2>
-        <div class="dash-card dash-dark" style="max-width: 600px;">
+        
+        <div class="dash-card dash-dark" style="max-width: 800px; margin-bottom: 24px;">
+          <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="shield-alert" style="color:var(--accent-red); width:20px;height:20px;"></i> Керування паролями співробітників</h3>
+          <p style="color:var(--text-muted); font-size:13px; margin: 8px 0 16px 0;">Ви можете скинути пароль для будь-якого акаунта. Новий пароль буде згенеровано автоматично та надіслано відповідному співробітнику в Telegram.</p>
+          
+          <div style="display:flex; gap:10px; margin-bottom:16px;">
+            <div class="search-container" style="flex-grow:1; position:relative;">
+              <i data-lucide="search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); width:16px; height:16px;"></i>
+              <input type="text" id="settings-password-search" placeholder="Пошук співробітника..." oninput="renderSettingsPasswordManager()" style="width:100%; padding:8px 10px 8px 36px; border-radius:20px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-color); font-size:14px;">
+            </div>
+          </div>
+          
+          <div id="settings-password-manager" style="max-height: 400px; overflow-y: auto; background: var(--bg-secondary); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <!-- Password manager list will render here -->
+          </div>
+        </div>
+
+        <div class="dash-card dash-dark" style="max-width: 800px;">
           <h3>Системні Налаштування</h3>
-          <p style="color:var(--text-muted); font-size:14px; margin-top:8px;">Цей розділ в процесі розробки.</p>
+          <p style="color:var(--text-muted); font-size:14px; margin-top:8px;">Основні параметри системи знаходяться у процесі розробки.</p>
         </div>
       </div>
 
@@ -1901,6 +1918,10 @@ body.light-theme .login-error {
       };
       ScriptRunBridge.prototype.deleteEmployee = function(employeeId) {
         this._callAPI('deleteEmployee', { id: employeeId });
+        return this;
+      };
+      ScriptRunBridge.prototype.resetEmployeePassword = function(employeeId) {
+        this._callAPI('resetEmployeePassword', { id: employeeId });
         return this;
       };
       ScriptRunBridge.prototype.approveClient = function(clientId, status) {
@@ -3972,6 +3993,8 @@ window.switchMainTab = function(tabId) {
         renderAnalytics('passenger');
     } else if (tabId === 'employees') {
         if(typeof showEmployeeDepartments === 'function') showEmployeeDepartments();
+    } else if (tabId === 'settings') {
+        if(typeof renderSettingsPasswordManager === 'function') renderSettingsPasswordManager();
     } else if (tabId === 'clients') {
         if(typeof renderClients === 'function') renderClients();
     }
@@ -5398,6 +5421,101 @@ function renderEmployees() {
     container.innerHTML = '<div style="color:red; padding: 20px;">Помилка рендеру: ' + err.toString() + '</div>';
   }
 }
+
+window.renderSettingsPasswordManager = function() {
+  const container = document.getElementById('settings-password-manager');
+  if (!container) return;
+  
+  const searchInput = document.getElementById('settings-password-search');
+  const searchVal = searchInput ? searchInput.value.toLowerCase() : '';
+  
+  let employees = state.employees || [];
+  if (searchVal) {
+    employees = employees.filter(e => {
+      const name = String(e['ПІБ'] || '').toLowerCase();
+      const login = String(e['Логін'] || '').toLowerCase();
+      const role = String(e['Роль'] || '').toLowerCase();
+      return name.includes(searchVal) || login.includes(searchVal) || role.includes(searchVal);
+    });
+  }
+  
+  if (employees.length === 0) {
+    container.innerHTML = `<div style="color:var(--text-muted); font-size:14px; padding:12px; text-align:center;">Нікого не знайдено</div>`;
+    return;
+  }
+  
+  let html = `
+    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border-color); text-align:left; color:var(--text-muted);">
+          <th style="padding:8px 4px;">ПІБ</th>
+          <th style="padding:8px 4px;">Посада</th>
+          <th style="padding:8px 4px;">Логін</th>
+          <th style="padding:8px 4px; text-align:right;">Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  employees.forEach(e => {
+    const login = e['Логін'] || e['ID'];
+    const name = e['ПІБ'] || login;
+    const role = e['Роль'] || 'водій';
+    
+    html += `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:10px 4px; font-weight:600;">${name}</td>
+        <td style="padding:10px 4px; color:var(--text-muted);">${role}</td>
+        <td style="padding:10px 4px; font-family:monospace; color:var(--accent-blue);">${login}</td>
+        <td style="padding:10px 4px; text-align:right;">
+          <button class="btn btn-secondary" style="font-size:12px; padding:5px 10px; border-radius:4px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="triggerPasswordReset('${login}')">
+            <i data-lucide="key" style="width:12px;height:12px;"></i> Скинути пароль
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+      </tbody>
+    </table>
+  `;
+  
+  container.innerHTML = html;
+  if (window.lucide && lucide.createIcons) window.lucide.createIcons();
+};
+
+window.triggerPasswordReset = function(login) {
+  if (!confirm(`Ви дійсно бажаєте видалити старий пароль для користувача ${login}, згенерувати новий та автоматично надіслати його через Telegram?`)) {
+    return;
+  }
+  
+  const btn = event.currentTarget;
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `Зміна...`;
+  
+  propexApi.withSuccessHandler(res => {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+    if (res.status === 'success') {
+      let alertMsg = `Пароль успішно оновлено!`;
+      if (res.sentTelegram) {
+        alertMsg += `\nНовий пароль надіслано в Telegram користувачу.`;
+      } else {
+        alertMsg += `\nУВАГА: Користувач не має Telegram ID в системі, тому сповіщення не надіслано в Telegram.`;
+      }
+      alert(alertMsg);
+      loadData();
+    } else {
+      alert('Помилка: ' + res.message);
+    }
+  }).withFailureHandler(err => {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+    alert('Помилка сервера: ' + err);
+  }).resetEmployeePassword(login);
+};
 </script>
 
   <div class="modal" id="map-modal" onclick="if(event.target===this) closeMapModal()">

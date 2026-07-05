@@ -96,6 +96,8 @@ function doGet(e) {
         result = saveEmployee(payload);
       } else if (action === 'deleteEmployee') {
         result = deleteEmployee(payload.id);
+      } else if (action === 'resetEmployeePassword') {
+        result = resetEmployeePassword(payload.id);
       } else {
         result = { status: 'error', message: 'Unknown action: ' + action };
       }
@@ -195,6 +197,10 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'deleteEmployee') {
       var result = deleteEmployee(data.data.id);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'resetEmployeePassword') {
+      var result = resetEmployeePassword(data.data.id);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'updateDriverPhoto') {
@@ -1821,6 +1827,63 @@ function parseDateString(str) {
     return new Date(parts[2], parts[1] - 1, parts[0]);
   }
   return new Date(str);
+}
+
+function resetEmployeePassword(loginId) {
+  try {
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Користувачі');
+    if (!sheet) return { status: 'error', message: 'Аркуш "Користувачі" не знайдено' };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return h.toString().trim(); });
+    var loginIdx = headers.indexOf('Логін');
+    var pwdIdx = headers.indexOf('Пароль');
+    var tgIdx = headers.indexOf('Telegram');
+    if (tgIdx === -1) tgIdx = headers.indexOf('Telegram_ID');
+    var nameIdx = headers.indexOf('ПІБ');
+    if (nameIdx === -1) nameIdx = headers.indexOf("Ім'я");
+    
+    if (loginIdx === -1 || pwdIdx === -1) {
+      return { status: 'error', message: 'Некоректні заголовки таблиці користувачів' };
+    }
+    
+    var rowIndex = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][loginIdx] === loginId) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) {
+      return { status: 'error', message: 'Співробітника не знайдено' };
+    }
+    
+    // Generate new random password
+    var newPassword = String(Math.floor(100000 + Math.random() * 900000));
+    
+    // Update password in sheet
+    sheet.getRange(rowIndex, pwdIdx + 1).setValue(newPassword);
+    
+    // Send to Telegram if Telegram ID exists
+    var telegramId = '';
+    if (tgIdx !== -1) {
+      telegramId = String(data[rowIndex - 1][tgIdx]).trim();
+    }
+    var employeeName = nameIdx !== -1 ? data[rowIndex - 1][nameIdx] : loginId;
+    
+    if (telegramId && telegramId !== '-' && telegramId !== 'None' && telegramId !== '') {
+      var messageText = "🔐 <b>Пароль оновлено адміністратором</b>\n\nШановний(а) <b>" + employeeName + "</b>, ваш пароль для входу в CRM-систему був скинутий адміністратором.\n\n🆕 Новий пароль: <code>" + newPassword + "</code>\n\n<i>Збережіть його в безпечному місці. Ви можете змінити його за бажанням.</i>";
+      sendTelegramMessage(telegramId, messageText);
+      return { status: 'success', sentTelegram: true, message: 'Пароль успішно змінено та надіслано в Telegram' };
+    } else {
+      return { status: 'success', sentTelegram: false, message: 'Пароль успішно змінено (користувач не має Telegram ID)' };
+    }
+    
+  } catch(e) {
+    return { status: 'error', message: e.toString() };
+  }
 }
 
 
