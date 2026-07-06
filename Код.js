@@ -98,6 +98,10 @@ function doGet(e) {
         result = deleteEmployee(payload.id);
       } else if (action === 'resetEmployeePassword') {
         result = resetEmployeePassword(payload.id);
+      } else if (action === 'sendDeveloperFeedback') {
+        result = sendDeveloperFeedback(payload.messageText, payload.currentUser);
+      } else if (action === 'broadcastMessageToEmployees') {
+        result = broadcastMessageToEmployees(payload);
       } else if (action === 'cleanupExistingLogins') {
         result = cleanupExistingLogins();
       } else {
@@ -1975,6 +1979,108 @@ function cleanupExistingLogins() {
     }
     
     return { status: 'success', message: 'Усі логіни успішно оновлено на імена співробітників!' };
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function sendDeveloperFeedback(messageText, currentUser) {
+  try {
+    if (!messageText || String(messageText).trim() === '') {
+      return { status: 'error', message: 'Повідомлення не може бути порожнім' };
+    }
+    
+    var ss = getSpreadsheet();
+    if (!ss) return { status: 'error', message: 'Не вдалося підключитися до бази даних' };
+    
+    var sheetName = "Зворотній зв'язок";
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow(["Дата", "ПІБ", "Роль", "Telegram ID", "Повідомлення"]);
+      sheet.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#f3f4f6");
+    }
+    
+    var now = new Date();
+    var formattedDate = Utilities.formatDate(now, "Europe/Kiev", "dd.MM.yyyy HH:mm:ss");
+    
+    var name = currentUser ? (currentUser.name || currentUser.username || currentUser.login || 'Невідомо') : 'Невідомо';
+    var role = currentUser ? (currentUser.role || 'Невідомо') : 'Невідомо';
+    var tgId = currentUser ? (currentUser.telegramId || '') : '';
+    
+    sheet.appendRow([formattedDate, name, role, "'" + tgId, messageText]);
+    
+    // Notify administrators
+    var usersSheet = ss.getSheetByName('Користувачі');
+    if (usersSheet) {
+      var data = usersSheet.getDataRange().getValues();
+      var headers = data[0];
+      var roleCol = headers.indexOf('Роль');
+      var tgCol = headers.indexOf('Telegram') !== -1 ? headers.indexOf('Telegram') : headers.indexOf('Telegram_ID');
+      
+      var notificationText = "📝 <b>Нове повідомлення розробнику!</b>\n\n" +
+                             "👤 Від: <b>" + name + "</b> (" + role + ")\n" +
+                             "🆔 Telegram ID: <code>" + tgId + "</code>\n" +
+                             "📅 Дата: " + formattedDate + "\n\n" +
+                             "💬 Повідомлення:\n<i>" + messageText + "</i>";
+                             
+      if (roleCol !== -1 && tgCol !== -1) {
+        for (var i = 1; i < data.length; i++) {
+          var userRole = String(data[i][roleCol]).trim().toLowerCase();
+          var userTg = String(data[i][tgCol]).trim();
+          
+          if (['admin', 'director', 'керівник'].includes(userRole) && userTg && userTg !== '-' && userTg !== '') {
+            sendTelegramMessage(userTg, notificationText);
+          }
+        }
+      }
+    }
+    
+    return { status: 'success', message: 'Повідомлення успішно надіслано розробнику!' };
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function broadcastMessageToEmployees(payload) {
+  try {
+    var messageText = payload ? payload.messageText : '';
+    if (!messageText || String(messageText).trim() === '') {
+      return { status: 'error', message: 'Повідомлення не може бути порожнім' };
+    }
+    
+    var ss = getSpreadsheet();
+    if (!ss) return { status: 'error', message: 'Не вдалося підключитися до бази даних' };
+    
+    var usersSheet = ss.getSheetByName('Користувачі');
+    if (!usersSheet) return { status: 'error', message: 'Таблиця користувачів не знайдена' };
+    
+    var data = usersSheet.getDataRange().getValues();
+    var headers = data[0];
+    var tgCol = headers.indexOf('Telegram') !== -1 ? headers.indexOf('Telegram') : headers.indexOf('Telegram_ID');
+    
+    if (tgCol === -1) {
+      return { status: 'error', message: 'Колонка Telegram ID не знайдена в таблиці користувачів' };
+    }
+    
+    var count = 0;
+    var broadcastText = "📢 <b>Офіційне сповіщення від керівництва:</b>\n\n" + messageText;
+    
+    // Set of sent Telegram IDs to avoid duplicates
+    var sentIds = {};
+    
+    for (var i = 1; i < data.length; i++) {
+      var tgId = String(data[i][tgCol]).trim();
+      if (tgId && tgId !== '-' && tgId !== '' && !sentIds[tgId]) {
+        sentIds[tgId] = true;
+        var respText = sendTelegramMessage(tgId, broadcastText);
+        if (respText && respText.indexOf('"ok":true') !== -1) {
+          count++;
+        }
+      }
+    }
+    
+    return { status: 'success', message: 'Повідомлення успішно надіслано в Telegram для ' + count + ' співробітників!' };
   } catch (e) {
     return { status: 'error', message: e.toString() };
   }

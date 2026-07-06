@@ -1133,7 +1133,7 @@ body.light-theme .login-error {
       <div id="settings-view" class="main-tab-view" style="padding-right: 10px;">
         <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">Налаштування</h2>
         
-        <div class="dash-card dash-dark" style="max-width: 800px; margin-bottom: 24px;">
+        <div class="dash-card dash-dark" id="settings-password-card" style="max-width: 800px; margin-bottom: 24px;">
           <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="shield-alert" style="color:var(--accent-red); width:20px;height:20px;"></i> Керування паролями співробітників</h3>
           <p style="color:var(--text-muted); font-size:13px; margin: 8px 0 16px 0;">Ви можете скинути пароль для будь-якого акаунта. Новий пароль буде згенеровано автоматично та надіслано відповідному співробітнику в Telegram.</p>
           
@@ -1147,6 +1147,30 @@ body.light-theme .login-error {
           <div id="settings-password-manager" style="max-height: 220px; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg-secondary); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
             <!-- Password manager list will render here -->
           </div>
+        </div>
+
+        <!-- Написати розробнику (для всіх, окрім розробника/адміністратора) -->
+        <div id="developer-feedback-card" class="dash-card dash-dark" style="max-width: 800px; margin-bottom: 24px; display: none;">
+          <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="message-square" style="color:var(--primary); width:20px;height:20px;"></i> Написати розробнику</h3>
+          <p style="color:var(--text-muted); font-size:13px; margin: 8px 0 16px 0;">Маєте побажання, пропозиції або помітили помилку? Надішліть повідомлення розробнику напряму.</p>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <textarea id="feedback-textarea" class="form-control" rows="4" placeholder="Опишіть ваше побажання або проблему..." style="resize: vertical;"></textarea>
+          </div>
+          <button id="send-feedback-btn" class="btn" style="background-color: var(--primary); color: white; border-radius: 8px;" onclick="sendFeedbackToDeveloper()">
+            <i data-lucide="send" style="width:16px;height:16px;"></i> Надіслати повідомлення
+          </button>
+        </div>
+
+        <!-- Розсилка повідомлень (тільки для директора) -->
+        <div id="settings-broadcast-card" class="dash-card dash-dark" style="max-width: 800px; margin-bottom: 24px; display: none;">
+          <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="megaphone" style="color:var(--accent-blue); width:20px;height:20px;"></i> Розсилка повідомлень співробітникам</h3>
+          <p style="color:var(--text-muted); font-size:13px; margin: 8px 0 16px 0;">Надішліть важливе сповіщення всім співробітникам, які зареєстровані у системі та мають підключений Telegram.</p>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <textarea id="broadcast-textarea" class="form-control" rows="4" placeholder="Введіть текст сповіщення для розсилки..." style="resize: vertical;"></textarea>
+          </div>
+          <button id="send-broadcast-btn" class="btn" style="background-color: var(--accent-blue); color: white; border-radius: 8px;" onclick="sendBroadcastToEmployees()">
+            <i data-lucide="send" style="width:16px;height:16px;"></i> Надіслати всім
+          </button>
         </div>
 
         <div class="dash-card dash-dark" style="max-width: 800px;">
@@ -1936,6 +1960,14 @@ body.light-theme .login-error {
         this._callAPI('getOdometerData', { startDate: startDate, endDate: endDate });
         return this;
       };
+      ScriptRunBridge.prototype.sendDeveloperFeedback = function(messageText, currentUser) {
+        this._callAPI('sendDeveloperFeedback', { messageText: messageText, currentUser: currentUser });
+        return this;
+      };
+      ScriptRunBridge.prototype.broadcastMessageToEmployees = function(messageText) {
+        this._callAPI('broadcastMessageToEmployees', { messageText: messageText });
+        return this;
+      };
       window.propexApi = new ScriptRunBridge();
       console.log("💎 Custom propexApi Bridge successfully initialized!");
     })();
@@ -2067,6 +2099,7 @@ body.light-theme .login-error {
       }
     }
 
+    let isRequestInProgress = false;
     let dataLoadedSuccessfully = false;
     function loadDeliveriesSafely() {
       const label = document.getElementById('date-label');
@@ -2074,6 +2107,7 @@ body.light-theme .login-error {
       propexApi
         .withFailureHandler(function(err) {
           dataLoadedSuccessfully = true;
+          isRequestInProgress = false;
           console.error("Failed to load deliveries from Sheets:", err);
           label.textContent = "❌ Помилка доставок: " + (err.message || err).substring(0, 50);
           state.deliveries = [];
@@ -2083,6 +2117,7 @@ body.light-theme .login-error {
         })
         .withSuccessHandler(function(response) {
           dataLoadedSuccessfully = true;
+          isRequestInProgress = false;
           state.deliveries = (response && response.status === 'success') ? response.data : (response || []);
           window.debugLoadedText = '';
           label.textContent = "⚙️ Оновлення сітки...";
@@ -2124,6 +2159,14 @@ body.light-theme .login-error {
     }
 
     function loadData() {
+      if (isRequestInProgress) return;
+      isRequestInProgress = true;
+      
+      // Safety timeout: reset flag after 15 seconds in case any request hangs
+      setTimeout(function() {
+        isRequestInProgress = false;
+      }, 15000);
+
       const label = document.getElementById('date-label');
       
         label.textContent = "⏱️ Завантаження водіїв...";
@@ -2140,6 +2183,7 @@ body.light-theme .login-error {
         propexApi
           .withFailureHandler(function(err) {
             dataLoadedSuccessfully = true;
+            isRequestInProgress = false;
             console.error("Failed to load drivers from Sheets:", err);
             label.textContent = "⏱️ Водіїв не знайдено, вантажимо доставки...";
             state.drivers = [];
@@ -2182,6 +2226,74 @@ body.light-theme .login-error {
           state.clients = [];
         })
         .getClients();
+    }
+
+    // --- Smart Auto-Refresh System (Polling) ---
+    let refreshIntervalId = null;
+    let lastActivityTime = Date.now();
+    const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+    const REFRESH_INTERVAL_MS = 45 * 1000; // 45 seconds
+
+    function resetActivity() {
+      const now = Date.now();
+      const wasIdle = (now - lastActivityTime) > IDLE_TIMEOUT_MS;
+      lastActivityTime = now;
+      if (wasIdle) {
+        console.log("User active again. Resuming auto-refresh.");
+        startPolling();
+        triggerSafeRefresh();
+      }
+    }
+
+    // Register activity event listeners to track user input
+    window.addEventListener('mousemove', resetActivity);
+    window.addEventListener('keydown', resetActivity);
+    window.addEventListener('click', resetActivity);
+    window.addEventListener('scroll', resetActivity);
+
+    // Page Visibility API
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        console.log("Tab is hidden. Pausing auto-refresh.");
+        stopPolling();
+      } else {
+        console.log("Tab is active. Resuming auto-refresh.");
+        startPolling();
+        triggerSafeRefresh();
+      }
+    });
+
+    function triggerSafeRefresh() {
+      if (!state.currentUser) return; // Only load if logged in
+      if (isRequestInProgress) return; // Prevent double requests
+      console.log("Auto-refreshing data...");
+      loadData();
+    }
+
+    function startPolling() {
+      stopPolling();
+      if (!state.currentUser) return; // Don't poll if logged out
+      
+      refreshIntervalId = setInterval(function() {
+        const isIdle = (Date.now() - lastActivityTime) > IDLE_TIMEOUT_MS;
+        if (isIdle) {
+          console.log("User is idle. Skipping auto-refresh.");
+          return;
+        }
+        if (document.hidden) {
+          return;
+        }
+        triggerSafeRefresh();
+      }, REFRESH_INTERVAL_MS);
+      console.log("Auto-refresh polling started (45s).");
+    }
+
+    function stopPolling() {
+      if (refreshIntervalId) {
+        clearInterval(refreshIntervalId);
+        refreshIntervalId = null;
+        console.log("Auto-refresh polling stopped.");
+      }
     }
 
     function handleApproveClient(clientId, status) {
@@ -2347,12 +2459,14 @@ body.light-theme .login-error {
       document.getElementById('user-profile-widget').style.display = 'flex';
       applyRoleRestrictions();
       loadData();
+      startPolling();
       document.getElementById('login-username').value = '';
       document.getElementById('login-password').value = '';
     }
     function handleLogout() {
       state.currentUser = null;
       try { sessionStorage.removeItem('propex_user'); } catch(e) {}
+      stopPolling();
       document.getElementById('login-container').style.display = 'flex';
       document.getElementById('app-wrapper').style.display = 'none';
       document.getElementById('user-profile-widget').style.display = 'none';
@@ -2394,6 +2508,16 @@ body.light-theme .login-error {
       if (document.getElementById('nav-employees')) {
          document.getElementById('nav-employees').style.display = 'flex'; // Visible to managers & logists too!
       }
+      
+      // Control Settings view options
+      const pwdCard = document.getElementById('settings-password-card');
+      const feedCard = document.getElementById('developer-feedback-card');
+      const broadcastCard = document.getElementById('settings-broadcast-card');
+      const isDirector = user.role === 'director';
+      
+      if (pwdCard) pwdCard.style.display = isAdmin ? 'block' : 'none';
+      if (feedCard) feedCard.style.display = isAdmin ? 'none' : 'block';
+      if (broadcastCard) broadcastCard.style.display = isDirector ? 'block' : 'none';
       
       // Also apply general admin-only class visibility
       document.querySelectorAll('.admin-only').forEach(el => {
@@ -4004,9 +4128,9 @@ function renderClients() {
       const formCarEl = document.getElementById('form-car');
       if (formCarEl) {
         formCarEl.addEventListener('change', function() {
-          if (this.value === 'Самовивіз') {
+          if (this.value === 'Самовивіз' || this.value === 'Самовивіз Нова Пошта') {
             const addrInput = document.getElementById('form-address');
-            if (addrInput && (!addrInput.value || addrInput.value.trim() === '')) {
+            if (addrInput) {
               addrInput.value = 'склад Propex, вул. Вікентія Хвойки, 18/14, місто Київ';
             }
           }
@@ -5597,6 +5721,74 @@ window.triggerPasswordReset = function(login) {
     btn.innerHTML = originalHtml;
     alert('Помилка сервера: ' + err);
   }).resetEmployeePassword(login);
+};
+
+window.sendFeedbackToDeveloper = function() {
+  const textarea = document.getElementById('feedback-textarea');
+  if (!textarea) return;
+  
+  const text = textarea.value.trim();
+  if (!text) {
+    alert('Будь ласка, введіть повідомлення перед надсиланням.');
+    return;
+  }
+  
+  const btn = document.getElementById('send-feedback-btn');
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Надсилання...';
+  
+  propexApi.withSuccessHandler(res => {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+    
+    if (res.status === 'success') {
+      alert(res.message);
+      textarea.value = '';
+    } else {
+      alert('Помилка: ' + res.message);
+    }
+  }).withFailureHandler(err => {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+    alert('Помилка при надсиланні: ' + err);
+  }).sendDeveloperFeedback(text, state.currentUser);
+};
+
+window.sendBroadcastToEmployees = function() {
+  const textarea = document.getElementById('broadcast-textarea');
+  if (!textarea) return;
+  
+  const text = textarea.value.trim();
+  if (!text) {
+    alert('Будь ласка, введіть повідомлення для розсилки.');
+    return;
+  }
+  
+  if (!confirm('Ви впевнені, що хочете надіслати це повідомлення усім співробітникам у Telegram?')) {
+    return;
+  }
+  
+  const btn = document.getElementById('send-broadcast-btn');
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Надсилання...';
+  
+  propexApi.withSuccessHandler(res => {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+    
+    if (res.status === 'success') {
+      alert(res.message);
+      textarea.value = '';
+    } else {
+      alert('Помилка: ' + res.message);
+    }
+  }).withFailureHandler(err => {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+    alert('Помилка при надсиланні: ' + err);
+  }).broadcastMessageToEmployees(text);
 };
 
 window.renderPassengerBarCharts = function(currDels, allLogs, ranges) {
