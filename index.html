@@ -3993,7 +3993,7 @@ function renderClients() {
         } else if (['warehouse', 'комірник', 'склад'].some(role => r.includes(role))) {
           counts['warehouse']++;
           found = true;
-        } else if (['sales', 'продаж', 'менеджер'].some(role => r.includes(role))) {
+        } else if (['sales', 'продаж', 'менеджер', 'manager'].some(role => r.includes(role))) {
           counts['sales']++;
           found = true;
         }
@@ -5498,14 +5498,14 @@ function renderEmployees() {
           return ['warehouse', 'комірник', 'склад'].some(role => r.includes(role));
         }
         if (currentEmployeeDepartment === 'sales') {
-          return ['sales', 'продаж', 'менеджер'].some(role => r.includes(role)) && !r.includes('офіс') && !r.includes('керівник') && !r.includes('директор');
+          return ['sales', 'продаж', 'менеджер', 'manager'].some(role => r.includes(role)) && !r.includes('офіс') && !r.includes('керівник') && !r.includes('директор');
         }
         if (currentEmployeeDepartment === 'other') {
           const isOffice = r.includes('офіс') || r.includes('office');
           const isMgmt = ['director', 'директор', 'керівник'].some(role => r.includes(role));
           const isDriver = r === 'водій' || r === 'driver';
           const isWarehouse = ['warehouse', 'комірник', 'склад'].some(role => r.includes(role));
-          const isSales = ['sales', 'продаж', 'менеджер'].some(role => r.includes(role));
+          const isSales = ['sales', 'продаж', 'менеджер', 'manager'].some(role => r.includes(role));
           return !isOffice && !isMgmt && !isDriver && !isWarehouse && !isSales;
         }
         return true;
