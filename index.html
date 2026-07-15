@@ -1928,6 +1928,10 @@ body.light-theme .login-error {
         this._callAPI('updateDeliveryDetails', { deliveryId: deliveryId, deliveryData: deliveryData, userRole: userRole });
         return this;
       };
+      ScriptRunBridge.prototype.deleteDelivery = function(deliveryId) {
+        this._callAPI('delete_delivery', { id: deliveryId });
+        return this;
+      };
       ScriptRunBridge.prototype.saveDailyCrew = function(dateStr, crewDataJson) {
         this._callAPI('saveDailyCrew', { dateStr: dateStr, crews: crewDataJson });
         return this;

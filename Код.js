@@ -162,6 +162,10 @@ function doPost(e) {
     } else if (action === 'test_wh') {
       return ContentService.createTextOutput(JSON.stringify(getWarehouseWorkers()))
         .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'delete_delivery') {
+      var result = deleteDelivery(data.data.id);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'update_warehouse_status') {
       var result = updateWarehouseStatus(data.data.deliveryId, data.data.status);
       return ContentService.createTextOutput(JSON.stringify(result))
@@ -1460,6 +1464,25 @@ function deleteEmployee(id) {
     }
   }
   return { status: 'error', message: 'Співробітника не знайдено' };
+}
+
+function deleteDelivery(id) {
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName('Доставки');
+  if (!sheet) return { status: 'error', message: 'Аркуш "Доставки" не знайдено' };
+  
+  var data = sheet.getDataRange().getValues();
+  var idCol = data[0].indexOf('ID');
+  if (idCol === -1) idCol = data[0].indexOf('Код');
+  if (idCol === -1) return { status: 'error', message: 'Колонку ID не знайдено' };
+  
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][idCol]).trim() === String(id).trim()) {
+      sheet.deleteRow(i + 1);
+      return { status: 'success', message: 'Доставку з ID ' + id + ' успішно видалено.' };
+    }
+  }
+  return { status: 'error', message: 'Доставку з ID ' + id + ' не знайдено.' };
 }
 
 function generateNextLogin(role, sheet) {
