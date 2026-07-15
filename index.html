@@ -2453,6 +2453,13 @@ body.light-theme .login-error {
       }
     }
     function loginUser(user) {
+      if (user && user.role) {
+        let r = user.role.toLowerCase().trim();
+        if (r === 'директор' || r === 'керівник') user.role = 'director';
+        else if (r === 'логіст') user.role = 'logist';
+        else if (r === 'менеджер') user.role = 'manager';
+        else if (r === 'адмін') user.role = 'admin';
+      }
       state.currentUser = user;
       try { sessionStorage.setItem('propex_user', JSON.stringify(user)); } catch(e) { console.warn('Storage blocked'); }
       document.getElementById('user-profile-name').textContent = user.name;
