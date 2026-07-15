@@ -4393,24 +4393,35 @@ function renderDashboard() {
     // Top Managers (by month)
     renderTopList('dash-top-managers', currDels, 'ID_Менеджера', '', ' замовлень');
     
-    // Recent Activities
-    const sorted = [...state.deliveries].sort((a,b) => {
-        return -1; // Assuming array order represents creation/update time roughly
-    }).slice(0, 5);
-    
-    const recentHtml = sorted.map(d => `
-        <div class="dash-recent-item">
-            <div>
-                <div class="recent-id">№${d['Номер_замовлення'] || d['ID']}</div>
-                <div class="recent-manager">${d['ID_Менеджера'] || 'Невідомий'} -> Авто ${d['ID_Авто'] || '?'}</div>
-            </div>
-            <div style="text-align: right;">
-                <div style="color:var(--text-color); font-size:13px; font-weight:600; padding:4px 8px; border-radius:4px; background: var(--border-color);">${d['Статус_оплати'] || 'В процесі'}</div>
-                <div class="recent-time" style="margin-top:4px;">${d['Дата']} ${d['Час'] || ''}</div>
-            </div>
-        </div>
-    `).join('');
-    document.getElementById('dash-recent-activity').innerHTML = recentHtml || '<div style="color:#6b7280; padding:10px;">Немає активності</div>';
+     // Recent Activities
+     const sorted = [...state.deliveries].sort((a,b) => {
+         return -1; // Assuming array order represents creation/update time roughly
+     }).slice(0, 5);
+     
+     const recentHtml = sorted.map(d => {
+         const mId = d['ID_Менеджера'];
+         let managerName = mId || 'Невідомий';
+         if (mId) {
+             const emp = (state.employees || []).find(e => {
+                 const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
+                 return tgId && String(tgId).trim() === String(mId).trim();
+             });
+             if (emp) managerName = emp['ПІБ'] || emp['Ім\'я'] || emp['name'];
+         }
+         return `
+             <div class="dash-recent-item">
+                 <div>
+                     <div class="recent-id">№${d['Номер_замовлення'] || d['ID']}</div>
+                     <div class="recent-manager">${managerName} -> Авто ${d['ID_Авто'] || '?'}</div>
+                 </div>
+                 <div style="text-align: right;">
+                     <div style="color:var(--text-color); font-size:13px; font-weight:600; padding:4px 8px; border-radius:4px; background: var(--border-color);">${d['Статус_оплати'] || 'В процесі'}</div>
+                     <div class="recent-time" style="margin-top:4px;">${d['Дата']} ${d['Час'] || ''}</div>
+                 </div>
+             </div>
+         `;
+     }).join('');
+     document.getElementById('dash-recent-activity').innerHTML = recentHtml || '<div style="color:#6b7280; padding:10px;">Немає активності</div>';
     
     // Chart
     renderStatusChart(currDels);
@@ -4490,7 +4501,17 @@ function renderTopList(elementId, dels, groupByField, prefix, suffix) {
         counts[key] = (counts[key] || 0) + 1;
     });
     
-    const sorted = Object.keys(counts).map(k => ({ name: k, count: counts[k] })).sort((a,b) => b.count - a.count).slice(0, 5);
+    const sorted = Object.keys(counts).map(k => {
+        let displayName = k;
+        if (groupByField === 'ID_Менеджера') {
+            const emp = (state.employees || []).find(e => {
+                const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'] || e['ID'];
+                return tgId && String(tgId).trim() === String(k).trim();
+            });
+            if (emp) displayName = emp['ПІБ'] || emp['Ім\'я'] || emp['name'] || k;
+        }
+        return { name: displayName, count: counts[k] };
+    }).sort((a,b) => b.count - a.count).slice(0, 5);
     
     if (sorted.length === 0) {
         document.getElementById(elementId).innerHTML = `<div style="color:#6b7280; padding: 10px;">Немає даних за цей період</div>`;
