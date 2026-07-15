@@ -2211,6 +2211,9 @@ body.light-theme .login-error {
             } else {
               if (typeof renderEmployeeDepartments === 'function') renderEmployeeDepartments();
             }
+            if (document.getElementById('dashboard-view') && document.getElementById('dashboard-view').classList.contains('active')) {
+              try { renderDashboard(); } catch (e) { console.error("Error rendering dashboard after employees load:", e); }
+            }
           })
           .withFailureHandler(function(err) {
             console.error("Failed to load employees:", err);
