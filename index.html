@@ -5568,7 +5568,7 @@ function renderEmployees() {
         roleIcon = '📦';
         roleLabel = rLower.includes('головний') ? 'Головний комірник' : 'Комірник';
         themeColor = '#ef4444';
-      } else if (['sales', 'продаж', 'менеджер'].some(role => rLower.includes(role))) {
+      } else if (['sales', 'продаж', 'менеджер', 'manager'].some(role => rLower.includes(role))) {
         roleIcon = '💼';
         roleLabel = 'Менеджер';
         themeColor = '#8b5cf6';
