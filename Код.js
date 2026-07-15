@@ -1536,7 +1536,33 @@ function register_driver(data) {
           setCellVal('ПІБ', name);
           setCellVal('Роль', data.role || "driver");
           if (data.phone) setCellVal('Телефон', data.phone);
-          return { status: 'success', message: 'Driver updated (already exists)' };
+          
+          // Retrieve existing credentials to send them to the user
+          var loginIdx = headers.indexOf('Логін');
+          var pwdIdx = headers.indexOf('Пароль');
+          var existingLogin = loginIdx !== -1 ? String(sheetData[foundRowIdx - 1][loginIdx]).trim() : name;
+          var existingPwd = pwdIdx !== -1 ? String(sheetData[foundRowIdx - 1][pwdIdx]).trim() : '1234';
+          
+          if (telegram_id && telegram_id !== '-' && telegram_id !== '') {
+            var roleLower = String(data.role || "driver").toLowerCase();
+            var isWebUser = roleLower.indexOf('керівник') > -1 || 
+                             roleLower.indexOf('director') > -1 || 
+                             roleLower.indexOf('менеджер') > -1 || 
+                             roleLower.indexOf('manager') > -1 || 
+                             roleLower.indexOf('логіст') > -1 || 
+                             roleLower.indexOf('logist') > -1 || 
+                             roleLower.indexOf('адмін') > -1;
+            
+            var welcomeText;
+            if (isWebUser) {
+              welcomeText = "🎉 <b>Доступ до системи Propex підтверджено!</b>\n\nВаші облікові дані для входу на веб-портал:\n\n👤 Логін: <code>" + existingLogin + "</code>\n🔑 Пароль: <code>" + existingPwd + "</code>\n\n<i>Ви можете увійти в систему вже зараз.</i>";
+            } else {
+              welcomeText = "🎉 <b>Реєстрацію успішно підтверджено!</b>\n\nТепер ви можете користуватися Telegram-ботом.";
+            }
+            sendTelegramMessage(telegram_id, welcomeText);
+          }
+          
+          return { status: 'success', message: 'Driver updated and credentials sent' };
         }
       }
     }
@@ -1958,27 +1984,86 @@ function cleanupExistingLogins() {
     var roleIdx = headers.indexOf('Роль');
     var nameIdx = headers.indexOf('ПІБ');
     if (nameIdx === -1) nameIdx = headers.indexOf("Ім'я");
+    var tgIdx = headers.indexOf('Telegram');
+    if (tgIdx === -1) tgIdx = headers.indexOf('Telegram_ID');
     
     if (loginIdx === -1) {
       return { status: 'error', message: 'Некоректні заголовки таблиці користувачів' };
     }
     
+    var rowsToDelete = [];
+    var seenUsers = {}; // Key: telegram_id or PІБ
+    
     for (var i = 1; i < data.length; i++) {
       var currentLogin = String(data[i][loginIdx]).trim();
       var role = roleIdx !== -1 ? String(data[i][roleIdx]).trim() : '';
       var name = nameIdx !== -1 ? String(data[i][nameIdx]).trim() : '';
-      if (!name) name = currentLogin;
+      var tgId = tgIdx !== -1 ? String(data[i][tgIdx]).trim() : '';
+      
+      // Clean up obvious mock/test logins starting with user1783 or user1
+      if (currentLogin.indexOf('user1783') === 0 || currentLogin === 'user1') {
+        rowsToDelete.push(i + 1);
+        continue;
+      }
+      
+      // Identify unique key
+      var uniqueKey = (tgId && tgId !== '-' && tgId !== '') ? tgId : name;
+      
+      if (!uniqueKey || uniqueKey === 'N/A' || uniqueKey === '-') {
+        // Delete rows with no identifying info
+        rowsToDelete.push(i + 1);
+        continue;
+      }
       
       // Keep admin as admin
       if (currentLogin === 'admin' || role.toLowerCase() === 'admin') {
         sheet.getRange(i + 1, loginIdx + 1).setValue('admin');
+        seenUsers['admin'] = true;
         continue;
       }
       
-      sheet.getRange(i + 1, loginIdx + 1).setValue(name);
+      if (seenUsers[uniqueKey]) {
+        // Duplicate! Mark for deletion.
+        rowsToDelete.push(i + 1);
+      } else {
+        seenUsers[uniqueKey] = true;
+        // Clean up login to be their PІБ
+        if (name && currentLogin !== name) {
+          sheet.getRange(i + 1, loginIdx + 1).setValue(name);
+        }
+      }
     }
     
-    return { status: 'success', message: 'Усі логіни успішно оновлено на імена співробітників!' };
+    // Delete duplicate rows in reverse order to keep indices correct
+    rowsToDelete.sort(function(a, b) { return b - a; });
+    var deletedCount = 0;
+    for (var j = 0; j < rowsToDelete.length; j++) {
+      sheet.deleteRow(rowsToDelete[j]);
+      deletedCount++;
+    }
+    
+    // Check if admin exists, if not, append it
+    var finalData = sheet.getDataRange().getValues();
+    var adminExists = false;
+    for (var k = 1; k < finalData.length; k++) {
+      if (String(finalData[k][loginIdx]).trim() === 'admin') {
+        adminExists = true;
+        break;
+      }
+    }
+    if (!adminExists) {
+      var adminRow = headers.map(function(h) {
+        if (h === 'Логін') return 'admin';
+        if (h === 'Пароль') return 'admin123';
+        if (h === 'ПІБ' || h === "Ім'я") return 'Творець системи';
+        if (h === 'Роль') return 'admin';
+        if (h === 'Telegram' || h === 'Telegram_ID') return '-';
+        return '';
+      });
+      sheet.appendRow(adminRow);
+    }
+    
+    return { status: 'success', message: 'Видалено ' + deletedCount + ' дублікатів та тестових акаунтів. Залишились лише унікальні користувачі!' };
   } catch (e) {
     return { status: 'error', message: e.toString() };
   }
