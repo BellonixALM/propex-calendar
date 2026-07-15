@@ -874,11 +874,8 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
     if (!currentIdRaw || currentIdRaw === 'undefined') currentIdRaw = String(i + 1);
     
     var matchId = idCol !== -1 && String(currentIdRaw).trim() === String(deliveryId).trim();
-    var matchOrder = orderCol !== -1 && String(data[i][orderCol]).trim() === String(deliveryId).trim();
-    var matchFallback = idCol !== -1 && String(currentIdRaw).trim() === String(deliveryData.order_num).trim();
-    var matchOrderFallback = orderCol !== -1 && String(data[i][orderCol]).trim() === String(deliveryData.order_num).trim();
     
-    if (matchId || matchOrder || matchFallback || matchOrderFallback) {
+    if (matchId) {
       var rowNum = i + 1;
       
       // Store old values for comparison
