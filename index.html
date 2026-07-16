@@ -2010,6 +2010,7 @@ body.light-theme .login-error {
     };
     let isEditMode = false;
     let editDeliveryId = null;
+    let selectedValidAddress = "";
     function parseDateStr(str) {
       if (!str) return null;
       const parts = str.split('.');
@@ -2102,7 +2103,10 @@ body.light-theme .login-error {
     function autofillClientData(selectedName) {
       if (window.knowledgeBase[selectedName]) {
         const kbData = window.knowledgeBase[selectedName];
-        if (kbData.address) document.getElementById('form-address').value = kbData.address;
+        if (kbData.address) {
+          document.getElementById('form-address').value = kbData.address;
+          selectedValidAddress = kbData.address;
+        }
         if (kbData.phone) document.getElementById('form-receiver-phone').value = kbData.phone;
       }
     }
@@ -2658,6 +2662,7 @@ body.light-theme .login-error {
       document.getElementById('form-receiver-name').value = currentDetailDelivery["Ім'я_одержувача"] || '';
       document.getElementById('form-receiver-phone').value = currentDetailDelivery['Телефон_одержувача'] || '';
       document.getElementById('form-address').value = currentDetailDelivery['Адреса'] || '';
+      selectedValidAddress = currentDetailDelivery['Адреса'] || ''; // заповнюємо існуючу адресу
       document.getElementById('form-comment').value = currentDetailDelivery['Коментар'] || '';
       document.getElementById('form-manager-id').value = currentDetailDelivery['ID_Менеджера'] || '';
       
@@ -3431,6 +3436,7 @@ body.light-theme .login-error {
     function openNewDeliveryModal() {
       isEditMode = false;
       editDeliveryId = null;
+      selectedValidAddress = ""; // скидаємо перевірену адресу
       document.getElementById('modal-title').textContent = "Нова доставка";
       document.getElementById('delivery-form').reset();
       const user = state.currentUser;
@@ -3443,6 +3449,7 @@ body.light-theme .login-error {
           carSelect.value = "Самовивіз";
           carSelect.disabled = false;
           document.getElementById('form-address').value = 'склад Propex, вул. Вікентія Хвойки, 18/14, місто Київ';
+          selectedValidAddress = 'склад Propex, вул. Вікентія Хвойки, 18/14, місто Київ';
         } else {
           document.getElementById('form-manager-id').disabled = false;
           carSelect.innerHTML = '<option value="Не призначено">-- Обере логіст --</option><option value="Самовивіз">Самовивіз</option><option value="Самовивіз Нова Пошта">Самовивіз Нова Пошта</option><option value="1">Hyundai EX-8</option><option value="3">Volkswagen Crafter</option><option value="4">Renault Dokker</option><option value="5">Renault D18</option>';
@@ -3593,6 +3600,17 @@ body.light-theme .login-error {
         alert("Будь ласка, заповніть усі обов'язкові поля (*)");
         return;
       }
+      
+      const normalizedAddress = address.toLowerCase();
+      const isAllowedException = normalizedAddress.includes("склад propex") || 
+                                 normalizedAddress.includes("самовивіз") || 
+                                 normalizedAddress.includes("вікентія хвойки") ||
+                                 normalizedAddress === "тест";
+      
+      if (!isAllowedException && (!selectedValidAddress || address !== selectedValidAddress)) {
+        alert("Будь ласка, почніть вводити адресу та обов'язково оберіть її зі списку підказок (автозаповнення), щоб вона відображалась на карті.");
+        return;
+      }
       const parts = rawDate.split('-');
       const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
       const deliveryData = {
@@ -3658,6 +3676,7 @@ body.light-theme .login-error {
     const autocompleteList = document.getElementById('autocomplete-list');
     let debounceTimer;
     addressInput.addEventListener('input', function() {
+      selectedValidAddress = ""; // скидаємо валідність, бо користувач вносить зміни
       const val = this.value.trim();
       autocompleteList.innerHTML = '';
       clearTimeout(debounceTimer);
@@ -3698,6 +3717,7 @@ body.light-theme .login-error {
               div.textContent = cleanName;
               div.addEventListener('click', function() {
                 addressInput.value = cleanName;
+                selectedValidAddress = cleanName; // зберігаємо обрану перевірену адресу
                 autocompleteList.innerHTML = '';
               });
               autocompleteList.appendChild(div);
@@ -3707,7 +3727,7 @@ body.light-theme .login-error {
             console.error("Autocomplete error:", err);
             const div = document.createElement('div');
             div.style.cssText = "padding: 10px 14px; color: var(--danger); font-size: 13px; font-weight: 600;";
-            div.textContent = "⚠️ Помилка пошуку (можливо, ліміт запитів). Спробуйте ввести вручну.";
+            div.textContent = "⚠️ Помилка пошуку (можливо, ліміт запитів). Спробуйте ввести адресу пізніше.";
             autocompleteList.appendChild(div);
           });
       }, 400);
@@ -4225,6 +4245,7 @@ function renderClients() {
             const addrInput = document.getElementById('form-address');
             if (addrInput) {
               addrInput.value = 'склад Propex, вул. Вікентія Хвойки, 18/14, місто Київ';
+              selectedValidAddress = 'склад Propex, вул. Вікентія Хвойки, 18/14, місто Київ';
             }
           }
         });
