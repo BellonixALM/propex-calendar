@@ -3362,15 +3362,43 @@ body.light-theme .login-error {
         </div>
       `;
 
+      // Знаходимо ім'я менеджера
+      const managerId = del['ID_Менеджера'];
+      let managerName = '';
+      let managerShort = '';
+      if (managerId) {
+        const emp = (state.employees || []).find(e => {
+          const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
+          return tgId && String(tgId).trim() === String(managerId).trim();
+        });
+        if (emp) {
+          managerName = emp['ПІБ'] || emp["Ім'я"] || '';
+          const parts = managerName.split(' ');
+          if (parts.length >= 2) {
+            managerShort = `${parts[0]} ${parts[1].charAt(0)}.`; // наприклад, "Петренко М."
+          } else if (parts.length === 1) {
+            managerShort = parts[0];
+          } else {
+            managerShort = managerName;
+          }
+        } else {
+          managerName = managerId;
+          managerShort = managerId;
+        }
+      }
+
       card.innerHTML = `
         <div class="card-meta">
           <span class="card-time">${isProblem ? '⚠️ ' : ''}${del['Час']}</span>
           <span class="card-order-badge ${isProblem ? 'problem-badge' : payClass}" style="display:flex; align-items:center;">№${del['Номер_замовлення']}${whIcon}</span>
         </div>
         <div class="card-address" title="${del['Адреса']}">${addressDisplay}</div>
-        <div class="card-footer">
-          <span title="${subText}">${subText}</span>
-          ${driverInfoHTML}
+        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <span title="${subText}" style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${subText}</span>
+          <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: auto;">
+            ${managerShort ? `<span class="card-manager-badge" title="Створив менеджер: ${managerName}" style="font-size: 10px; opacity: 0.85; color: var(--text-color); background: rgba(156,163,175,0.12); padding: 1px 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(156,163,175,0.2); white-space: nowrap;">👤 ${managerShort}</span>` : ''}
+            ${driverInfoHTML}
+          </div>
         </div>
       `;
       const user = state.currentUser;
@@ -3442,6 +3470,22 @@ body.light-theme .login-error {
       document.getElementById('det-status').textContent = del['Статус'] || 'Заплановано';
       document.getElementById('det-comment').textContent = del['Коментар'] || 'Немає коментарів';
       document.getElementById('det-status-select').value = del['Статус'] || 'Заплановано';
+
+      // Пошук ПІБ або імені менеджера
+      const managerId = del['ID_Менеджера'];
+      let managerFullName = 'Не вказано';
+      if (managerId) {
+        const emp = (state.employees || []).find(e => {
+          const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
+          return tgId && String(tgId).trim() === String(managerId).trim();
+        });
+        if (emp) {
+          managerFullName = emp['ПІБ'] || emp["Ім'я"] || managerId;
+        } else {
+          managerFullName = `Telegram ID: ${managerId}`;
+        }
+      }
+      document.getElementById('det-manager').textContent = managerFullName;
       
       // Control Cancel Button Visibility
       const cancelBtn = document.getElementById('cancel-delivery-btn');
