@@ -20,8 +20,8 @@ tar --exclude='./.git' --exclude='node_modules' -czf "$ARCHIVE" -C "$BACKUP_DIR"
 #   Якщо ви користуєтесь іншим інструментом (gsutil, rclone), замініть цю команду
 aws s3 cp "$ARCHIVE" "s3://${S3_BUCKET}/backups/" --storage-class STANDARD_IA
 
-# 3. Очистити локальні старі архіви (старші 7 днів)
-find "$BACKUP_DIR" -name "backup_*.tgz" -type f -mtime +7 -exec rm {} \;
+# 3. Очистити локальні старі архіви (старші 30 днів)
+find "$BACKUP_DIR" -name "backup_*.tgz" -type f -mtime +30 -exec rm {} \;
 
 # Вихідний код 0 в разі успіху
 exit 0

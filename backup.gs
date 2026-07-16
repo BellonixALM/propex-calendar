@@ -22,6 +22,24 @@ function dailySheetBackup() {
     const folder = DriveApp.getFolderById(backupFolderId);
     folder.createFile(blob);
     Logger.log('Backup saved for ' + today);
+    
+    // Очищення бекапів старших за 30 днів
+    try {
+      const files = folder.getFiles();
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - 30);
+      
+      while (files.hasNext()) {
+        const file = files.next();
+        if (file.getDateCreated() < cutoffDate) {
+          file.setTrashed(true);
+          Logger.log('Old backup trashed: ' + file.getName());
+        }
+      }
+    } catch(e) {
+      Logger.log('Error cleaning up old backups: ' + e.toString());
+    }
+    
     return 'Backup saved successfully';
   } else {
     Logger.log('Backup failed, code: ' + response.getResponseCode());
