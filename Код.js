@@ -236,6 +236,8 @@ function getDeliveries() {
   var sheet = ss.getSheetByName('Доставки');
   if (!sheet) return [];
   
+  sanitizeRowIds(); // Автоматично виправляємо дублікати та пусті ID в таблиці перед читанням
+  
   var data = sheet.getDataRange().getDisplayValues();
   if (data.length <= 1) return [];
   
@@ -2188,6 +2190,60 @@ function broadcastMessageToEmployees(payload) {
     return { status: 'success', message: 'Повідомлення успішно надіслано в Telegram для ' + count + ' співробітників!' };
   } catch (e) {
     return { status: 'error', message: e.toString() };
+  }
+}
+
+/**
+ * Автоматично перевіряє стовпчик "ID" у листі "Доставки".
+ * Якщо знайдено порожні комірки або дублікати ID (наприклад, через ручне копіювання в Google Sheets),
+ * присвоює їм нові унікальні ID і записує в таблицю для запобігання дублювання замовлень.
+ */
+function sanitizeRowIds() {
+  var ss = getSpreadsheet();
+  if (!ss) return;
+  var sheet = ss.getSheetByName('Доставки');
+  if (!sheet) return;
+  
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  if (values.length <= 1) return;
+  
+  var headers = values[0];
+  var idCol = headers.indexOf('ID');
+  if (idCol === -1) return;
+  
+  var usedIds = {};
+  var maxId = 0;
+  
+  // Крок 1: Знаходимо максимальний числовий ID серед існуючих коректних унікальних ID
+  for (var i = 1; i < values.length; i++) {
+    var idVal = String(values[i][idCol]).trim();
+    if (idVal && idVal !== 'undefined' && idVal !== 'NaN' && idVal !== '-') {
+      var num = parseInt(idVal, 10);
+      if (!isNaN(num)) {
+        if (num > maxId) maxId = num;
+      }
+    }
+  }
+  
+  // Страховка: якщо maxId надто малий, стартуємо від кількості рядків
+  if (maxId < values.length) {
+    maxId = values.length + 10;
+  }
+  
+  // Крок 2: Знаходимо дублікати та пусті ID, генеруємо для них нові унікальні значення
+  for (var i = 1; i < values.length; i++) {
+    var idVal = String(values[i][idCol]).trim();
+    var isEmpty = !idVal || idVal === 'undefined' || idVal === 'NaN' || idVal === '-';
+    var isDuplicate = usedIds[idVal];
+    
+    if (isEmpty || isDuplicate) {
+      maxId++;
+      sheet.getRange(i + 1, idCol + 1).setValue(maxId);
+      usedIds[maxId] = true;
+    } else {
+      usedIds[idVal] = true;
+    }
   }
 }
 
