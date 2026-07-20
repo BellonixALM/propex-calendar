@@ -1626,6 +1626,8 @@ function register_driver(data) {
                        roleLower.indexOf('manager') > -1 || 
                        roleLower.indexOf('логіст') > -1 || 
                        roleLower.indexOf('logist') > -1 || 
+                       roleLower.indexOf('бухгалтер') > -1 || 
+                       roleLower.indexOf('бух') > -1 || 
                        roleLower.indexOf('адмін') > -1;
       
       var welcomeText;
