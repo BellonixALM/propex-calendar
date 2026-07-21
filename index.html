@@ -1673,6 +1673,12 @@ body.light-theme .login-error {
               </select>
             </div>
             <div class="form-group">
+              <label for="form-driver-select">Призначений водій</label>
+              <select id="form-driver-select" class="form-control">
+                <option value="">-- Обере логіст / Не призначено --</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label for="form-date">Дата доставки *</label>
               <input type="date" id="form-date" class="form-control" required>
             </div>
@@ -2713,6 +2719,7 @@ body.light-theme .login-error {
         carSelect.value = currentCar;
         carSelect.disabled = false;
       }
+      populateDriversDropdown(currentDetailDelivery['ID_Водія'] || '');
       openModal('delivery-modal');
     }
     function renderCalendar() {
@@ -3417,10 +3424,20 @@ body.light-theme .login-error {
           } else {
             managerShort = managerName;
           }
-        } else {
-          managerName = managerId;
-          managerShort = managerId;
-        }
+      // Знаходимо водія
+      let driverInfoHTML = '';
+      const driverId = del['ID_Водія'];
+      if (driverId) {
+        const empDriver = (state.employees || []).find(e => {
+          const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
+          const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
+          const targetStr = String(driverId).trim();
+          return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
+        });
+        const driverName = empDriver ? (empDriver['ПІБ'] || empDriver["Ім'я"] || driverId) : driverId;
+        const dParts = driverName.split(' ');
+        const driverShort = dParts.length >= 2 ? `${dParts[0]} ${dParts[1].charAt(0)}.` : driverName;
+        driverInfoHTML = `<span class="card-driver-badge" title="Призначений водій: ${driverName}" style="font-size: 10px; opacity: 0.9; color: #10b981; background: rgba(16,185,129,0.12); padding: 1px 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(16,185,129,0.2); white-space: nowrap;">🚚 ${driverShort}</span>`;
       }
 
       card.innerHTML = `
@@ -3434,6 +3451,7 @@ body.light-theme .login-error {
           <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: auto;">
             ${managerShort ? `<span class="card-manager-badge" title="Створив менеджер: ${managerName}" style="font-size: 10px; opacity: 0.85; color: var(--text-color); background: rgba(156,163,175,0.12); padding: 1px 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(156,163,175,0.2); white-space: nowrap;">👤 ${managerShort}</span>` : ''}
             ${driverInfoHTML}
+            ${driverInfoHTML ? '' : driverInfoHTML}
           </div>
         </div>
       `;
@@ -3493,12 +3511,49 @@ body.light-theme .login-error {
         timeSelect.appendChild(opt);
       });
       document.getElementById('form-date').value = formatDateISO(state.currentDate);
+      populateDriversDropdown('');
       openModal('delivery-modal');
     }
+
+    function populateDriversDropdown(selectedDriverId) {
+      const driverSelect = document.getElementById('form-driver-select');
+      if (!driverSelect) return;
+      driverSelect.innerHTML = '<option value="">-- Обере логіст / Не призначено --</option>';
+      const employees = state.employees || [];
+      const drivers = employees.filter(e => {
+        const r = (e['Роль'] || e['role'] || '').toString().toLowerCase();
+        return r.includes('driver') || r.includes('водій');
+      });
+      drivers.forEach(d => {
+        const tgId = d['Telegram_ID'] || d['Telegram'] || d['telegramId'] || d['ID'] || d['Логін'];
+        const pib = d['ПІБ'] || d["Ім'я"] || d['Логін'];
+        const phone = d['Телефон'] ? ` (${d['Телефон']})` : '';
+        const carInfo = d['Авто'] ? ` [Авто №${d['Авто']}]` : '';
+        const opt = document.createElement('option');
+        opt.value = tgId;
+        opt.textContent = `${pib}${carInfo}${phone}`;
+        if (selectedDriverId && (String(selectedDriverId).trim() === String(tgId).trim() || String(selectedDriverId).trim() === String(pib).trim())) {
+          opt.selected = true;
+        }
+        driverSelect.appendChild(opt);
+      });
+    }
+
     let currentDetailDelivery = null;
     function showDetails(del) {
       currentDetailDelivery = del;
-      document.getElementById('det-car').textContent = "🚗 Автомобіль " + del['ID_Авто'];
+      const driverId = del['ID_Водія'];
+      let driverText = 'Не призначено';
+      if (driverId) {
+        const empDriver = (state.employees || []).find(e => {
+          const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
+          const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
+          const targetStr = String(driverId).trim();
+          return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
+        });
+        driverText = empDriver ? (empDriver['ПІБ'] || empDriver["Ім'я"] || driverId) : driverId;
+      }
+      document.getElementById('det-car').textContent = `🚗 Авто: ${window.getCarName(del['ID_Авто'])} | 🚚 Водій: ${driverText}`;
       document.getElementById('det-time-date').textContent = `${del['Час']} — ${del['Дата']}`;
       document.getElementById('det-order').textContent = `№ ${del['Номер_замовлення']}`;
       document.getElementById('det-payment').textContent = del['Статус_оплати'] || 'Не вказано';
@@ -3640,8 +3695,10 @@ body.light-theme .login-error {
       }
       const parts = rawDate.split('-');
       const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
+      const driverUserId = document.getElementById('form-driver-select') ? document.getElementById('form-driver-select').value.trim() : '';
       const deliveryData = {
         driver_id: car,
+        driver_user_id: driverUserId,
         manager_chat_id: document.getElementById('form-manager-id').value.trim(),
         date: formattedDate,
         time: time,

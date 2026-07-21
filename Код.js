@@ -412,6 +412,7 @@ function addDelivery(deliveryData) {
     // Add missing columns if they don't exist
     var hasWorker = headers.indexOf('ID_Комірника') !== -1;
     var hasGatherStatus = headers.indexOf('Статус_збору') !== -1;
+    var hasDriverCol = headers.indexOf('ID_Водія') !== -1;
     
     if (!hasWorker) {
       sheet.getRange(1, headers.length + 1).setValue('ID_Комірника');
@@ -420,6 +421,10 @@ function addDelivery(deliveryData) {
     if (!hasGatherStatus) {
       sheet.getRange(1, headers.length + 1).setValue('Статус_збору');
       headers.push('Статус_збору');
+    }
+    if (!hasDriverCol) {
+      sheet.getRange(1, headers.length + 1).setValue('ID_Водія');
+      headers.push('ID_Водія');
     }
   }
   
@@ -443,6 +448,7 @@ function addDelivery(deliveryData) {
   setVal('Телефон_одержувача', deliveryData.receiver_phone || '');
   setVal('ID_Менеджера', deliveryData.manager_chat_id || '');
   setVal('ID_Комірника', '');
+  setVal('ID_Водія', deliveryData.driver_user_id || '');
   var statusColFound = false;
   for (var k = 0; k < headers.length; k++) {
     var hStr = headers[k].toString().trim().toLowerCase();
@@ -494,6 +500,10 @@ function addDelivery(deliveryData) {
     heads.forEach(function(head) {
       sendTelegramMessage(head.telegram_id, text, kb);
     });
+  }
+  
+  if (deliveryData.driver_user_id) {
+    notifyDriverAboutDelivery(deliveryData);
   }
   
   return { status: 'success', id: id };
@@ -875,6 +885,12 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
   var nameCol = headers.indexOf('Ім\'я_одержувача');
   var phoneCol = headers.indexOf('Телефон_одержувача');
   var managerCol = headers.indexOf('ID_Менеджера');
+  var driverUserCol = headers.indexOf('ID_Водія');
+  if (driverUserCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('ID_Водія');
+    driverUserCol = headers.length;
+    headers.push('ID_Водія');
+  }
   
   if (idCol === -1) {
     return { status: 'error', message: 'Необхідні заголовки таблиці відсутні' };
@@ -906,7 +922,13 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
       if (payCol !== -1) sheet.getRange(rowNum, payCol + 1).setValue(deliveryData.payment || '');
       if (commentCol !== -1) sheet.getRange(rowNum, commentCol + 1).setValue(deliveryData.comment || '');
       if (nameCol !== -1) sheet.getRange(rowNum, nameCol + 1).setValue(deliveryData.receiver_name || '');
-      if (phoneCol !== -1) sheet.getRange(rowNum, phoneCol + 1).setValue(deliveryData.receiver_phone || '');
+      var oldDriverUser = driverUserCol !== -1 ? data[i][driverUserCol] : '';
+      
+      if (driverUserCol !== -1) sheet.getRange(rowNum, driverUserCol + 1).setValue(deliveryData.driver_user_id || '');
+      
+      if (deliveryData.driver_user_id && deliveryData.driver_user_id !== oldDriverUser) {
+        notifyDriverAboutDelivery(deliveryData);
+      }
       
       // Check if changes are made by logist/director/admin and notify manager if critical fields shifted
       if (managerId && (userRole === 'logist' || userRole === 'director' || userRole === 'admin')) {
@@ -2252,6 +2274,72 @@ function sanitizeRowIds() {
       usedIds[idVal] = true;
     }
   }
+}
+
+function notifyDriverAboutDelivery(deliveryData) {
+  var driverTarget = deliveryData.driver_user_id;
+  if (!driverTarget || driverTarget === 'Не призначено' || driverTarget === '-') return;
+
+  var ss = getSpreadsheet();
+  if (!ss) return;
+  var userSheet = ss.getSheetByName('Користувачі');
+  var targetTgId = driverTarget;
+
+  if (userSheet) {
+    var uData = userSheet.getDataRange().getValues();
+    var uHeaders = uData[0];
+    var tgCol = uHeaders.indexOf('Telegram_ID');
+    if (tgCol === -1) tgCol = uHeaders.indexOf('Telegram');
+    var pibCol = uHeaders.indexOf('ПІБ');
+    if (pibCol === -1) pibCol = uHeaders.indexOf('Ім\'я');
+
+    for (var i = 1; i < uData.length; i++) {
+      var rowTg = tgCol !== -1 ? String(uData[i][tgCol]).trim() : '';
+      var rowPib = pibCol !== -1 ? String(uData[i][pibCol]).trim() : '';
+      var rowLogin = String(uData[i][0]).trim();
+
+      if (rowTg === driverTarget || rowPib === driverTarget || rowLogin === driverTarget) {
+        if (rowTg && rowTg !== '-') {
+          targetTgId = rowTg;
+          break;
+        }
+      }
+    }
+  }
+
+  if (targetTgId && /^\d+$/.test(targetTgId)) {
+    var carName = getCarName(deliveryData.driver_id || deliveryData.car || '');
+    var text = "🚚 <b>Маршрутний лист / Нова доставка!</b>\n\n" +
+               "📋 <b>Замовлення №:</b> " + (deliveryData.order_num || "Б/Н") + "\n" +
+               "📅 <b>Дата та час:</b> " + (deliveryData.date || "") + " (" + (deliveryData.time || "") + ")\n" +
+               "📍 <b>Адреса:</b> " + (deliveryData.address || "") + "\n" +
+               "👤 <b>Одержувач:</b> " + (deliveryData.receiver_name || "Не вказано") + (deliveryData.receiver_phone ? (" (" + deliveryData.receiver_phone + ")") : "") + "\n" +
+               "💬 <b>Коментар:</b> " + (deliveryData.comment || "Немає") + "\n" +
+               "🚗 <b>Автомобіль:</b> " + carName + "\n\n" +
+               "<i>Вдалого маршруту!</i> 🛣️";
+
+    var kb = null;
+    if (deliveryData.address) {
+      var mapsUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(deliveryData.address);
+      kb = {
+        "inline_keyboard": [
+          [{"text": "🗺️ Відкрити в Навігаторі (Google Maps)", "url": mapsUrl}]
+        ]
+      };
+    }
+    sendTelegramMessage(targetTgId, text, kb);
+  }
+}
+
+function getCarName(carId) {
+  var id = String(carId).trim();
+  if (id === '1') return 'Hyundai EX-8';
+  if (id === '3') return 'Volkswagen Crafter';
+  if (id === '4') return 'Renault Dokker';
+  if (id === '5') return 'Renault D18';
+  if (id === 'Самовивіз') return 'Самовивіз зі складу';
+  if (id === 'Самовивіз Нова Пошта') return 'Нова Пошта';
+  return id || 'Не призначено';
 }
 
 
