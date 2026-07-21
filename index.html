@@ -86,7 +86,11 @@ async function geocodeAddress(addressStr) {
     return addressCache[addressStr];
   }
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressStr + ', Київ')}`);
+    let q = addressStr;
+    if (!q.toLowerCase().includes('україна') && !q.toLowerCase().includes('ukraine')) {
+      q += ', Україна';
+    }
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=ua&limit=1`);
     const data = await response.json();
     if (data && data.length > 0) {
       addressCache[addressStr] = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
@@ -3706,10 +3710,10 @@ body.light-theme .login-error {
       if (!val || val.length < 3) return;
       debounceTimer = setTimeout(() => {
         let searchQuery = val;
-        if (!val.toLowerCase().includes('київ') && !val.toLowerCase().includes('киев')) {
-          searchQuery = 'Київ, ' + val;
+        if (!searchQuery.toLowerCase().includes('україна') && !searchQuery.toLowerCase().includes('ukraine')) {
+          searchQuery += ', Україна';
         }
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&addressdetails=1&limit=5&countrycodes=ua&bounded=1&viewbox=30.0,50.2,31.0,50.7`;
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&addressdetails=1&limit=8&countrycodes=ua&viewbox=29.0,49.5,32.5,51.8`;
         fetch(url, { headers: { 'Accept': 'application/json' } })
           .then(response => {
             if (!response.ok) throw new Error("HTTP error! status: " + response.status);
@@ -3728,14 +3732,28 @@ body.light-theme .login-error {
               const div = document.createElement('div');
               
               const addr = item.address;
-              let streetAndNumber = '';
-              if (addr && addr.road) {
-                streetAndNumber = addr.road;
-                if (addr.house_number) streetAndNumber += ', ' + addr.house_number;
+              let cleanName = '';
+              if (addr) {
+                const city = addr.city || addr.town || addr.village || addr.municipality || addr.settlement || '';
+                const road = addr.road || addr.pedestrian || addr.suburb || '';
+                const house = addr.house_number ? (', ' + addr.house_number) : '';
+                
+                if (city && road) {
+                  if (road.toLowerCase().includes(city.toLowerCase())) {
+                    cleanName = `${road}${house}`;
+                  } else {
+                    cleanName = `${city}, ${road}${house}`;
+                  }
+                } else if (road) {
+                  cleanName = `${road}${house}`;
+                } else if (city) {
+                  cleanName = city;
+                } else {
+                  cleanName = item.display_name.split(',').slice(0, 3).join(',').replace(', Україна', '').replace(', Ukraine', '').trim();
+                }
               } else {
-                streetAndNumber = item.display_name.split(',').slice(0, 2).join(',').replace(', Україна', '').replace(', Ukraine', '');
+                cleanName = item.display_name.split(',').slice(0, 3).join(',').replace(', Україна', '').replace(', Ukraine', '').trim();
               }
-              const cleanName = streetAndNumber;
 
               div.textContent = cleanName;
               div.addEventListener('click', function() {
