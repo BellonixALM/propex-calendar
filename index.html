@@ -3399,7 +3399,9 @@ body.light-theme .login-error {
       if (managerId) {
         const emp = (state.employees || []).find(e => {
           const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
-          return tgId && String(tgId).trim() === String(managerId).trim();
+          const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
+          const targetStr = String(managerId).trim();
+          return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
         });
         if (emp) {
           managerName = emp['ПІБ'] || emp["Ім'я"] || '';
@@ -3463,7 +3465,7 @@ body.light-theme .login-error {
       const user = state.currentUser;
       const carSelect = document.getElementById('form-car');
       if (user) {
-        document.getElementById('form-manager-id').value = user.telegramId || '';
+        document.getElementById('form-manager-id').value = user.telegramId || user.name || user.login || '';
         if (user.role === 'manager') {
           document.getElementById('form-manager-id').disabled = true;
           carSelect.innerHTML = '<option value="Самовивіз">Самовивіз</option><option value="Самовивіз Нова Пошта">Самовивіз Нова Пошта</option><option value="Не призначено">-- Обере логіст --</option><option value="1">Hyundai EX-8</option><option value="3">Volkswagen Crafter</option><option value="4">Renault Dokker</option><option value="5">Renault D18</option>';

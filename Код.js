@@ -825,6 +825,7 @@ function authenticateUser(login, password) {
   var roleCol = headers.indexOf('Роль');
   var nameCol = headers.indexOf('Ім\'я');
   var telCol = headers.indexOf('Telegram_ID');
+  var altTelCol = headers.indexOf('Telegram');
   
   if (loginCol === -1 || passCol === -1 || roleCol === -1) {
     return { status: 'error', message: 'Некоректний формат листа користувачів' };
@@ -834,13 +835,17 @@ function authenticateUser(login, password) {
     var rowLogin = String(data[i][loginCol]).trim();
     var rowPass = String(data[i][passCol]).trim();
     if (rowLogin === login && rowPass === password) {
+      var tgVal = telCol !== -1 ? String(data[i][telCol]).trim() : '';
+      if (!tgVal && altTelCol !== -1) {
+        tgVal = String(data[i][altTelCol]).trim();
+      }
       return {
         status: 'success',
         user: {
           login: rowLogin,
           role: String(data[i][roleCol]).trim(),
           name: nameCol !== -1 ? String(data[i][nameCol]).trim() : rowLogin,
-          telegramId: telCol !== -1 ? String(data[i][telCol]).trim() : ''
+          telegramId: tgVal
         }
       };
     }
