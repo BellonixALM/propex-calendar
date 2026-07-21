@@ -82,23 +82,78 @@ function closeMapModal() {
 }
 
 async function geocodeAddress(addressStr) {
-  if (addressCache[addressStr]) {
-    return addressCache[addressStr];
+  if (!addressStr || typeof addressStr !== 'string') return null;
+  const rawClean = addressStr.trim();
+  if (addressCache[rawClean]) {
+    return addressCache[rawClean];
   }
-  try {
-    let q = addressStr;
-    if (!q.toLowerCase().includes('україна') && !q.toLowerCase().includes('ukraine')) {
-      q += ', Україна';
-    }
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=ua&limit=1`);
-    const data = await response.json();
-    if (data && data.length > 0) {
-      addressCache[addressStr] = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-      return addressCache[addressStr];
-    }
-  } catch (e) {
-    console.error("Geocoding error for", addressStr, e);
+
+  // 1. Check known fallback dictionary for common company / settlement names
+  const lower = rawClean.toLowerCase();
+  if (lower.includes('хвойки') || lower.includes('пропекс') || lower.includes('propex')) {
+    addressCache[rawClean] = { lat: 50.484077, lon: 30.486195 };
+    return addressCache[rawClean];
   }
+  if (lower.includes('лебедівка') || lower.includes('лебедевка')) {
+    addressCache[rawClean] = { lat: 50.7042, lon: 30.4939 };
+    return addressCache[rawClean];
+  }
+
+  // Helper function to query Nominatim
+  async function queryNominatim(searchQuery) {
+    try {
+      let q = searchQuery;
+      if (!q.toLowerCase().includes('україна') && !q.toLowerCase().includes('ukraine')) {
+        q += ', Україна';
+      }
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=ua&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+      }
+    } catch (err) {
+      console.error("Nominatim error for:", searchQuery, err);
+    }
+    return null;
+  }
+
+  // 2. Try raw query
+  let coords = await queryNominatim(rawClean);
+  if (coords) {
+    addressCache[rawClean] = coords;
+    return coords;
+  }
+
+  // 3. Clean up address string (remove clutter like "склад Propex,", "СЕС", "ЖК", "ТОВ")
+  let cleanQ = rawClean
+    .replace(/^склад\s+propex,\s*/i, '')
+    .replace(/^склад,\s*/i, '')
+    .replace(/^сес\s+/i, '')
+    .replace(/^жк\s+/i, '')
+    .replace(/^тов\s+[^,]+,\s*/i, '')
+    .replace(/,\s*pirnove rural hromada/i, '')
+    .replace(/,\s*місто київ/i, ', Київ')
+    .trim();
+
+  if (cleanQ !== rawClean) {
+    coords = await queryNominatim(cleanQ);
+    if (coords) {
+      addressCache[rawClean] = coords;
+      return coords;
+    }
+  }
+
+  // 4. Try extracting just street name and number
+  const parts = cleanQ.split(',');
+  if (parts.length > 1) {
+    const subQ = parts.slice(0, 2).join(', ') + ', Київська область';
+    coords = await queryNominatim(subQ);
+    if (coords) {
+      addressCache[rawClean] = coords;
+      return coords;
+    }
+  }
+
   return null;
 }
 
@@ -148,25 +203,44 @@ async function openGlobalMap() {
 
   const carRoutes = {};
   todayDels.forEach(d => {
-    const carId = d['ID_Авто'] || 'Невідомо';
-    if (carId && carId !== 'Самовивіз' && carId !== 'Самовивіз Нова Пошта' && carId !== 'Не призначено') {
-      if (!carRoutes[carId]) {
-        let modelLabel = window.getCarName(carId);
-        const driver = (state.drivers || []).find(dr => String(dr['ID_Авто']) === String(carId));
-        if (driver) {
-           const foundModel = driver['Авто'] || driver['Модель'] || driver['Марка_Авто'] || driver['Автомобіль'];
-           if (foundModel) modelLabel = foundModel;
-        }
-        
-        const isIncident = hasCarIncidentOnDate(carId, todayStr);
-        carRoutes[carId] = {
-          model: modelLabel,
-          incident: isIncident,
-          deliveries: []
-        };
+    let carId = d['ID_Авто'] ? String(d['ID_Авто']).trim() : '';
+    
+    // Якщо ID_Авто не вказано або "Не призначено", перевіряємо, чи вказано водія!
+    if ((!carId || carId === 'Не призначено' || carId === 'Невідомо') && d['ID_Водія']) {
+      const empDriver = (state.employees || []).find(e => {
+        const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
+        const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
+        const targetStr = String(d['ID_Водія']).trim();
+        return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
+      });
+      if (empDriver && empDriver['Авто']) {
+        carId = String(empDriver['Авто']);
       }
-      carRoutes[carId].deliveries.push(d);
     }
+
+    // Якщо все ще не призначено авто — групуємо у "Не призначено" або "Самовивіз", алеНЕ ФІЛЬТРУЄМО!
+    if (!carId || carId === 'Самовивіз' || carId === 'Самовивіз Нова Пошта') {
+      carId = 'Самовивіз';
+    } else if (carId === 'Не призначено' || carId === 'Невідомо') {
+      carId = 'unassigned';
+    }
+
+    if (!carRoutes[carId]) {
+      let modelLabel = carId === 'unassigned' ? 'Не призначені (Очікують авто)' : (carId === 'Самовивіз' ? 'Самовивіз' : window.getCarName(carId));
+      const driver = (state.drivers || []).find(dr => String(dr['ID_Авто']) === String(carId));
+      if (driver) {
+         const foundModel = driver['Авто'] || driver['Модель'] || driver['Марка_Авто'] || driver['Автомобіль'];
+         if (foundModel) modelLabel = foundModel;
+      }
+      
+      const isIncident = (carId !== 'unassigned' && carId !== 'Самовивіз') ? hasCarIncidentOnDate(carId, todayStr) : false;
+      carRoutes[carId] = {
+        model: modelLabel,
+        incident: isIncident,
+        deliveries: []
+      };
+    }
+    carRoutes[carId].deliveries.push(d);
   });
 
   // Calculate idle cars (from drivers)
