@@ -913,18 +913,18 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
       var oldOrderNum = orderCol !== -1 ? data[i][orderCol] : '';
       var managerId = managerCol !== -1 ? data[i][managerCol] : '';
       
-      // Update spreadsheet cells
-      if (carCol !== -1) sheet.getRange(rowNum, carCol + 1).setValue(deliveryData.driver_id);
-      if (dateCol !== -1) sheet.getRange(rowNum, dateCol + 1).setValue(deliveryData.date);
-      if (timeCol !== -1) sheet.getRange(rowNum, timeCol + 1).setValue(deliveryData.time);
-      if (addressCol !== -1) sheet.getRange(rowNum, addressCol + 1).setValue(deliveryData.address);
-      if (orderCol !== -1) sheet.getRange(rowNum, orderCol + 1).setValue(deliveryData.order_num || '');
-      if (payCol !== -1) sheet.getRange(rowNum, payCol + 1).setValue(deliveryData.payment || '');
-      if (commentCol !== -1) sheet.getRange(rowNum, commentCol + 1).setValue(deliveryData.comment || '');
-      if (nameCol !== -1) sheet.getRange(rowNum, nameCol + 1).setValue(deliveryData.receiver_name || '');
+      // Update spreadsheet cells safely (only if provided)
+      if (carCol !== -1 && deliveryData.driver_id !== undefined) sheet.getRange(rowNum, carCol + 1).setValue(deliveryData.driver_id);
+      if (dateCol !== -1 && deliveryData.date !== undefined) sheet.getRange(rowNum, dateCol + 1).setValue(deliveryData.date);
+      if (timeCol !== -1 && deliveryData.time !== undefined) sheet.getRange(rowNum, timeCol + 1).setValue(deliveryData.time);
+      if (addressCol !== -1 && deliveryData.address !== undefined) sheet.getRange(rowNum, addressCol + 1).setValue(deliveryData.address);
+      if (orderCol !== -1 && deliveryData.order_num !== undefined) sheet.getRange(rowNum, orderCol + 1).setValue(deliveryData.order_num);
+      if (payCol !== -1 && deliveryData.payment !== undefined) sheet.getRange(rowNum, payCol + 1).setValue(deliveryData.payment);
+      if (commentCol !== -1 && deliveryData.comment !== undefined) sheet.getRange(rowNum, commentCol + 1).setValue(deliveryData.comment);
+      if (nameCol !== -1 && deliveryData.receiver_name !== undefined) sheet.getRange(rowNum, nameCol + 1).setValue(deliveryData.receiver_name);
       var oldDriverUser = driverUserCol !== -1 ? data[i][driverUserCol] : '';
       
-      if (driverUserCol !== -1) sheet.getRange(rowNum, driverUserCol + 1).setValue(deliveryData.driver_user_id || '');
+      if (driverUserCol !== -1 && deliveryData.driver_user_id !== undefined) sheet.getRange(rowNum, driverUserCol + 1).setValue(deliveryData.driver_user_id);
       
       if (deliveryData.driver_user_id && deliveryData.driver_user_id !== oldDriverUser) {
         notifyDriverAboutDelivery(deliveryData);
