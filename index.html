@@ -3424,8 +3424,14 @@ body.light-theme .login-error {
           } else {
             managerShort = managerName;
           }
+        } else {
+          managerName = managerId;
+          managerShort = managerId;
+        }
+      }
+
       // Знаходимо водія
-      let driverInfoHTML = '';
+      let assignedDriverBadgeHTML = '';
       const driverId = del['ID_Водія'];
       if (driverId) {
         const empDriver = (state.employees || []).find(e => {
@@ -3437,7 +3443,7 @@ body.light-theme .login-error {
         const driverName = empDriver ? (empDriver['ПІБ'] || empDriver["Ім'я"] || driverId) : driverId;
         const dParts = driverName.split(' ');
         const driverShort = dParts.length >= 2 ? `${dParts[0]} ${dParts[1].charAt(0)}.` : driverName;
-        driverInfoHTML = `<span class="card-driver-badge" title="Призначений водій: ${driverName}" style="font-size: 10px; opacity: 0.9; color: #10b981; background: rgba(16,185,129,0.12); padding: 1px 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(16,185,129,0.2); white-space: nowrap;">🚚 ${driverShort}</span>`;
+        assignedDriverBadgeHTML = `<span class="card-driver-badge" title="Призначений водій: ${driverName}" style="font-size: 10px; opacity: 0.9; color: #10b981; background: rgba(16,185,129,0.12); padding: 1px 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(16,185,129,0.2); white-space: nowrap;">🚚 ${driverShort}</span>`;
       }
 
       card.innerHTML = `
@@ -3450,8 +3456,7 @@ body.light-theme .login-error {
           <span title="${subText}" style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${subText}</span>
           <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: auto;">
             ${managerShort ? `<span class="card-manager-badge" title="Створив менеджер: ${managerName}" style="font-size: 10px; opacity: 0.85; color: var(--text-color); background: rgba(156,163,175,0.12); padding: 1px 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(156,163,175,0.2); white-space: nowrap;">👤 ${managerShort}</span>` : ''}
-            ${driverInfoHTML}
-            ${driverInfoHTML ? '' : driverInfoHTML}
+            ${assignedDriverBadgeHTML}
           </div>
         </div>
       `;
