@@ -14,7 +14,7 @@ ARCHIVE="${BACKUP_DIR}/backup_${DATE}.tgz"
 # 1. Створити архів (виключаємо .git та node_modules)
 #   Якщо у вас немає node_modules у репозиторії, можна видалити --exclude='node_modules'
 
-tar --exclude='./.git' --exclude='node_modules' -czf "$ARCHIVE" -C "$BACKUP_DIR" .
+tar --exclude='./.git' --exclude='node_modules' --exclude='backup_*.tgz' --exclude='*.tgz' -czf "$ARCHIVE" -C "$BACKUP_DIR" .
 
 # 2. Завантажити в S3 (потребує налаштованих AWS credentials)
 #   Якщо ви користуєтесь іншим інструментом (gsutil, rclone), замініть цю команду
