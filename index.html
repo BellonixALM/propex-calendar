@@ -105,12 +105,38 @@ async function geocodeAddress(addressStr) {
     addressCache[rawClean] = { lat: 50.7042, lon: 30.4939 };
     return addressCache[rawClean];
   }
+  if (lower.includes('антоновича')) {
+    addressCache[rawClean] = { lat: 50.4175517, lon: 30.5201655 };
+    return addressCache[rawClean];
+  }
+  if (lower.includes('гоголів') || lower.includes('гоголев')) {
+    addressCache[rawClean] = { lat: 50.5198, lon: 31.0253 };
+    return addressCache[rawClean];
+  }
 
-  // Helper function to query Nominatim
+  // Helper function to query Geocoders (Photon Komoot API first, then Nominatim)
   async function queryNominatim(searchQuery) {
     try {
       let q = searchQuery.trim().replace(/,$/, '').trim();
       if (!q) return null;
+
+      // 1. Try Photon (Komoot) API first (fast, no rate-limit 429 errors)
+      try {
+        let photonQ = q;
+        if (!photonQ.toLowerCase().includes('україна') && !photonQ.toLowerCase().includes('ukraine') && !photonQ.toLowerCase().includes('київ') && !photonQ.toLowerCase().includes('kyiv')) {
+          photonQ += ' Київ Україна';
+        }
+        const pRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(photonQ)}`);
+        const pData = await pRes.json();
+        if (pData && pData.features && pData.features.length > 0) {
+          const coords = pData.features[0].geometry.coordinates;
+          if (coords[1] >= 44 && coords[1] <= 53 && coords[0] >= 22 && coords[0] <= 41) {
+            return { lat: coords[1], lon: coords[0] };
+          }
+        }
+      } catch (e) {}
+
+      // 2. Fallback to Nominatim API
       if (!q.toLowerCase().includes('україна') && !q.toLowerCase().includes('ukraine')) {
         q += ', Україна';
       }
@@ -120,7 +146,7 @@ async function geocodeAddress(addressStr) {
         return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
       }
     } catch (err) {
-      console.error("Nominatim error for:", searchQuery, err);
+      console.error("Geocoding error for:", searchQuery, err);
     }
     return null;
   }
