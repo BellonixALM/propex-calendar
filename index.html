@@ -102,7 +102,8 @@ async function geocodeAddress(addressStr) {
   // Helper function to query Nominatim
   async function queryNominatim(searchQuery) {
     try {
-      let q = searchQuery;
+      let q = searchQuery.trim().replace(/,$/, '').trim();
+      if (!q) return null;
       if (!q.toLowerCase().includes('україна') && !q.toLowerCase().includes('ukraine')) {
         q += ', Україна';
       }
@@ -143,7 +144,27 @@ async function geocodeAddress(addressStr) {
     }
   }
 
-  // 4. Try extracting just street name and number
+  // 4. Fallback logic: If it contains a house number, strip the house number and search for the street/road itself!
+  const numMatch = cleanQ.match(/(?:^|\s)(\d+[-а-яіїєґ\/]*)(?:\s|$)/i);
+  if (numMatch) {
+    const houseNum = numMatch[1];
+    let streetQ = cleanQ.replace(houseNum, '').replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+    streetQ = streetQ.replace(/^,|,$/g, '').trim();
+    
+    const otherCities = ['боярка', 'гоголів', 'бровари', 'ірпінь', 'буча', 'вишгород', 'бориспіль', 'васильків', 'обухів', 'фастів', 'лебедівка', 'підгірці', 'козин', 'пірнове', 'вишеньки', 'гнідин', 'львів', 'харків', 'одеса', 'дніпро'];
+    const hasOtherCity = otherCities.some(city => streetQ.toLowerCase().includes(city));
+    if (!hasOtherCity && !streetQ.toLowerCase().includes('київ') && !streetQ.toLowerCase().includes('kyiv') && !streetQ.toLowerCase().includes('kiev')) {
+      streetQ = 'Київ, ' + streetQ;
+    }
+
+    coords = await queryNominatim(streetQ);
+    if (coords) {
+      addressCache[rawClean] = coords;
+      return coords;
+    }
+  }
+
+  // 5. Try extracting just the first two comma-separated parts + Kyiv region
   const parts = cleanQ.split(',');
   if (parts.length > 1) {
     const subQ = parts.slice(0, 2).join(', ') + ', Київська область';
@@ -152,33 +173,13 @@ async function geocodeAddress(addressStr) {
       addressCache[rawClean] = coords;
       return coords;
     }
-  } else {
-    // No comma. Check if the first word matches a known city/town and fallback to geocoding it
-    const words = cleanQ.split(/\s+/);
-    if (words.length > 0) {
-      const firstWord = words[0].toLowerCase().replace(/[^a-zа-яіїєґ]/g, '');
-      const otherCities = ['боярка', 'гоголів', 'бровари', 'ірпінь', 'буча', 'вишгород', 'бориспіль', 'васильків', 'обухів', 'фастів', 'лебедівка', 'підгірці', 'козин', 'пірнове', 'вишеньки', 'гнідин'];
-      if (otherCities.includes(firstWord)) {
-        coords = await queryNominatim(words[0] + ', Київська область');
-        if (coords) {
-          addressCache[rawClean] = coords;
-          return coords;
-        }
-      }
-    }
   }
-  
-  // 5. Try stripping the house number if it ends with one
-  const numMatch = cleanQ.match(/^(.*?)\s+(\d+[-а-яіїєґ]*)$/i);
-  if (numMatch) {
-    const streetPart = numMatch[1];
-    coords = await queryNominatim(streetPart);
-    if (coords) {
-      addressCache[rawClean] = coords;
-      return coords;
-    }
-    if (!lower.includes('київ') && !lower.includes('kyiv') && !lower.includes('kiev')) {
-      coords = await queryNominatim(streetPart + ', Київ');
+
+  // 6. Final fallback: If there is a known city/town in the query, geocode just the city/town to at least place it somewhere sensible!
+  const otherCities = ['боярка', 'гоголів', 'бровари', 'ірпінь', 'буча', 'вишгород', 'бориспіль', 'васильків', 'обухів', 'фастів', 'лебедівка', 'підгірці', 'козин', 'пірнове', 'вишеньки', 'гнідин', 'київ', 'kyiv', 'kiev'];
+  for (const city of otherCities) {
+    if (lower.includes(city)) {
+      coords = await queryNominatim(city + ', Київська область');
       if (coords) {
         addressCache[rawClean] = coords;
         return coords;
