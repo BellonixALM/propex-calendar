@@ -3764,6 +3764,8 @@ body.light-theme .login-error {
       
       const normalizedAddress = address.toLowerCase();
       const isAllowedException = normalizedAddress.includes("склад propex") || 
+                                 normalizedAddress.includes("склад пропекс") || 
+                                 normalizedAddress.includes("гоголів") ||
                                  normalizedAddress.includes("самовивіз") || 
                                  normalizedAddress.includes("вікентія хвойки") ||
                                  normalizedAddress === "тест";
@@ -3846,6 +3848,14 @@ body.light-theme .login-error {
       if (!val || val.length < 3) return;
       debounceTimer = setTimeout(() => {
         let searchQuery = val;
+        const lowerVal = val.toLowerCase();
+        const otherCities = ['боярка', 'гоголів', 'бровари', 'ірпінь', 'буча', 'вишгород', 'бориспіль', 'васильків', 'обухів', 'фастів', 'лебедівка', 'підгірці', 'козин', 'львів', 'дніпро', 'полтава', 'харків', 'одеса'];
+        const hasOtherCity = otherCities.some(city => lowerVal.includes(city));
+        
+        if (!hasOtherCity && !lowerVal.includes('київ') && !lowerVal.includes('kyiv') && !lowerVal.includes('kiev')) {
+          searchQuery += ', Київ';
+        }
+        
         if (!searchQuery.toLowerCase().includes('україна') && !searchQuery.toLowerCase().includes('ukraine')) {
           searchQuery += ', Україна';
         }
