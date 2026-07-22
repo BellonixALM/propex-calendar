@@ -88,8 +88,15 @@ async function geocodeAddress(addressStr) {
     return addressCache[rawClean];
   }
 
+  // Normalize Ukrainian/Russian spelling variations of Kyiv at the start
+  let cleanQ = rawClean
+    .replace(/\bкиів\b/gi, 'Київ')
+    .replace(/\bкиев\b/gi, 'Київ')
+    .replace(/\bkyiv\b/gi, 'Київ')
+    .replace(/\bkiev\b/gi, 'Київ');
+
   // 1. Check known fallback dictionary for common company / settlement names
-  const lower = rawClean.toLowerCase();
+  const lower = cleanQ.toLowerCase();
   if (lower.includes('хвойки') || lower.includes('пропекс') || lower.includes('propex')) {
     addressCache[rawClean] = { lat: 50.484077, lon: 30.486195 };
     return addressCache[rawClean];
@@ -118,15 +125,45 @@ async function geocodeAddress(addressStr) {
     return null;
   }
 
-  // 2. Try raw query
-  let coords = await queryNominatim(rawClean);
+  // Smart City Rearrangement: If the address starts with Kyiv or other common cities, move them to the end
+  const cities = [
+    { pattern: /^(?:м\.|місто\s+)?київ\b[,\s]*/i, name: 'Київ' },
+    { pattern: /^(?:м\.|місто\s+)?бровари\b[,\s]*/i, name: 'Бровари' },
+    { pattern: /^(?:м\.|місто\s+)?бориспіль\b[,\s]*/i, name: 'Бориспіль' },
+    { pattern: /^(?:м\.|місто\s+)?вишгород\b[,\s]*/i, name: 'Вишгород' },
+    { pattern: /^(?:м\.|місто\s+)?ірпінь\b[,\s]*/i, name: 'Ірпінь' },
+    { pattern: /^(?:м\.|місто\s+)?буча\b[,\s]*/i, name: 'Буча' },
+    { pattern: /^(?:м\.|місто\s+)?васильків\b[,\s]*/i, name: 'Васильків' },
+    { pattern: /^(?:м\.|місто\s+)?обухів\b[,\s]*/i, name: 'Обухів' },
+    { pattern: /^(?:м\.|місто\s+)?фастів\b[,\s]*/i, name: 'Фастів' },
+    { pattern: /^(?:м\.|місто\s+)?боярка\b[,\s]*/i, name: 'Боярка' },
+    { pattern: /^(?:смт\.|с\.|селище\s+)?лебедівка\b[,\s]*/i, name: 'Лебедівка' },
+    { pattern: /^(?:смт\.|с\.|селище\s+)?гоголів\b[,\s]*/i, name: 'Гоголів' }
+  ];
+
+  let detectedCity = null;
+  let rearrangedQ = cleanQ;
+  for (const city of cities) {
+    if (city.pattern.test(rearrangedQ)) {
+      detectedCity = city.name;
+      rearrangedQ = rearrangedQ.replace(city.pattern, '').trim();
+      break;
+    }
+  }
+
+  if (detectedCity && rearrangedQ) {
+    rearrangedQ = rearrangedQ.replace(/,$/, '').trim() + ', ' + detectedCity;
+  }
+
+  // 2. Try raw query (rearranged if applicable, otherwise original)
+  let coords = await queryNominatim(rearrangedQ);
   if (coords) {
     addressCache[rawClean] = coords;
     return coords;
   }
 
   // 3. Clean up address string (remove clutter like "склад Propex,", "СЕС", "ЖК", "ТОВ")
-  let cleanQ = rawClean
+  let cleanParts = rearrangedQ
     .replace(/^склад\s+propex,\s*/i, '')
     .replace(/^склад,\s*/i, '')
     .replace(/^сес\s+/i, '')
@@ -136,8 +173,8 @@ async function geocodeAddress(addressStr) {
     .replace(/,\s*місто київ/i, ', Київ')
     .trim();
 
-  if (cleanQ !== rawClean) {
-    coords = await queryNominatim(cleanQ);
+  if (cleanParts !== rearrangedQ) {
+    coords = await queryNominatim(cleanParts);
     if (coords) {
       addressCache[rawClean] = coords;
       return coords;
@@ -145,10 +182,10 @@ async function geocodeAddress(addressStr) {
   }
 
   // 4. Fallback logic: If it contains a house number, strip the house number and search for the street/road itself!
-  const numMatch = cleanQ.match(/(?:^|\s)(\d+[-а-яіїєґ\/]*)(?:\s|$)/i);
+  const numMatch = cleanParts.match(/(?:^|\s)(\d+[-а-яіїєґ\/]*)(?:\s|$)/i);
   if (numMatch) {
     const houseNum = numMatch[1];
-    let streetQ = cleanQ.replace(houseNum, '').replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+    let streetQ = cleanParts.replace(houseNum, '').replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
     streetQ = streetQ.replace(/^,|,$/g, '').trim();
     
     const otherCities = ['боярка', 'гоголів', 'бровари', 'ірпінь', 'буча', 'вишгород', 'бориспіль', 'васильків', 'обухів', 'фастів', 'лебедівка', 'підгірці', 'козин', 'пірнове', 'вишеньки', 'гнідин', 'львів', 'харків', 'одеса', 'дніпро'];
@@ -4845,7 +4882,7 @@ function renderDashboard() {
              <div class="dash-recent-item">
                  <div>
                      <div class="recent-id">№${d['Номер_замовлення'] || d['ID']}</div>
-                     <div class="recent-manager">${managerName} -> Авто ${d['ID_Авто'] || '?'}</div>
+                     <div class="recent-manager">${managerName} ➡️ ${window.getCarName(d['ID_Авто']) || 'Не призначено'}</div>
                  </div>
                  <div style="text-align: right;">
                      <div style="color:var(--text-color); font-size:13px; font-weight:600; padding:4px 8px; border-radius:4px; background: var(--border-color);">${d['Статус_оплати'] || 'В процесі'}</div>
