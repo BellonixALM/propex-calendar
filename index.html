@@ -1678,7 +1678,7 @@ body.light-theme .login-error {
                 <option value="офіс-менеджер">Офіс-менеджер</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="display: none;">
               <label for="form-emp-car">Закріплене авто (якщо водій)</label>
               <select id="form-emp-car" class="form-control">
                 <option value="">Немає</option>
@@ -6046,7 +6046,6 @@ function renderEmployees() {
             <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-color); font-family: var(--font-title);">${e['ПІБ'] || '-'}</h3>
           </div>
         </div>
-        ${e['Авто'] && (rLower === 'водій' || rLower === 'driver') ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>🚗</span> <span>Авто: <b>${e['Авто']}</b></span></div>` : ''}
         ${e['Телефон'] ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>📱</span> <span>${e['Телефон']}</span></div>` : ''}
         ${e['Telegram'] ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>✈️</span> <span>${e['Telegram']}</span></div>` : ''}
         
