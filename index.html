@@ -152,6 +152,38 @@ async function geocodeAddress(addressStr) {
       addressCache[rawClean] = coords;
       return coords;
     }
+  } else {
+    // No comma. Check if the first word matches a known city/town and fallback to geocoding it
+    const words = cleanQ.split(/\s+/);
+    if (words.length > 0) {
+      const firstWord = words[0].toLowerCase().replace(/[^a-zа-яіїєґ]/g, '');
+      const otherCities = ['боярка', 'гоголів', 'бровари', 'ірпінь', 'буча', 'вишгород', 'бориспіль', 'васильків', 'обухів', 'фастів', 'лебедівка', 'підгірці', 'козин', 'пірнове', 'вишеньки', 'гнідин'];
+      if (otherCities.includes(firstWord)) {
+        coords = await queryNominatim(words[0] + ', Київська область');
+        if (coords) {
+          addressCache[rawClean] = coords;
+          return coords;
+        }
+      }
+    }
+  }
+  
+  // 5. Try stripping the house number if it ends with one
+  const numMatch = cleanQ.match(/^(.*?)\s+(\d+[-а-яіїєґ]*)$/i);
+  if (numMatch) {
+    const streetPart = numMatch[1];
+    coords = await queryNominatim(streetPart);
+    if (coords) {
+      addressCache[rawClean] = coords;
+      return coords;
+    }
+    if (!lower.includes('київ') && !lower.includes('kyiv') && !lower.includes('kiev')) {
+      coords = await queryNominatim(streetPart + ', Київ');
+      if (coords) {
+        addressCache[rawClean] = coords;
+        return coords;
+      }
+    }
   }
 
   return null;
@@ -2172,17 +2204,36 @@ body.light-theme .login-error {
       
       const uniqueNames = new Set();
       
+      // 1. Populate from registered clients database (Клієнти sheet)
+      (state.clients || []).forEach(c => {
+        const name = (c["Назва"] || "").toString().trim();
+        if (name) {
+          window.knowledgeBase[name] = {
+            address: c["Адреса"] || c["Адреса доставки"] || "",
+            phone: c["Телефон"] || ""
+          };
+          uniqueNames.add(name);
+        }
+      });
+      
+      // 2. Overlay with deliveries history (Доставки sheet) to get the latest non-empty details
       (state.deliveries || []).forEach(del => {
         const rawName = del["Ім'я_одержувача"] || del["Ім'я одержувача"] || del["Одержувач"] || "";
         const name = rawName.toString().trim();
         if (name) {
+          const address = (del["Адреса"] || "").toString().trim();
+          const phone = (del["Телефон_одержувача"] || del["Телефон"] || "").toString().trim();
+          
           if (!window.knowledgeBase[name]) {
-             window.knowledgeBase[name] = {
-                 address: del["Адреса"] || "",
-                 phone: del["Телефон_одержувача"] || del["Телефон"] || ""
-             };
-             uniqueNames.add(name);
+            window.knowledgeBase[name] = { address: "", phone: "" };
           }
+          if (address) {
+            window.knowledgeBase[name].address = address;
+          }
+          if (phone) {
+            window.knowledgeBase[name].phone = phone;
+          }
+          uniqueNames.add(name);
         }
       });
       
@@ -2196,13 +2247,25 @@ body.light-theme .login-error {
     }
     
     function autofillClientData(selectedName) {
-      if (window.knowledgeBase[selectedName]) {
-        const kbData = window.knowledgeBase[selectedName];
+      const search = (selectedName || "").trim().toLowerCase();
+      if (!search) return;
+      
+      let kbData = window.knowledgeBase[selectedName];
+      if (!kbData) {
+        const key = Object.keys(window.knowledgeBase).find(k => k.toLowerCase() === search);
+        if (key) {
+          kbData = window.knowledgeBase[key];
+        }
+      }
+      
+      if (kbData) {
         if (kbData.address) {
           document.getElementById('form-address').value = kbData.address;
           selectedValidAddress = kbData.address;
         }
-        if (kbData.phone) document.getElementById('form-receiver-phone').value = kbData.phone;
+        if (kbData.phone) {
+          document.getElementById('form-receiver-phone').value = kbData.phone;
+        }
       }
     }
 
@@ -2329,6 +2392,7 @@ body.light-theme .login-error {
       propexApi
         .withSuccessHandler(function(response) {
           state.clients = (response && response.status === 'success') ? response.data : (response || []);
+          buildKnowledgeBase();
           if (typeof renderClients === 'function') renderClients();
         })
         .withFailureHandler(function(err) {
@@ -2794,6 +2858,11 @@ body.light-theme .login-error {
         carSelect.disabled = false;
       }
       populateDriversDropdown(currentDetailDelivery['ID_Водія'] || '');
+      const driverSelect = document.getElementById('form-driver-select');
+      const isManager = user && (user.role === 'manager' || user.role === 'менеджер' || user.role === 'офіс-менеджер' || user.role === 'office_manager');
+      if (driverSelect) {
+        driverSelect.disabled = isManager;
+      }
       openModal('delivery-modal');
     }
     function renderCalendar() {
@@ -3591,6 +3660,11 @@ body.light-theme .login-error {
       });
       document.getElementById('form-date').value = formatDateISO(state.currentDate);
       populateDriversDropdown('');
+      const driverSelect = document.getElementById('form-driver-select');
+      const isManager = user && (user.role === 'manager' || user.role === 'менеджер' || user.role === 'офіс-менеджер' || user.role === 'office_manager');
+      if (driverSelect) {
+        driverSelect.disabled = isManager;
+      }
       openModal('delivery-modal');
     }
 
@@ -3866,56 +3940,123 @@ body.light-theme .login-error {
             return response.json();
           })
           .then(data => {
-            autocompleteList.innerHTML = '';
-            if (!data || data.length === 0) {
+            function showUseAsIs(v) {
+              autocompleteList.innerHTML = '';
               const div = document.createElement('div');
-              div.style.cssText = "padding: 10px 14px; color: var(--text-muted); font-size: 13px; font-style: italic;";
-              div.textContent = "Адресу не знайдено. Перевірте написання.";
-              autocompleteList.appendChild(div);
-              return;
-            }
-            data.forEach(item => {
-              const div = document.createElement('div');
-              
-              const addr = item.address;
-              let cleanName = '';
-              if (addr) {
-                const city = addr.city || addr.town || addr.village || addr.municipality || addr.settlement || '';
-                const road = addr.road || addr.pedestrian || addr.suburb || '';
-                const house = addr.house_number ? (', ' + addr.house_number) : '';
-                
-                if (city && road) {
-                  if (road.toLowerCase().includes(city.toLowerCase())) {
-                    cleanName = `${road}${house}`;
-                  } else {
-                    cleanName = `${city}, ${road}${house}`;
-                  }
-                } else if (road) {
-                  cleanName = `${road}${house}`;
-                } else if (city) {
-                  cleanName = city;
-                } else {
-                  cleanName = item.display_name.split(',').slice(0, 3).join(',').replace(', Україна', '').replace(', Ukraine', '').trim();
-                }
-              } else {
-                cleanName = item.display_name.split(',').slice(0, 3).join(',').replace(', Україна', '').replace(', Ukraine', '').trim();
-              }
-
-              div.textContent = cleanName;
+              div.style.cssText = "padding: 10px 14px; color: var(--accent-blue); font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px;";
+              div.innerHTML = `📍 Використати як є: "<strong>${v}</strong>"`;
               div.addEventListener('click', function() {
-                addressInput.value = cleanName;
-                selectedValidAddress = cleanName; // зберігаємо обрану перевірену адресу
+                addressInput.value = v;
+                selectedValidAddress = v;
                 autocompleteList.innerHTML = '';
               });
               autocompleteList.appendChild(div);
-            });
+            }
+
+            function extractHouseNumber(query) {
+              if (!query) return null;
+              // Remove fallback indicator if present
+              const cleanQ = query.replace('_fallback_tried', '');
+              const match = cleanQ.match(/(?:^|\s)(\d+[-а-яіїєґ\/]*)(?:\s|$)/i);
+              return match ? match[1] : null;
+            }
+
+            function renderResults(resData, searchVal) {
+              autocompleteList.innerHTML = '';
+              const typedHouse = extractHouseNumber(searchVal);
+
+              if (!resData || resData.length === 0) {
+                // Check if input contains a house number and try to fallback to searching the street itself
+                if (typedHouse && !searchVal.includes('_fallback_tried')) {
+                  const streetQuery = searchVal.replace(/(?:^|\s)\d+[-а-яіїєґ\/]*(?:\s|$)/i, ' ').replace(/\s+/g, ' ').trim();
+                  let fallbackSearch = streetQuery;
+                  if (!hasOtherCity && !fallbackSearch.toLowerCase().includes('київ') && !fallbackSearch.toLowerCase().includes('kyiv') && !fallbackSearch.toLowerCase().includes('kiev')) {
+                    fallbackSearch += ', Київ';
+                  }
+                  if (!fallbackSearch.toLowerCase().includes('україна') && !fallbackSearch.toLowerCase().includes('ukraine')) {
+                    fallbackSearch += ', Україна';
+                  }
+                  const fallbackUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fallbackSearch)}&addressdetails=1&limit=8&countrycodes=ua&accept-language=uk&viewbox=29.0,49.5,32.5,51.8`;
+                  fetch(fallbackUrl, { headers: { 'Accept': 'application/json' } })
+                    .then(r => {
+                      if (!r.ok) throw new Error();
+                      return r.json();
+                    })
+                    .then(fallbackData => {
+                      if (fallbackData && fallbackData.length > 0) {
+                        const mappedData = fallbackData.map(item => {
+                          if (item.address) {
+                            item.address.house_number = typedHouse;
+                          }
+                          return item;
+                        });
+                        renderResults(mappedData, searchVal + '_fallback_tried');
+                      } else {
+                        showUseAsIs(val);
+                      }
+                    })
+                    .catch(() => showUseAsIs(val));
+                  return;
+                }
+                showUseAsIs(val);
+                return;
+              }
+
+              resData.forEach(item => {
+                const div = document.createElement('div');
+                const addr = item.address;
+                
+                // Inject the typed house number if Nominatim matched the street but has no house number
+                if (addr && !addr.house_number && typedHouse) {
+                  addr.house_number = typedHouse;
+                }
+
+                let cleanName = '';
+                if (addr) {
+                  const city = addr.city || addr.town || addr.village || addr.municipality || addr.settlement || '';
+                  const road = addr.road || addr.pedestrian || addr.suburb || '';
+                  const house = addr.house_number ? (', ' + addr.house_number) : '';
+                  
+                  if (city && road) {
+                    if (road.toLowerCase().includes(city.toLowerCase())) {
+                      cleanName = `${road}${house}`;
+                    } else {
+                      cleanName = `${city}, ${road}${house}`;
+                    }
+                  } else if (road) {
+                    cleanName = `${road}${house}`;
+                  } else if (city) {
+                    cleanName = city;
+                  } else {
+                    cleanName = item.display_name.split(',').slice(0, 3).join(',').replace(', Україна', '').replace(', Ukraine', '').trim();
+                  }
+                } else {
+                  cleanName = item.display_name.split(',').slice(0, 3).join(',').replace(', Україна', '').replace(', Ukraine', '').trim();
+                  if (typedHouse && !cleanName.includes(typedHouse)) {
+                    cleanName += ', ' + typedHouse;
+                  }
+                }
+
+                div.textContent = cleanName;
+                div.addEventListener('click', function() {
+                  addressInput.value = cleanName;
+                  selectedValidAddress = cleanName;
+                  autocompleteList.innerHTML = '';
+                });
+                autocompleteList.appendChild(div);
+              });
+            }
+
+            renderResults(data, val);
           })
           .catch(err => {
             console.error("Autocomplete error:", err);
+            autocompleteList.innerHTML = '';
             const div = document.createElement('div');
             div.style.cssText = "padding: 10px 14px; color: var(--danger); font-size: 13px; font-weight: 600;";
-            div.textContent = "⚠️ Помилка пошуку (можливо, ліміт запитів). Спробуйте ввести адресу пізніше.";
+            div.textContent = "⚠️ Помилка пошуку. Спробуйте зберегти як є.";
             autocompleteList.appendChild(div);
+            showUseAsIs(val);
           });
       }, 400);
     });

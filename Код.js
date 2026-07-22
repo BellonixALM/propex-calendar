@@ -506,6 +506,13 @@ function addDelivery(deliveryData) {
     notifyDriverAboutDelivery(deliveryData);
   }
   
+  // Ensure the client is recorded in the clients database
+  try {
+    ensureClientInDatabase(deliveryData.receiver_name, deliveryData.receiver_phone, deliveryData.address);
+  } catch (e) {
+    Logger.log("Error in ensureClientInDatabase during addDelivery: " + e.message);
+  }
+  
   return { status: 'success', id: id };
 }
 
@@ -652,6 +659,11 @@ function assignWarehouseWorker(deliveryId, workerId) {
       sheet.getRange(i + 1, gatherCol + 1).setValue('В процесі збору');
       if (orderCol !== -1) orderNum = data[i][orderCol];
       
+      var managerId = "";
+      var managerCol = headers.indexOf('ID_Менеджера');
+      if (managerCol !== -1) managerId = String(data[i][managerCol]).trim().toLowerCase();
+      var isIraOrder = (managerId === '7797165411' || managerId === 'ira order' || managerId === 'ira_order');
+      
       // Get the worker telegram ID to send them a notification
       var whData = getWarehouseWorkers();
       var assignedWorker = null;
@@ -659,11 +671,15 @@ function assignWarehouseWorker(deliveryId, workerId) {
       for (var k = 0; k < whData.workers.length; k++) { if (String(whData.workers[k].id) == String(workerId) || String(whData.workers[k].telegram_id) == String(workerId)) assignedWorker = whData.workers[k]; }
       
       if (assignedWorker && assignedWorker.telegram_id) {
-        var text = "📦 <b>Вам призначено збірку замовлення №" + orderNum + "</b>\n\n" +
-                   "Натисніть 'Підтвердити', коли воно буде готове, або 'Проблема', якщо щось пішло не так.";
+        var text = isIraOrder
+          ? "📥 <b>Вам призначено прийом поставки №" + orderNum + "</b>\n\n" +
+            "Натисніть 'Прийняв доставку', коли товар буде прийнято на склад, або 'Проблема', якщо щось пішло не так."
+          : "📦 <b>Вам призначено збірку замовлення №" + orderNum + "</b>\n\n" +
+            "Натисніть 'Підтвердити', коли воно буде готове, або 'Проблема', якщо щось пішло не так.";
+        var confirmBtnText = isIraOrder ? "✅ Прийняв поставку" : "✅ Підтвердити (Зібрано)";
         var kb = {
           "inline_keyboard": [
-            [{"text": "✅ Підтвердити (Зібрано)", "callback_data": "wh_confirm_" + deliveryId}],
+            [{"text": confirmBtnText, "callback_data": "wh_confirm_" + deliveryId}],
             [{"text": "⚠️ Проблема зі збіркою", "callback_data": "wh_problem_" + deliveryId}]
           ]
         };
@@ -745,7 +761,7 @@ function updateWarehouseStatus(deliveryId, statusStr) {
           sendTelegramMessage(managerId, alertText);
         }
       }
-      return { status: 'success', order_num: orderNum, car_id: carId };
+      return { status: 'success', order_num: orderNum, car_id: carId, manager_id: managerId };
     }
   }
   return { status: 'error' };
@@ -959,6 +975,17 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
                                  "ℹ️ Будь ласка, врахуйте ці зміни у вашій роботі.";
           sendTelegramMessage(managerId, notificationText);
         }
+      }
+      
+      // Ensure the client is recorded in the clients database
+      var finalName = deliveryData.receiver_name !== undefined ? deliveryData.receiver_name : (nameCol !== -1 ? data[i][nameCol] : '');
+      var finalPhone = deliveryData.receiver_phone !== undefined ? deliveryData.receiver_phone : (phoneCol !== -1 ? data[i][phoneCol] : '');
+      var finalAddress = deliveryData.address !== undefined ? deliveryData.address : (addressCol !== -1 ? data[i][addressCol] : '');
+      
+      try {
+        ensureClientInDatabase(finalName, finalPhone, finalAddress);
+      } catch (e) {
+        Logger.log("Error in ensureClientInDatabase during updateDeliveryDetails: " + e.message);
       }
       
       return { status: 'success', id: deliveryId };
@@ -2280,6 +2307,17 @@ function notifyDriverAboutDelivery(deliveryData) {
   var driverTarget = deliveryData.driver_user_id;
   if (!driverTarget || driverTarget === 'Не призначено' || driverTarget === '-') return;
 
+  // Suppress notifications for future deliveries (only notify immediately if the delivery is for today)
+  if (deliveryData.date) {
+    var todayDateStr = Utilities.formatDate(new Date(), 'Europe/Kiev', 'dd.MM.yyyy');
+    var todayDateISO = Utilities.formatDate(new Date(), 'Europe/Kiev', 'yyyy-MM-dd');
+    var delDate = String(deliveryData.date).trim();
+    if (delDate !== todayDateStr && delDate !== todayDateISO) {
+      Logger.log('Suppressing driver notification for future delivery: ' + delDate + ' (Today is: ' + todayDateStr + ')');
+      return;
+    }
+  }
+
   var ss = getSpreadsheet();
   if (!ss) return;
   var userSheet = ss.getSheetByName('Користувачі');
@@ -2342,4 +2380,68 @@ function getCarName(carId) {
   return id || 'Не призначено';
 }
 
-
+function ensureClientInDatabase(name, phone, address) {
+  if (!name || name.trim() === '') return;
+  name = name.trim();
+  phone = phone ? phone.trim() : '';
+  address = address ? address.trim() : '';
+  
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName('Клієнти');
+  if (!sheet) {
+    sheet = ss.insertSheet('Клієнти');
+    sheet.appendRow(['ID', 'Тип', 'Назва', 'Контакт', 'Телефон', 'Email', 'Telegram', 'Viber', 'WhatsApp', 'Примітки', 'Адреса']);
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(function(h) { return h.toString().trim(); });
+  
+  // Ensure Адреса column exists in Клієнти sheet if not present
+  var addressIndex = headers.indexOf('Адреса');
+  if (addressIndex === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Адреса');
+    headers.push('Адреса');
+    addressIndex = headers.length - 1;
+  }
+  
+  var idIndex = headers.indexOf('ID');
+  var nameIndex = headers.indexOf('Назва');
+  var phoneIndex = headers.indexOf('Телефон');
+  var typeIndex = headers.indexOf('Тип');
+  var notesIndex = headers.indexOf('Примітки');
+  
+  // Find case-insensitive match by client name
+  var rowIndex = -1;
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][nameIndex].toString().trim().toLowerCase() === name.toLowerCase()) {
+      rowIndex = i + 1;
+      break;
+    }
+  }
+  
+  if (rowIndex > -1) {
+    // Client exists. Update phone and/or address if they were empty in database but are supplied now
+    var existingPhone = data[rowIndex - 1][phoneIndex] ? data[rowIndex - 1][phoneIndex].toString().trim() : '';
+    var existingAddress = data[rowIndex - 1][addressIndex] ? data[rowIndex - 1][addressIndex].toString().trim() : '';
+    
+    if (phone && !existingPhone && phoneIndex > -1) {
+      sheet.getRange(rowIndex, phoneIndex + 1).setValue(phone);
+    }
+    if (address && !existingAddress && addressIndex > -1) {
+      sheet.getRange(rowIndex, addressIndex + 1).setValue(address);
+    }
+  } else {
+    // Client does not exist. Create a new client record
+    var newId = 'CLI-' + new Date().getTime();
+    var newRow = new Array(headers.length).fill('');
+    
+    if (idIndex > -1) newRow[idIndex] = newId;
+    if (typeIndex > -1) newRow[typeIndex] = 'Отримувач';
+    if (nameIndex > -1) newRow[nameIndex] = name;
+    if (phoneIndex > -1) newRow[phoneIndex] = phone;
+    if (addressIndex > -1) newRow[addressIndex] = address;
+    if (notesIndex > -1) newRow[notesIndex] = 'Створено автоматично з карти доставки';
+    
+    sheet.appendRow(newRow);
+  }
+}
