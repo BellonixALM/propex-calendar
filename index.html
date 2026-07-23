@@ -2353,6 +2353,11 @@ body.light-theme .login-error {
           dataLoadedSuccessfully = true;
           isRequestInProgress = false;
           state.deliveries = (response && response.status === 'success') ? response.data : (response || []);
+          state.deliveries.forEach(d => {
+            if (!d['ID_Водія'] && d['Водій']) {
+              d['ID_Водія'] = d['Водій'];
+            }
+          });
           window.debugLoadedText = '';
           label.textContent = "⚙️ Оновлення сітки...";
           buildKnowledgeBase();
