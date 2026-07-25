@@ -99,7 +99,7 @@ function doGet(e) {
       } else if (action === 'resetEmployeePassword') {
         result = resetEmployeePassword(payload.id);
       } else if (action === 'sendDeveloperFeedback') {
-        result = sendDeveloperFeedback(payload.messageText, payload.currentUser);
+        result = sendDeveloperFeedback(payload.messageText, payload.currentUser, payload.screenshotBase64, payload.voiceBase64);
       } else if (action === 'broadcastMessageToEmployees') {
         result = broadcastMessageToEmployees(payload);
       } else if (action === 'cleanupExistingLogins') {
@@ -2148,9 +2148,9 @@ function cleanupExistingLogins() {
   }
 }
 
-function sendDeveloperFeedback(messageText, currentUser) {
+function sendDeveloperFeedback(messageText, currentUser, screenshotBase64, voiceBase64) {
   try {
-    if (!messageText || String(messageText).trim() === '') {
+    if ((!messageText || String(messageText).trim() === '') && !voiceBase64) {
       return { status: 'error', message: 'Повідомлення не може бути порожнім' };
     }
     
@@ -2161,20 +2161,61 @@ function sendDeveloperFeedback(messageText, currentUser) {
     var sheet = ss.getSheetByName(sheetName);
     if (!sheet) {
       sheet = ss.insertSheet(sheetName);
-      sheet.appendRow(["Дата", "ПІБ", "Роль", "Telegram ID", "Повідомлення"]);
-      sheet.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#f3f4f6");
+      sheet.appendRow(["Дата", "ПІБ", "Роль", "Telegram ID", "Повідомлення", "Скріншот", "Голосове"]);
+      sheet.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#f3f4f6");
     }
     
+    var driveFolder = null;
+    var screenshotUrl = "";
+    var voiceUrl = "";
+
+    try {
+      var folderName = "CRM_Feedback_Attachments";
+      var folders = DriveApp.getFoldersByName(folderName);
+      if (folders.hasNext()) {
+        driveFolder = folders.next();
+      } else {
+        driveFolder = DriveApp.createFolder(folderName);
+        driveFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      }
+    } catch (driveErr) {
+      Logger.log("Drive folder error: " + driveErr.toString());
+    }
+
     var now = new Date();
+    var timeStampStr = Utilities.formatDate(now, "Europe/Kiev", "yyyyMMdd_HHmmss");
+
+    if (screenshotBase64 && driveFolder) {
+      try {
+        var imgData = screenshotBase64.replace(/^data:image\/(png|jpeg);base64,/, "");
+        var imgBlob = Utilities.newBlob(Utilities.base64Decode(imgData), "image/png", "bug_screen_" + timeStampStr + ".png");
+        var imgFile = driveFolder.createFile(imgBlob);
+        imgFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        screenshotUrl = imgFile.getUrl();
+      } catch (imgErr) {
+        Logger.log("Error saving screenshot: " + imgErr.toString());
+      }
+    }
+
+    if (voiceBase64 && driveFolder) {
+      try {
+        var audioData = voiceBase64.replace(/^data:audio\/(webm|mp3|ogg|wav);base64,/, "");
+        var audioBlob = Utilities.newBlob(Utilities.base64Decode(audioData), "audio/webm", "bug_voice_" + timeStampStr + ".webm");
+        var audioFile = driveFolder.createFile(audioBlob);
+        audioFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        voiceUrl = audioFile.getUrl();
+      } catch (audErr) {
+        Logger.log("Error saving voice note: " + audErr.toString());
+      }
+    }
+
     var formattedDate = Utilities.formatDate(now, "Europe/Kiev", "dd.MM.yyyy HH:mm:ss");
-    
     var name = currentUser ? (currentUser.name || currentUser.username || currentUser.login || 'Невідомо') : 'Невідомо';
     var role = currentUser ? (currentUser.role || 'Невідомо') : 'Невідомо';
     var tgId = currentUser ? (currentUser.telegramId || '') : '';
     
-    sheet.appendRow([formattedDate, name, role, "'" + tgId, messageText]);
+    sheet.appendRow([formattedDate, name, role, "'" + tgId, messageText || "(Голосове повідомлення)", screenshotUrl, voiceUrl]);
     
-    // Notify administrators
     var usersSheet = ss.getSheetByName('Користувачі');
     if (usersSheet) {
       var data = usersSheet.getDataRange().getValues();
@@ -2182,11 +2223,18 @@ function sendDeveloperFeedback(messageText, currentUser) {
       var roleCol = headers.indexOf('Роль');
       var tgCol = headers.indexOf('Telegram') !== -1 ? headers.indexOf('Telegram') : headers.indexOf('Telegram_ID');
       
-      var notificationText = "📝 <b>Нове повідомлення розробнику!</b>\n\n" +
+      var notificationText = "🐛 <b>ПОДОМЛЕННЯ ПРО БАГ / ЗВОРОТНІЙ ЗВ'ЯЗОК</b>\n\n" +
                              "👤 Від: <b>" + name + "</b> (" + role + ")\n" +
                              "🆔 Telegram ID: <code>" + tgId + "</code>\n" +
                              "📅 Дата: " + formattedDate + "\n\n" +
-                             "💬 Повідомлення:\n<i>" + messageText + "</i>";
+                             "💬 <b>Опис:</b>\n<i>" + (messageText || "без тексту") + "</i>\n";
+
+      if (screenshotUrl) {
+        notificationText += "\n🖼️ <b>Скріншот:</b> " + screenshotUrl;
+      }
+      if (voiceUrl) {
+        notificationText += "\n🎙️ <b>Голосове повідомлення:</b> " + voiceUrl;
+      }
                              
       if (roleCol !== -1 && tgCol !== -1) {
         for (var i = 1; i < data.length; i++) {
@@ -2200,7 +2248,7 @@ function sendDeveloperFeedback(messageText, currentUser) {
       }
     }
     
-    return { status: 'success', message: 'Повідомлення успішно надіслано розробнику!' };
+    return { status: 'success', message: 'Повідомлення про баг успішно надіслано!' };
   } catch (e) {
     return { status: 'error', message: e.toString() };
   }
