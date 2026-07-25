@@ -170,6 +170,11 @@ function doPost(e) {
       var result = updateWarehouseStatus(data.data.deliveryId, data.data.status);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'sendDeveloperFeedback') {
+      var d = data.data || {};
+      var result = sendDeveloperFeedback(d.messageText, d.currentUser, d.screenshotBase64, d.voiceBase64);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'update_driver_photo') {
       var result = updateDriverPhoto(data.data.carId, data.data.photoBase64);
       return ContentService.createTextOutput(JSON.stringify(result))
