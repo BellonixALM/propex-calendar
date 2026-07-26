@@ -7505,5 +7505,101 @@ ${sysInfo}`;
     }
   </script>
 
+
+  <!-- MODAL: ISSUE TOOL (ВИДАЧА ІНСТРУМЕНТА) -->
+  <div class="modal" id="modal-issue-tool" onclick="if(event.target===this) closeIssueToolModal()">
+    <div class="modal-content" style="max-width: 540px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="wrench" style="width: 20px; height: 20px;"></i>
+          </div>
+          <div>
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700;">Видача інструмента</h2>
+            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Оформлення оренди та автододавання клієнта</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeIssueToolModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="issue-tool-form" onsubmit="event.preventDefault(); submitIssueToolForm();">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Обрати інструмент (зі складу)</label>
+            <select id="issue-tool-select" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px; font-weight: 600;">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Клієнт або Монтажник (Орендар)</label>
+            <input type="text" id="issue-tool-client-input" class="form-control" placeholder="Введіть назву компанії або прізвище..." list="clients-datalist" autocomplete="off" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+              💡 Почніть вводити для вибору з бази. Якщо клієнта немає — він автоматично створиться та збережеться в базі!
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Безкоштовний термін (днів)</label>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <input type="number" id="issue-tool-days" class="form-control" value="5" min="1" max="90" style="width: 90px; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px; font-weight: 700; text-align: center;">
+              <div style="display: flex; gap: 6px;">
+                <button type="button" onclick="setIssueToolDays(3)" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">3 дні</button>
+                <button type="button" onclick="setIssueToolDays(5)" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">5 днів</button>
+                <button type="button" onclick="setIssueToolDays(7)" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">7 днів</button>
+                <button type="button" onclick="setIssueToolDays(14)" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">14 днів</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Примітки / Комплектація</label>
+            <textarea id="issue-tool-notes" class="form-control" placeholder="Наприклад: в комплекті кейс, насадка 16/20/25 мм..." style="width: 100%; height: 70px; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; resize: none;"></textarea>
+          </div>
+
+          <div class="modal-footer" style="padding: 0; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-secondary" onclick="closeIssueToolModal()">Скасувати</button>
+            <button type="submit" class="btn" style="background-color: #10b981; color: white; border: none; font-weight: 700; padding: 10px 20px; border-radius: 8px;">Підтвердити видачу</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD NEW TOOL (ДОДАТИ НОВИЙ ІНСТРУМЕНТ) -->
+  <div class="modal" id="modal-add-tool" onclick="if(event.target===this) closeAddToolModal()">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="wrench" style="width: 20px; height: 20px;"></i>
+          </div>
+          <div>
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700;">Новий інструмент</h2>
+            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Реєстрація нової одиниці в каталог склада</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeAddToolModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="add-tool-form" onsubmit="event.preventDefault(); submitAddToolForm();">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Назва інструмента / Обладнання</label>
+            <input type="text" id="add-tool-name" class="form-control" placeholder="Наприклад: Прес-кліщі REMS Akku-Press..." required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px;">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Серійний номер (S/N)</label>
+            <input type="text" id="add-tool-sn" class="form-control" placeholder="Наприклад: S/N: 998811" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px; font-family: var(--font-title); font-weight: 700;">
+          </div>
+
+          <div class="modal-footer" style="padding: 0; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-secondary" onclick="closeAddToolModal()">Скасувати</button>
+            <button type="submit" class="btn" style="background-color: #3b82f6; color: white; border: none; font-weight: 700; padding: 10px 20px; border-radius: 8px;">Зберегти в каталог</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
