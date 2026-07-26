@@ -1526,7 +1526,10 @@ body.light-theme .login-error {
               <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Контроль обладнання, серійних номерів та автоматичні нагадування про терміни оренди</p>
             </div>
             <div style="display: flex; gap: 10px;">
-              <button class="btn" onclick="window.openIssueToolModal()" style="background-color: #10b981; color: white; border: none; font-weight: 600; border-radius: 20px; font-size: 13px; padding: 8px 16px;">
+              <button class="btn" onclick="window.openAddToolModal()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; font-weight: 700; border-radius: 20px; font-size: 13px; padding: 10px 18px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); cursor: pointer;">
+                <i data-lucide="plus" style="width: 16px; height: 16px;"></i> Додати інструмент
+              </button>
+              <button class="btn" onclick="window.openIssueToolModal()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; font-weight: 700; border-radius: 20px; font-size: 13px; padding: 10px 18px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35); cursor: pointer;">
                 <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> Видати інструмент
               </button>
             </div>
@@ -1558,6 +1561,11 @@ body.light-theme .login-error {
               <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; height: 18px;"></i>
               <input type="text" id="tools-search-input" placeholder="Пошук за назвою або S/N..." oninput="window.renderToolsView()" style="width: 100%; padding: 10px 10px 10px 38px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color);">
             </div>
+            <div>
+              <button onclick="window.openAddToolModal()" style="background: var(--accent-color); color: #fff; border: none; padding: 10px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+                <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> Додати новий інструмент
+              </button>
+            </div>
           </div>
 
           <!-- TOOLS TABLE CONTAINER -->
@@ -1568,6 +1576,7 @@ body.light-theme .login-error {
                   <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">
                     <th style="padding: 14px 14px; white-space: nowrap;">Серійний № (S/N)</th>
                     <th style="padding: 14px 14px; white-space: nowrap;">Назва інструмента</th>
+                    <th style="padding: 14px 14px; white-space: nowrap;">Технічний стан</th>
                     <th style="padding: 14px 14px; white-space: nowrap;">Орендар (Клієнт / Монтажник)</th>
                     <th style="padding: 14px 14px; white-space: nowrap;">Дата видачі</th>
                     <th style="padding: 14px 14px; white-space: nowrap;">Залишок часу (Таймер)</th>
@@ -4975,7 +4984,7 @@ window.switchMainTab = function(tabId) {
     const addBtn = document.getElementById('add-delivery-btn');
     const filterBtn = document.getElementById('header-filter-btn');
     if (tabId === 'tools') {
-        if (addBtn) addBtn.style.display = 'none';
+        if (addBtn) addBtn.style.display = 'inline-flex';
         if (filterBtn) filterBtn.style.display = 'none';
     } else {
         if (filterBtn) filterBtn.style.display = 'inline-flex';
@@ -6132,6 +6141,8 @@ function onGlobalAddClick() {
         openClientModal();
     } else if (activeTab.id === 'employees-view') {
         openEmployeeModal();
+    } else if (activeTab.id === 'tools-view') {
+        if (typeof window.openAddToolModal === 'function') window.openAddToolModal();
     }
 }
 
@@ -7408,7 +7419,7 @@ ${sysInfo}`;
 
       let html = '';
       if (filtered.length === 0) {
-        html = `<tr><td colspan="7" style="padding: 24px; text-align: center; color: var(--text-muted);">Інструментів не знайдено</td></tr>`;
+        html = `<tr><td colspan="8" style="padding: 24px; text-align: center; color: var(--text-muted);">Інструментів не знайдено</td></tr>`;
       } else {
         filtered.forEach(item => {
           let timerBadge = '';
@@ -7427,6 +7438,8 @@ ${sysInfo}`;
             ? `<span style="color: #10b981; font-weight: 700; white-space: nowrap; display: inline-block;">🟢 На складі</span>` 
             : `<span style="color: #3b82f6; font-weight: 700; white-space: nowrap; display: inline-block;">🔵 В користуванні</span>`;
 
+          let conditionBadge = `<span style="font-size: 12px; font-weight: 600;">${item.condition || '🟢 Добрий (Справний)'}</span>`;
+
           let actionBtn = item.status === 'stock'
             ? `<button onclick="window.openIssueToolModal('${item.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Видати</button>`
             : `<button onclick="window.returnTool('${item.id}')" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Прийняти</button>`;
@@ -7435,6 +7448,7 @@ ${sysInfo}`;
             <tr style="border-bottom: 1px solid var(--border-color);">
               <td style="padding: 14px; font-family: var(--font-title); font-weight: 700; color: var(--text-color); white-space: nowrap;">${item.sn}</td>
               <td style="padding: 14px; font-weight: 600; min-width: 180px;">${item.name}</td>
+              <td style="padding: 14px; white-space: nowrap;">${conditionBadge}</td>
               <td style="padding: 14px; color: var(--text-muted); min-width: 160px;">${item.client}</td>
               <td style="padding: 14px; white-space: nowrap;">${item.issueDate}</td>
               <td style="padding: 14px; white-space: nowrap;">${timerBadge}</td>
@@ -7529,7 +7543,7 @@ ${sysInfo}`;
 
   <!-- MODAL: ADD NEW TOOL (ДОДАТИ НОВИЙ ІНСТРУМЕНТ) -->
   <div class="modal" id="modal-add-tool" onclick="if(event.target===this) closeAddToolModal()">
-    <div class="modal-content" style="max-width: 480px;">
+    <div class="modal-content" style="max-width: 520px;">
       <div class="modal-header">
         <div style="display: flex; align-items: center; gap: 10px;">
           <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
@@ -7545,13 +7559,37 @@ ${sysInfo}`;
       <div class="modal-body">
         <form id="add-tool-form" onsubmit="event.preventDefault(); submitAddToolForm();">
           <div class="form-group" style="margin-bottom: 16px;">
-            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Назва інструмента / Обладнання</label>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Назва інструмента / Обладнання *</label>
             <input type="text" id="add-tool-name" class="form-control" placeholder="Наприклад: Прес-кліщі REMS Akku-Press..." required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px;">
           </div>
 
-          <div class="form-group" style="margin-bottom: 20px;">
-            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Серійний номер (S/N)</label>
-            <input type="text" id="add-tool-sn" class="form-control" placeholder="Наприклад: S/N: 998811" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px; font-family: var(--font-title); font-weight: 700;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Серійний номер (S/N) *</label>
+              <input type="text" id="add-tool-sn" class="form-control" placeholder="Наприклад: S/N: 998811" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px; font-family: var(--font-title); font-weight: 700;">
+            </div>
+
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Технічний стан *</label>
+              <select id="add-tool-condition" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; font-weight: 600;">
+                <option value="Відмінний (Новий)">🟢 Відмінний (Новий)</option>
+                <option value="Добрий (Справний)" selected>🟢 Добрий (Справний)</option>
+                <option value="Задовільний (Знос)">🟡 Задовільний (Знос)</option>
+                <option value="Потребує ТО / Ремонту">🔴 Потребує ТО / Ремонту</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Дата наступного техогляду (ТО)</label>
+              <input type="date" id="add-tool-inspection" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+            </div>
+
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Категорія / Тип</label>
+              <input type="text" id="add-tool-category" class="form-control" placeholder="Електроінструмент, Монтаж..." style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+            </div>
           </div>
 
           <div class="modal-footer" style="padding: 0; display: flex; justify-content: flex-end; gap: 10px;">
@@ -7757,6 +7795,13 @@ ${sysInfo}`;
     window.openAddToolModal = function() {
       document.getElementById('add-tool-name').value = '';
       document.getElementById('add-tool-sn').value = 'S/N: ' + Math.floor(100000 + Math.random() * 900000);
+      const conditionEl = document.getElementById('add-tool-condition');
+      if (conditionEl) conditionEl.value = '🟢 Добрий (Справний)';
+      const inspectionEl = document.getElementById('add-tool-inspection');
+      if (inspectionEl) inspectionEl.value = '';
+      const categoryEl = document.getElementById('add-tool-category');
+      if (categoryEl) categoryEl.value = '';
+
       const modal = document.getElementById('modal-add-tool');
       if (modal) modal.classList.add('show');
       if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
@@ -7770,6 +7815,9 @@ ${sysInfo}`;
     window.submitAddToolForm = function() {
       const name = document.getElementById('add-tool-name').value.trim();
       let sn = document.getElementById('add-tool-sn').value.trim();
+      const condition = document.getElementById('add-tool-condition')?.value || '🟢 Добрий (Справний)';
+      const inspection = document.getElementById('add-tool-inspection')?.value || '';
+      const category = document.getElementById('add-tool-category')?.value.trim() || '';
 
       if (!name || !sn) {
         alert('Заповніть назву та серійний номер!');
@@ -7783,6 +7831,9 @@ ${sysInfo}`;
         id: 'T' + (window.toolsData.length + 1),
         sn: sn,
         name: name,
+        condition: condition,
+        inspectionDate: inspection,
+        category: category,
         client: '—',
         issueDate: '—',
         freeDays: 0,
@@ -7791,7 +7842,7 @@ ${sysInfo}`;
       });
 
       window.closeAddToolModal();
-      alert(`✅ Новий інструмент "${name}" (${sn}) додано на склад!`);
+      alert(`✅ Новий інструмент "${name}" (${sn}) успішно додано на склад!`);
       window.renderToolsView();
     };
 
