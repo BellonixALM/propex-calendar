@@ -7580,21 +7580,30 @@ ${sysInfo}`;
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
             <div class="form-group">
               <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Дата наступного техогляду (ТО)</label>
               <input type="date" id="add-tool-inspection" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
             </div>
 
             <div class="form-group">
-              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Категорія / Тип</label>
-              <input type="text" id="add-tool-category" class="form-control" placeholder="Електроінструмент, Монтаж..." style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Категорія / Тип *</label>
+              <select id="add-tool-category" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; font-weight: 600;">
+                <option value="Прес-інструмент (Кліщі)">⚙️ Прес-інструмент (Кліщі)</option>
+                <option value="Електроінструмент" selected>⚡️ Електроінструмент</option>
+                <option value="Зварювальне обладнання">🔥 Зварювальне обладнання</option>
+                <option value="Трубогиби та Металообробка">🔧 Трубогиби та Металообробка</option>
+                <option value="Вимірювальні прилади / Детектори">📏 Вимірювальні прилади / Детектори</option>
+                <option value="Акумуляторний інструмент">🔋 Акумуляторний інструмент</option>
+                <option value="Гідравлічний та Пневмоінструмент">💧 Гідравліка та Пневматика</option>
+                <option value="Інше обладнання">📦 Інше обладнання</option>
+              </select>
             </div>
           </div>
 
-          <div class="modal-footer" style="padding: 0; display: flex; justify-content: flex-end; gap: 10px;">
-            <button type="button" class="btn btn-secondary" onclick="closeAddToolModal()">Скасувати</button>
-            <button type="submit" class="btn" style="background-color: #3b82f6; color: white; border: none; font-weight: 700; padding: 10px 20px; border-radius: 8px;">Зберегти в каталог</button>
+          <div class="modal-footer" style="padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
+            <button type="button" class="btn btn-secondary" onclick="closeAddToolModal()" style="padding: 10px 20px; border-radius: 8px; font-weight: 600;">Скасувати</button>
+            <button type="submit" class="btn" style="background-color: #3b82f6; color: white; border: none; font-weight: 700; padding: 10px 22px; border-radius: 8px;">Зберегти в каталог</button>
           </div>
         </form>
       </div>
@@ -7800,7 +7809,7 @@ ${sysInfo}`;
       const inspectionEl = document.getElementById('add-tool-inspection');
       if (inspectionEl) inspectionEl.value = '';
       const categoryEl = document.getElementById('add-tool-category');
-      if (categoryEl) categoryEl.value = '';
+      if (categoryEl) categoryEl.value = '⚡️ Електроінструмент';
 
       const modal = document.getElementById('modal-add-tool');
       if (modal) modal.classList.add('show');
