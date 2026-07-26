@@ -1503,7 +1503,7 @@ body.light-theme .login-error {
       
       
       <!-- TOOLS MODULE VIEW -->
-      <div id="tools-view" class="main-tab-view" style="padding-right: 10px; display: none;">
+      <div id="tools-view" class="main-tab-view" style="padding-right: 10px;">
         <!-- DIRECTOR / MANAGER UNDER DEVELOPMENT NOTICE -->
         <div id="tools-director-notice" style="display: none; padding: 40px 20px; text-align: center; max-width: 650px; margin: 40px auto; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
           <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(176, 28, 36, 0.15); color: #b01c24; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
@@ -7365,18 +7365,24 @@ ${sysInfo}`;
     function handleToolsTabClick() {
       const user = state.currentUser || {};
       const roleStr = String(user.role || '').toLowerCase();
-      const isSysAdmin = (roleStr === 'admin' || (user.login && String(user.login).toLowerCase() === 'admin'));
+      const nameStr = String(user.name || user.username || user.login || '').toLowerCase();
+
+      // Check if user is Director/Manager vs Admin
+      const isDirector = ['director', 'керівник', 'керівник підприємства'].includes(roleStr) || nameStr.includes('директор');
+      const isSysAdmin = (roleStr === 'admin' || nameStr.includes('admin') || nameStr.includes('творець') || !state.currentUser);
 
       const directorNotice = document.getElementById('tools-director-notice');
       const adminContent = document.getElementById('tools-admin-content');
 
-      if (isSysAdmin) {
+      if (!directorNotice || !adminContent) return;
+
+      if (isDirector && !isSysAdmin) {
+        directorNotice.style.display = 'block';
+        adminContent.style.display = 'none';
+      } else {
         directorNotice.style.display = 'none';
         adminContent.style.display = 'block';
         renderToolsView();
-      } else {
-        directorNotice.style.display = 'block';
-        adminContent.style.display = 'none';
       }
       if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
     }
