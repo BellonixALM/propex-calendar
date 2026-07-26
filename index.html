@@ -7566,5 +7566,250 @@ ${sysInfo}`;
     </div>
   </div>
 
+
+  <script>
+    // --- COMPLETE TOOLS MODULE GLOBAL FUNCTIONS ---
+    if (!window.toolsData) {
+      window.toolsData = [
+        { id: 'T1', sn: 'S/N: 88410', name: 'Прес-кліщі REMS Akku-Press', client: 'ТОВ «БудСервіс» (Олексій)', issueDate: '20.07.2026', freeDays: 5, status: 'rented', daysOverdue: 2 },
+        { id: 'T2', sn: 'S/N: 99201', name: 'Зварювальний апарат поліпропілену', client: 'Кавчук О.М.', issueDate: '24.07.2026', freeDays: 3, status: 'rented', daysOverdue: 0 },
+        { id: 'T3', sn: 'S/N: 33412', name: 'Детектор прихованої проводки Bosch', client: 'Атланта Сіті', issueDate: '25.07.2026', freeDays: 7, status: 'rented', daysOverdue: -5 },
+        { id: 'T4', sn: 'S/N: 11029', name: 'Гідравлічний трубогин Rothenberger', client: '—', issueDate: '—', freeDays: 0, status: 'stock', daysOverdue: 0 }
+      ];
+    }
+
+    window.getAllClientNames = function() {
+      const set = new Set();
+      
+      // 1. From state.clients
+      if (window.state && window.state.clients) {
+        window.state.clients.forEach(c => {
+          const name = (c['Назва'] || c['Назва компанії'] || c.company || c.name || c['Контакт'] || c.contactName || '').toString().trim();
+          if (name) set.add(name);
+        });
+      }
+
+      // 2. From state.deliveries
+      if (window.state && window.state.deliveries) {
+        window.state.deliveries.forEach(d => {
+          const name = (d["Ім'я_одержувача"] || d["Ім'я одержувача"] || d["Одержувач"] || d.receiverName || '').toString().trim();
+          if (name) set.add(name);
+        });
+      }
+
+      // 3. From window.knowledgeBase
+      if (window.knowledgeBase) {
+        Object.keys(window.knowledgeBase).forEach(k => {
+          if (k && k.trim()) set.add(k.trim());
+        });
+      }
+
+      // Add default mock clients if list is short
+      ['Bellonix aLM', 'ТОВ «Атланта Сіті»', 'ТОВ «ТРАНС - ГРУП»', 'Кустадінчев М.В.ФОП', 'Кавчук О.М.', 'Бортовщук Ю.І.'].forEach(m => set.add(m));
+
+      return Array.from(set);
+    };
+
+    window.handleClientInputChange = function(val) {
+      const dropdown = document.getElementById('issue-tool-client-suggestions');
+      if (!dropdown) return;
+
+      const query = (val || '').trim().toLowerCase();
+      const allClients = window.getAllClientNames();
+
+      let matches = allClients.filter(c => c.toLowerCase().includes(query));
+
+      if (matches.length === 0) {
+        if (query.length > 0) {
+          dropdown.innerHTML = `<div style="padding: 10px 14px; font-size: 13px; color: #10b981; font-weight: 600;">➕ Клієнта "${val}" немає в базі — його буде автоматично створено!</div>`;
+          dropdown.style.display = 'block';
+        } else {
+          dropdown.style.display = 'none';
+        }
+        return;
+      }
+
+      let html = '';
+      matches.slice(0, 10).forEach(clientName => {
+        const safeName = clientName.replace(/'/g, "\'");
+        html += `<div onclick="window.selectClientSuggestion('${safeName}')" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'" style="padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--text-color); display: flex; align-items: center; justify-content: space-between;">
+          <span>🏢 ${clientName}</span>
+          <span style="font-size: 11px; color: var(--text-muted); font-weight: 400;">Клієнт з бази</span>
+        </div>`;
+      });
+      dropdown.innerHTML = html;
+      dropdown.style.display = 'block';
+    };
+
+    window.selectClientSuggestion = function(name) {
+      const input = document.getElementById('issue-tool-client-input');
+      if (input) input.value = name;
+      const dropdown = document.getElementById('issue-tool-client-suggestions');
+      if (dropdown) dropdown.style.display = 'none';
+    };
+
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('issue-tool-client-suggestions');
+      const input = document.getElementById('issue-tool-client-input');
+      if (dropdown && input && !input.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    window.setIssueToolDays = function(days) {
+      const input = document.getElementById('issue-tool-days');
+      if (input) input.value = days;
+    };
+
+    window.openIssueToolModal = function(targetToolId) {
+      const select = document.getElementById('issue-tool-select');
+      if (!select) return;
+      select.innerHTML = '';
+
+      const stockTools = window.toolsData.filter(t => t.status === 'stock');
+      if (stockTools.length === 0) {
+        alert('Увага: На складі зараз немає вільних інструментів для видачі! Додайте новий інструмент або поверніть існуючий.');
+        return;
+      }
+
+      stockTools.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = `${t.name} (${t.sn})`;
+        if (targetToolId && t.id === targetToolId) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      const clientInput = document.getElementById('issue-tool-client-input');
+      if (clientInput) clientInput.value = '';
+      const daysInput = document.getElementById('issue-tool-days');
+      if (daysInput) daysInput.value = 5;
+      const notesInput = document.getElementById('issue-tool-notes');
+      if (notesInput) notesInput.value = '';
+
+      const modal = document.getElementById('modal-issue-tool');
+      if (modal) modal.classList.add('show');
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    };
+
+    window.closeIssueToolModal = function() {
+      const modal = document.getElementById('modal-issue-tool');
+      if (modal) modal.classList.remove('show');
+    };
+
+    window.submitIssueToolForm = function() {
+      const toolId = document.getElementById('issue-tool-select').value;
+      const clientName = document.getElementById('issue-tool-client-input').value.trim();
+      const freeDays = parseInt(document.getElementById('issue-tool-days').value) || 5;
+
+      if (!clientName) {
+        alert('Будь ласка, введіть назву компанії або ім'я монтажника!');
+        return;
+      }
+
+      const tool = window.toolsData.find(t => t.id === toolId);
+      if (!tool) return;
+
+      // 1. Check if client exists in state.clients, if not -> create & auto-save
+      let clientExists = false;
+      const currentClients = (window.state && window.state.clients) || [];
+      const searchLower = clientName.toLowerCase();
+
+      for (let c of currentClients) {
+        const comp = String(c['Назва'] || c['Назва компанії'] || c.company || c.name || '').toLowerCase();
+        const contact = String(c['Контакт'] || c.contactName || '').toLowerCase();
+        if (comp === searchLower || contact === searchLower) {
+          clientExists = true;
+          break;
+        }
+      }
+
+      if (!clientExists) {
+        const newClientObj = {
+          id: 'C_' + Date.now(),
+          'Назва': clientName,
+          company: clientName,
+          name: clientName,
+          contactName: clientName,
+          phone: '',
+          address: ''
+        };
+        if (!window.state) window.state = {};
+        if (!window.state.clients) window.state.clients = [];
+        window.state.clients.push(newClientObj);
+
+        if (typeof propexApi !== 'undefined' && propexApi.saveClient) {
+          propexApi.saveClient(newClientObj);
+        }
+      }
+
+      const now = new Date();
+      const dateStr = String(now.getDate()).padStart(2, '0') + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + now.getFullYear();
+
+      tool.status = 'rented';
+      tool.client = clientName;
+      tool.issueDate = dateStr;
+      tool.freeDays = freeDays;
+      tool.daysOverdue = -freeDays;
+
+      window.closeIssueToolModal();
+      alert(`✅ Інструмент "${tool.name}" успішно видано клієнту ${clientName} на ${freeDays} днів!${!clientExists ? '\n\n(Клієнта "' + clientName + '" автоматично додано в базу клієнтів)' : ''}`);
+      window.renderToolsView();
+    };
+
+    window.openAddToolModal = function() {
+      document.getElementById('add-tool-name').value = '';
+      document.getElementById('add-tool-sn').value = 'S/N: ' + Math.floor(100000 + Math.random() * 900000);
+      const modal = document.getElementById('modal-add-tool');
+      if (modal) modal.classList.add('show');
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    };
+
+    window.closeAddToolModal = function() {
+      const modal = document.getElementById('modal-add-tool');
+      if (modal) modal.classList.remove('show');
+    };
+
+    window.submitAddToolForm = function() {
+      const name = document.getElementById('add-tool-name').value.trim();
+      let sn = document.getElementById('add-tool-sn').value.trim();
+
+      if (!name || !sn) {
+        alert('Заповніть назву та серійний номер!');
+        return;
+      }
+      if (!sn.toUpperCase().startsWith('S/N')) {
+        sn = 'S/N: ' + sn;
+      }
+
+      window.toolsData.push({
+        id: 'T' + (window.toolsData.length + 1),
+        sn: sn,
+        name: name,
+        client: '—',
+        issueDate: '—',
+        freeDays: 0,
+        status: 'stock',
+        daysOverdue: 0
+      });
+
+      window.closeAddToolModal();
+      alert(`✅ Новий інструмент "${name}" (${sn}) додано на склад!`);
+      window.renderToolsView();
+    };
+
+    window.returnTool = function(toolId) {
+      const tool = window.toolsData.find(t => t.id === toolId);
+      if (tool) {
+        tool.status = 'stock';
+        tool.client = '—';
+        tool.issueDate = '—';
+        tool.daysOverdue = 0;
+        alert(`✅ Інструмент "${tool.name}" успішно прийнято на склад!`);
+        window.renderToolsView();
+      }
+    };
+  </script>
+
 </body>
 </html>
