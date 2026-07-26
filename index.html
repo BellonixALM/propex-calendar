@@ -7530,11 +7530,15 @@ ${sysInfo}`;
             </select>
           </div>
 
-          <div class="form-group" style="margin-bottom: 16px;">
+          <div class="form-group" style="margin-bottom: 16px; position: relative;">
             <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Клієнт або Монтажник (Орендар)</label>
-            <input type="text" id="issue-tool-client-input" class="form-control" placeholder="Введіть назву компанії або прізвище..." list="clients-datalist" autocomplete="off" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px;">
+            <input type="text" id="issue-tool-client-input" class="form-control" placeholder="Почніть вводити назву компанії (напр. Bellonix)..." autocomplete="off" required oninput="handleClientInputChange(this.value)" onfocus="handleClientInputChange(this.value)" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px;">
+            
+            <!-- AUTO-SUGGESTIONS DROPDOWN MENU -->
+            <div id="issue-tool-client-suggestions" style="display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; max-height: 220px; overflow-y: auto; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 99999;"></div>
+
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-              💡 Почніть вводити для вибору з бази. Якщо клієнта немає — він автоматично створиться та збережеться в базі!
+              💡 Оберіть підказку з бази або введіть нового клієнта — його буде автоматично додано у базу!
             </div>
           </div>
 
