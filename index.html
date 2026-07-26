@@ -1355,6 +1355,7 @@ body.light-theme .login-error {
       <a class="nav-item admin-only" id="nav-analytics-cargo" onclick="switchMainTab('analytics-cargo')" style="display:none;" title="Логістика та склад"><i data-lucide="truck"></i> <span class="nav-item-text">Логістика та склад</span></a>
       <a class="nav-item admin-only" id="nav-analytics-passenger" onclick="switchMainTab('analytics-passenger')" style="display:none;" title="Аналітика відділу продажів"><i data-lucide="trending-up"></i> <span class="nav-item-text">Аналітика продажів</span></a>
       <a class="nav-item active" id="nav-tracking" onclick="switchMainTab('tracking')" title="Трекінг"><i data-lucide="map"></i> <span class="nav-item-text">Трекінг</span></a>
+            <a class="nav-item" id="nav-tools" onclick="switchMainTab('tools')" title="Облік інструментів" style="display:none;"><i data-lucide="wrench"></i> <span class="nav-item-text">Облік інструментів</span></a>
       <a class="nav-item" id="nav-clients" onclick="switchMainTab('clients')" title="Клієнти / Компанії"><i data-lucide="users"></i> <span class="nav-item-text">Клієнти / Компанії</span></a>
       <a class="nav-item admin-only" id="nav-employees" onclick="switchMainTab('employees')" style="display:none;" title="Співробітники"><i data-lucide="contact"></i> <span class="nav-item-text">Співробітники</span></a>
       <a class="nav-item" id="nav-settings" onclick="switchMainTab('settings')" title="Налаштування"><i data-lucide="settings"></i> <span class="nav-item-text">Налаштування</span></a>
@@ -1500,6 +1501,100 @@ body.light-theme .login-error {
         <div id="clients-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;"></div>
       </div>
       
+      
+      <!-- TOOLS MODULE VIEW -->
+      <div id="tools-view" class="main-tab-view" style="padding-right: 10px; display: none;">
+        <!-- DIRECTOR / MANAGER UNDER DEVELOPMENT NOTICE -->
+        <div id="tools-director-notice" style="display: none; padding: 40px 20px; text-align: center; max-width: 650px; margin: 40px auto; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+          <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(176, 28, 36, 0.15); color: #b01c24; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+            <i data-lucide="lock" style="width: 32px; height: 32px;"></i>
+          </div>
+          <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 12px; font-family: var(--font-title);">Модуль в розробці та потребує додаткового узгодження</h2>
+          <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+            Функціонал обліку та оренди інструменту зараз перебуває на стадії розробки та буде активований після остаточного узгодження регламенту та бізнес-процесу з керівництвом.
+          </p>
+          <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;">
+            <i data-lucide="info" style="width: 16px; height: 16px;"></i> Повний доступ наразі відкрито тільки для Головного Адміністратора
+          </div>
+        </div>
+
+        <!-- ADMIN FULL INTERACTIVE CONTENT -->
+        <div id="tools-admin-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h2 style="font-size: 24px; font-weight: 800; margin: 0; font-family: var(--font-title);">🛠 Облік та Оренда Інструменту</h2>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Контроль обладнання, серійних номерів та автоматичні нагадування про терміни оренди</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn" onclick="openIssueToolModal()" style="background-color: #10b981; color: white; border: none; font-weight: 600; border-radius: 20px; font-size: 13px; padding: 8px 16px;">
+                <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> Видати інструмент
+              </button>
+              <button class="btn" onclick="openAddToolModal()" style="background-color: rgba(255, 255, 255, 0.08); color: var(--text-color); border: 1px solid var(--border-color); font-weight: 600; border-radius: 20px; font-size: 13px; padding: 8px 16px;">
+                <i data-lucide="wrench" style="width: 16px; height: 16px;"></i> Додати інструмент
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI STATS CARDS -->
+          <div class="dash-kpi-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div class="dash-card" style="padding: 16px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+              <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Всього інструментів</div>
+              <div style="font-size: 28px; font-weight: 800; font-family: var(--font-title); margin-top: 6px;" id="kpi-total-tools">0</div>
+            </div>
+            <div class="dash-card" style="padding: 16px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+              <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">На складі</div>
+              <div style="font-size: 28px; font-weight: 800; font-family: var(--font-title); margin-top: 6px; color: #10b981;" id="kpi-stock-tools">0</div>
+            </div>
+            <div class="dash-card" style="padding: 16px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+              <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">В користуванні</div>
+              <div style="font-size: 28px; font-weight: 800; font-family: var(--font-title); margin-top: 6px; color: #3b82f6;" id="kpi-rented-tools">0</div>
+            </div>
+            <div class="dash-card" style="padding: 16px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+              <div style="font-size: 12px; color: var(--danger); font-weight: 600; text-transform: uppercase;">Прострочено повернення</div>
+              <div style="font-size: 28px; font-weight: 800; font-family: var(--font-title); margin-top: 6px; color: var(--danger);" id="kpi-overdue-tools">0</div>
+            </div>
+          </div>
+
+          <!-- ACTION & SEARCH BAR -->
+          <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+            <div class="search-container" style="flex-grow: 1; max-width: 400px; position: relative;">
+              <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; height: 18px;"></i>
+              <input type="text" id="tools-search-input" placeholder="Пошук за назвою або S/N..." oninput="renderToolsView()" style="width: 100%; padding: 10px 10px 10px 38px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color);">
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <select id="tools-filter-status" onchange="renderToolsView()" class="select-custom" style="padding: 8px 14px; border-radius: 8px;">
+                <option value="all">Всі статуси</option>
+                <option value="rented">В користуванні</option>
+                <option value="stock">На складі</option>
+                <option value="overdue">🔴 Прострочено</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- TOOLS TABLE CONTAINER -->
+          <div class="dash-card" style="padding: 0; overflow: hidden; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                <thead>
+                  <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <th style="padding: 14px 16px;">Серійний № (S/N)</th>
+                    <th style="padding: 14px 16px;">Назва інструмента</th>
+                    <th style="padding: 14px 16px;">Орендар (Клієнт / Монтажник)</th>
+                    <th style="padding: 14px 16px;">Дата видачі</th>
+                    <th style="padding: 14px 16px;">Залишок часу (Таймер)</th>
+                    <th style="padding: 14px 16px;">Статус</th>
+                    <th style="padding: 14px 16px; text-align: right;">Дії</th>
+                  </tr>
+                </thead>
+                <tbody id="tools-table-body">
+                  <!-- Rendered by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="settings-view" class="main-tab-view" style="padding-right: 10px;">
         <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">Налаштування</h2>
         
@@ -2961,6 +3056,11 @@ body.light-theme .login-error {
       
       document.getElementById('nav-tracking').style.display = 'flex';
       document.getElementById('nav-clients').style.display = 'flex';
+      if (document.getElementById('nav-tools')) {
+        const isSysAdmin = (roleStr === 'admin' || (user.login && user.login.toLowerCase() === 'admin'));
+        const isDirectorOrManager = ['director', 'керівник', 'керівник підприємства'].includes(roleStr);
+        document.getElementById('nav-tools').style.display = (isSysAdmin || isDirectorOrManager) ? 'flex' : 'none';
+      }
       document.getElementById('nav-settings').style.display = 'flex';
       if (document.getElementById('nav-employees')) {
          document.getElementById('nav-employees').style.display = 'flex'; // Visible to managers & logists too!
@@ -4861,7 +4961,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
 
 window.switchMainTab = function(tabId) {
     // Hide all
-    ['tracking', 'dashboard', 'analytics-cargo', 'analytics-passenger', 'employees', 'clients', 'settings'].forEach(id => {
+    ['tracking', 'dashboard', 'analytics-cargo', 'analytics-passenger', 'employees', 'clients', 'tools', 'settings'].forEach(id => {
         const el = document.getElementById(id + '-view');
         if (el) el.classList.remove('active');
         const navEl = document.getElementById('nav-' + id);
@@ -7249,6 +7349,153 @@ ${sysInfo}`;
         role: user.role || 'Невідомо',
         telegramId: user.telegramId || ''
       }, currentBugScreenshotBase64, currentBugVoiceBase64);
+    }
+  </script>
+
+
+  <script>
+    // --- TOOLS MODULE LOGIC ---
+    let toolsData = [
+      { id: 'T1', sn: 'S/N: 88410', name: 'Прес-кліщі REMS Akku-Press', client: 'ТОВ «БудСервіс» (Олексій)', issueDate: '20.07.2026', freeDays: 5, status: 'rented', daysOverdue: 2 },
+      { id: 'T2', sn: 'S/N: 99201', name: 'Зварювальний апарат поліпропілену', client: 'Кавчук О.М.', issueDate: '24.07.2026', freeDays: 3, status: 'rented', daysOverdue: 0 },
+      { id: 'T3', sn: 'S/N: 33412', name: 'Детектор прихованої проводки Bosch', client: 'Атланта Сіті', issueDate: '25.07.2026', freeDays: 7, status: 'rented', daysOverdue: -5 },
+      { id: 'T4', sn: 'S/N: 11029', name: 'Гідравлічний трубогин Rothenberger', client: '—', issueDate: '—', freeDays: 0, status: 'stock', daysOverdue: 0 }
+    ];
+
+    function handleToolsTabClick() {
+      const user = state.currentUser || {};
+      const roleStr = String(user.role || '').toLowerCase();
+      const isSysAdmin = (roleStr === 'admin' || (user.login && String(user.login).toLowerCase() === 'admin'));
+
+      const directorNotice = document.getElementById('tools-director-notice');
+      const adminContent = document.getElementById('tools-admin-content');
+
+      if (isSysAdmin) {
+        directorNotice.style.display = 'none';
+        adminContent.style.display = 'block';
+        renderToolsView();
+      } else {
+        directorNotice.style.display = 'block';
+        adminContent.style.display = 'none';
+      }
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    }
+
+    function renderToolsView() {
+      const search = (document.getElementById('tools-search-input')?.value || '').toLowerCase();
+      const filter = document.getElementById('tools-filter-status')?.value || 'all';
+      const tbody = document.getElementById('tools-table-body');
+      if (!tbody) return;
+
+      let filtered = toolsData.filter(item => {
+        const matchesSearch = item.sn.toLowerCase().includes(search) || item.name.toLowerCase().includes(search) || item.client.toLowerCase().includes(search);
+        if (!matchesSearch) return false;
+
+        if (filter === 'rented') return item.status === 'rented';
+        if (filter === 'stock') return item.status === 'stock';
+        if (filter === 'overdue') return item.daysOverdue > 0;
+        return true;
+      });
+
+      // Update KPI Stats
+      document.getElementById('kpi-total-tools').textContent = toolsData.length;
+      document.getElementById('kpi-stock-tools').textContent = toolsData.filter(x => x.status === 'stock').length;
+      document.getElementById('kpi-rented-tools').textContent = toolsData.filter(x => x.status === 'rented').length;
+      document.getElementById('kpi-overdue-tools').textContent = toolsData.filter(x => x.daysOverdue > 0).length;
+
+      let html = '';
+      if (filtered.length === 0) {
+        html = `<tr><td colspan="7" style="padding: 24px; text-align: center; color: var(--text-muted);">Інструментів не знайдено</td></tr>`;
+      } else {
+        filtered.forEach(item => {
+          let timerBadge = '';
+          if (item.status === 'stock') {
+            timerBadge = `<span style="background: rgba(255,255,255,0.05); color: var(--text-muted); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px;">—</span>`;
+          } else if (item.daysOverdue > 0) {
+            timerBadge = `<span style="background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 11px;">🔴 Прострочено на ${item.daysOverdue} дн.</span>`;
+          } else if (item.daysOverdue === 0) {
+            timerBadge = `<span style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 11px;">🟡 Останній день (Сьогодні)</span>`;
+          } else {
+            const daysLeft = Math.abs(item.daysOverdue);
+            timerBadge = `<span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 11px;">🟢 Залишилось ${daysLeft} дн.</span>`;
+          }
+
+          let statusBadge = item.status === 'stock' 
+            ? `<span style="color: #10b981; font-weight: 700;">🟢 На складі</span>` 
+            : `<span style="color: #3b82f6; font-weight: 700;">🔵 В користуванні</span>`;
+
+          let actionBtn = item.status === 'stock'
+            ? `<button onclick="openIssueToolModal('${item.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">Видати</button>`
+            : `<button onclick="returnTool('${item.id}')" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">Прийняти</button>`;
+
+          html += `
+            <tr style="border-bottom: 1px solid var(--border-color);">
+              <td style="padding: 14px 16px; font-family: var(--font-title); font-weight: 700; color: var(--text-color);">${item.sn}</td>
+              <td style="padding: 14px 16px; font-weight: 600;">${item.name}</td>
+              <td style="padding: 14px 16px; color: var(--text-muted);">${item.client}</td>
+              <td style="padding: 14px 16px;">${item.issueDate}</td>
+              <td style="padding: 14px 16px;">${timerBadge}</td>
+              <td style="padding: 14px 16px;">${statusBadge}</td>
+              <td style="padding: 14px 16px; text-align: right;">${actionBtn}</td>
+            </tr>
+          `;
+        });
+      }
+      tbody.innerHTML = html;
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    }
+
+    function returnTool(toolId) {
+      const tool = toolsData.find(t => t.id === toolId);
+      if (tool) {
+        tool.status = 'stock';
+        tool.client = '—';
+        tool.issueDate = '—';
+        tool.daysOverdue = 0;
+        alert(`✅ Інструмент "${tool.name}" успішно прийнято на склад!`);
+        renderToolsView();
+      }
+    }
+
+    function openIssueToolModal(toolId) {
+      const tool = toolsData.find(t => t.id === toolId) || toolsData.find(t => t.status === 'stock');
+      if (!tool) {
+        alert('Немає вільних інструментів на складі для видачі!');
+        return;
+      }
+      const client = prompt(`Видача інструмента: ${tool.name} (${tool.sn})
+
+Введіть назву компанії або ім'я монтажника:`, 'ТОВ БудСервіс');
+      if (client && client.trim() !== '') {
+        const now = new Date();
+        const dateStr = String(now.getDate()).padStart(2, '0') + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + now.getFullYear();
+        tool.status = 'rented';
+        tool.client = client.trim();
+        tool.issueDate = dateStr;
+        tool.daysOverdue = -5; // 5 days remaining
+        alert(`✅ Інструмент "${tool.name}" успішно видано клієнту ${client.trim()}!`);
+        renderToolsView();
+      }
+    }
+
+    function openAddToolModal() {
+      const name = prompt('Введіть назву нового інструмента:', 'Прес-гідравлічний Rothenberger');
+      if (!name) return;
+      const sn = prompt('Введіть серійний номер (S/N):', 'S/N: ' + Math.floor(10000 + Math.random() * 90000));
+      if (!sn) return;
+
+      toolsData.push({
+        id: 'T' + (toolsData.length + 1),
+        sn: sn.trim(),
+        name: name.trim(),
+        client: '—',
+        issueDate: '—',
+        freeDays: 0,
+        status: 'stock',
+        daysOverdue: 0
+      });
+      alert(`✅ Новий інструмент "${name}" додано в каталог!`);
+      renderToolsView();
     }
   </script>
 
