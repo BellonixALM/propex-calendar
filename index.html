@@ -7387,13 +7387,14 @@ ${sysInfo}`;
       if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
     }
 
-    function renderToolsView() {
+    window.renderToolsView = function() {
+      if (!window.toolsData) window.toolsData = [];
       const search = (document.getElementById('tools-search-input')?.value || '').toLowerCase();
       const filter = document.getElementById('tools-filter-status')?.value || 'all';
       const tbody = document.getElementById('tools-table-body');
       if (!tbody) return;
 
-      let filtered = toolsData.filter(item => {
+      let filtered = window.toolsData.filter(item => {
         const matchesSearch = item.sn.toLowerCase().includes(search) || item.name.toLowerCase().includes(search) || item.client.toLowerCase().includes(search);
         if (!matchesSearch) return false;
 
@@ -7404,10 +7405,10 @@ ${sysInfo}`;
       });
 
       // Update KPI Stats
-      document.getElementById('kpi-total-tools').textContent = toolsData.length;
-      document.getElementById('kpi-stock-tools').textContent = toolsData.filter(x => x.status === 'stock').length;
-      document.getElementById('kpi-rented-tools').textContent = toolsData.filter(x => x.status === 'rented').length;
-      document.getElementById('kpi-overdue-tools').textContent = toolsData.filter(x => x.daysOverdue > 0).length;
+      document.getElementById('kpi-total-tools').textContent = window.toolsData.length;
+      document.getElementById('kpi-stock-tools').textContent = window.toolsData.filter(x => x.status === 'stock').length;
+      document.getElementById('kpi-rented-tools').textContent = window.toolsData.filter(x => x.status === 'rented').length;
+      document.getElementById('kpi-overdue-tools').textContent = window.toolsData.filter(x => x.daysOverdue > 0).length;
 
       let html = '';
       if (filtered.length === 0) {
@@ -7431,8 +7432,8 @@ ${sysInfo}`;
             : `<span style="color: #3b82f6; font-weight: 700;">🔵 В користуванні</span>`;
 
           let actionBtn = item.status === 'stock'
-            ? `<button onclick="openIssueToolModal('${item.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">Видати</button>`
-            : `<button onclick="returnTool('${item.id}')" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">Прийняти</button>`;
+            ? `<button onclick="window.openIssueToolModal('${item.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">Видати</button>`
+            : `<button onclick="window.returnTool('${item.id}')" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">Прийняти</button>`;
 
           html += `
             <tr style="border-bottom: 1px solid var(--border-color);">
