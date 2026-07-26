@@ -7463,46 +7463,7 @@ ${sysInfo}`;
       }
     }
 
-    function openIssueToolModal(toolId) {
-      const tool = toolsData.find(t => t.id === toolId) || toolsData.find(t => t.status === 'stock');
-      if (!tool) {
-        alert('Немає вільних інструментів на складі для видачі!');
-        return;
-      }
-      const client = prompt(`Видача інструмента: ${tool.name} (${tool.sn})
 
-Введіть назву компанії або ім'я монтажника:`, 'ТОВ БудСервіс');
-      if (client && client.trim() !== '') {
-        const now = new Date();
-        const dateStr = String(now.getDate()).padStart(2, '0') + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + now.getFullYear();
-        tool.status = 'rented';
-        tool.client = client.trim();
-        tool.issueDate = dateStr;
-        tool.daysOverdue = -5; // 5 days remaining
-        alert(`✅ Інструмент "${tool.name}" успішно видано клієнту ${client.trim()}!`);
-        renderToolsView();
-      }
-    }
-
-    function openAddToolModal() {
-      const name = prompt('Введіть назву нового інструмента:', 'Прес-гідравлічний Rothenberger');
-      if (!name) return;
-      const sn = prompt('Введіть серійний номер (S/N):', 'S/N: ' + Math.floor(10000 + Math.random() * 90000));
-      if (!sn) return;
-
-      toolsData.push({
-        id: 'T' + (toolsData.length + 1),
-        sn: sn.trim(),
-        name: name.trim(),
-        client: '—',
-        issueDate: '—',
-        freeDays: 0,
-        status: 'stock',
-        daysOverdue: 0
-      });
-      alert(`✅ Новий інструмент "${name}" додано в каталог!`);
-      renderToolsView();
-    }
   </script>
 
 
