@@ -1576,14 +1576,14 @@ body.light-theme .login-error {
             <div style="overflow-x: auto;">
               <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
                 <thead>
-                  <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
-                    <th style="padding: 14px 16px;">Серійний № (S/N)</th>
-                    <th style="padding: 14px 16px;">Назва інструмента</th>
-                    <th style="padding: 14px 16px;">Орендар (Клієнт / Монтажник)</th>
-                    <th style="padding: 14px 16px;">Дата видачі</th>
-                    <th style="padding: 14px 16px;">Залишок часу (Таймер)</th>
-                    <th style="padding: 14px 16px;">Статус</th>
-                    <th style="padding: 14px 16px; text-align: right;">Дії</th>
+                  <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">
+                    <th style="padding: 14px 14px; white-space: nowrap;">Серійний № (S/N)</th>
+                    <th style="padding: 14px 14px; white-space: nowrap;">Назва інструмента</th>
+                    <th style="padding: 14px 14px; white-space: nowrap;">Орендар (Клієнт / Монтажник)</th>
+                    <th style="padding: 14px 14px; white-space: nowrap;">Дата видачі</th>
+                    <th style="padding: 14px 14px; white-space: nowrap;">Залишок часу (Таймер)</th>
+                    <th style="padding: 14px 14px; white-space: nowrap;">Статус</th>
+                    <th style="padding: 14px 14px; text-align: right; white-space: nowrap;">Дії</th>
                   </tr>
                 </thead>
                 <tbody id="tools-table-body">
@@ -7417,33 +7417,33 @@ ${sysInfo}`;
         filtered.forEach(item => {
           let timerBadge = '';
           if (item.status === 'stock') {
-            timerBadge = `<span style="background: rgba(255,255,255,0.05); color: var(--text-muted); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px;">—</span>`;
+            timerBadge = `<span style="background: rgba(255,255,255,0.05); color: var(--text-muted); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; white-space: nowrap; display: inline-block;">—</span>`;
           } else if (item.daysOverdue > 0) {
-            timerBadge = `<span style="background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 11px;">🔴 Прострочено на ${item.daysOverdue} дн.</span>`;
+            timerBadge = `<span style="background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); padding: 5px 12px; border-radius: 14px; font-weight: 700; font-size: 11px; white-space: nowrap; display: inline-block;">🔴 Прострочено на ${item.daysOverdue} дн.</span>`;
           } else if (item.daysOverdue === 0) {
-            timerBadge = `<span style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 11px;">🟡 Останній день (Сьогодні)</span>`;
+            timerBadge = `<span style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); padding: 5px 12px; border-radius: 14px; font-weight: 700; font-size: 11px; white-space: nowrap; display: inline-block;">🟡 Останній день (Сьогодні)</span>`;
           } else {
             const daysLeft = Math.abs(item.daysOverdue);
-            timerBadge = `<span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 11px;">🟢 Залишилось ${daysLeft} дн.</span>`;
+            timerBadge = `<span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 12px; border-radius: 14px; font-weight: 700; font-size: 11px; white-space: nowrap; display: inline-block;">🟢 Залишилось ${daysLeft} дн.</span>`;
           }
 
           let statusBadge = item.status === 'stock' 
-            ? `<span style="color: #10b981; font-weight: 700;">🟢 На складі</span>` 
-            : `<span style="color: #3b82f6; font-weight: 700;">🔵 В користуванні</span>`;
+            ? `<span style="color: #10b981; font-weight: 700; white-space: nowrap; display: inline-block;">🟢 На складі</span>` 
+            : `<span style="color: #3b82f6; font-weight: 700; white-space: nowrap; display: inline-block;">🔵 В користуванні</span>`;
 
           let actionBtn = item.status === 'stock'
-            ? `<button onclick="window.openIssueToolModal('${item.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">Видати</button>`
-            : `<button onclick="window.returnTool('${item.id}')" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">Прийняти</button>`;
+            ? `<button onclick="window.openIssueToolModal('${item.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Видати</button>`
+            : `<button onclick="window.returnTool('${item.id}')" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Прийняти</button>`;
 
           html += `
             <tr style="border-bottom: 1px solid var(--border-color);">
-              <td style="padding: 14px 16px; font-family: var(--font-title); font-weight: 700; color: var(--text-color);">${item.sn}</td>
-              <td style="padding: 14px 16px; font-weight: 600;">${item.name}</td>
-              <td style="padding: 14px 16px; color: var(--text-muted);">${item.client}</td>
-              <td style="padding: 14px 16px;">${item.issueDate}</td>
-              <td style="padding: 14px 16px;">${timerBadge}</td>
-              <td style="padding: 14px 16px;">${statusBadge}</td>
-              <td style="padding: 14px 16px; text-align: right;">${actionBtn}</td>
+              <td style="padding: 14px; font-family: var(--font-title); font-weight: 700; color: var(--text-color); white-space: nowrap;">${item.sn}</td>
+              <td style="padding: 14px; font-weight: 600; min-width: 180px;">${item.name}</td>
+              <td style="padding: 14px; color: var(--text-muted); min-width: 160px;">${item.client}</td>
+              <td style="padding: 14px; white-space: nowrap;">${item.issueDate}</td>
+              <td style="padding: 14px; white-space: nowrap;">${timerBadge}</td>
+              <td style="padding: 14px; white-space: nowrap;">${statusBadge}</td>
+              <td style="padding: 14px; text-align: right; white-space: nowrap;">${actionBtn}</td>
             </tr>
           `;
         });
