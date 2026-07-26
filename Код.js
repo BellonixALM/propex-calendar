@@ -115,7 +115,7 @@ function doGet(e) {
                          .setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
 
-  var template = HtmlService.createTemplateFromFile('Index');
+  var template = HtmlService.createTemplateFromFile('index');
   template.scriptUrl = ScriptApp.getService().getUrl();
   return template.evaluate()
       .setTitle('Календар Propex')

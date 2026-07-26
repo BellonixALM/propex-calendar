@@ -1526,11 +1526,8 @@ body.light-theme .login-error {
               <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Контроль обладнання, серійних номерів та автоматичні нагадування про терміни оренди</p>
             </div>
             <div style="display: flex; gap: 10px;">
-              <button class="btn" onclick="openIssueToolModal()" style="background-color: #10b981; color: white; border: none; font-weight: 600; border-radius: 20px; font-size: 13px; padding: 8px 16px;">
+              <button class="btn" onclick="window.openIssueToolModal()" style="background-color: #10b981; color: white; border: none; font-weight: 600; border-radius: 20px; font-size: 13px; padding: 8px 16px;">
                 <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> Видати інструмент
-              </button>
-              <button class="btn" onclick="openAddToolModal()" style="background-color: rgba(255, 255, 255, 0.08); color: var(--text-color); border: 1px solid var(--border-color); font-weight: 600; border-radius: 20px; font-size: 13px; padding: 8px 16px;">
-                <i data-lucide="wrench" style="width: 16px; height: 16px;"></i> Додати інструмент
               </button>
             </div>
           </div>
@@ -1559,15 +1556,7 @@ body.light-theme .login-error {
           <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
             <div class="search-container" style="flex-grow: 1; max-width: 400px; position: relative;">
               <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; height: 18px;"></i>
-              <input type="text" id="tools-search-input" placeholder="Пошук за назвою або S/N..." oninput="renderToolsView()" style="width: 100%; padding: 10px 10px 10px 38px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color);">
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <select id="tools-filter-status" onchange="renderToolsView()" class="select-custom" style="padding: 8px 14px; border-radius: 8px;">
-                <option value="all">Всі статуси</option>
-                <option value="rented">В користуванні</option>
-                <option value="stock">На складі</option>
-                <option value="overdue">🔴 Прострочено</option>
-              </select>
+              <input type="text" id="tools-search-input" placeholder="Пошук за назвою або S/N..." oninput="window.renderToolsView()" style="width: 100%; padding: 10px 10px 10px 38px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color);">
             </div>
           </div>
 
@@ -2265,7 +2254,7 @@ body.light-theme .login-error {
 (function() {
       let scriptUrlTemplate = "<?= scriptUrl ?>";
       let WEBAPP_URL = scriptUrlTemplate.includes("?=") 
-          ? "https://script.google.com/macros/s/AKfycbw_OB94HtQ8CS8rP8laR9ZSFldrHh_X85VPeoULYG9AywOebKj3JBsKV2QgI1lmkfE-/exec" 
+          ? "https://script.google.com/macros/s/AKfycbzh7vETYhpRrG_KNzNL4w1rSaIhW25GnJFMyw1KOIO5bQDOpP8bLXOkeP6KH_Msj2Ho/exec" 
           : scriptUrlTemplate;
       
       const paramApi = new URLSearchParams(window.location.search).get('api');
@@ -4982,13 +4971,20 @@ window.switchMainTab = function(tabId) {
         }
     }
     
-    // Toggle add button visibility
+    // Toggle add & filter buttons visibility in header
     const addBtn = document.getElementById('add-delivery-btn');
-    if (addBtn) {
-        if (tabId === 'dashboard' || tabId === 'analytics-cargo' || tabId === 'analytics-passenger' || tabId === 'employees') {
-            addBtn.style.display = 'none';
-        } else {
-            if (typeof applyRoleRestrictions === 'function') applyRoleRestrictions();
+    const filterBtn = document.getElementById('header-filter-btn');
+    if (tabId === 'tools') {
+        if (addBtn) addBtn.style.display = 'none';
+        if (filterBtn) filterBtn.style.display = 'none';
+    } else {
+        if (filterBtn) filterBtn.style.display = 'inline-flex';
+        if (addBtn) {
+            if (['dashboard', 'analytics-cargo', 'analytics-passenger', 'employees'].includes(tabId)) {
+                addBtn.style.display = 'none';
+            } else {
+                if (typeof applyRoleRestrictions === 'function') applyRoleRestrictions();
+            }
         }
     }
     
@@ -7390,7 +7386,7 @@ ${sysInfo}`;
     window.renderToolsView = function() {
       if (!window.toolsData) window.toolsData = [];
       const search = (document.getElementById('tools-search-input')?.value || '').toLowerCase();
-      const filter = document.getElementById('tools-filter-status')?.value || 'all';
+      const filter = 'all';
       const tbody = document.getElementById('tools-table-body');
       if (!tbody) return;
 
