@@ -7523,13 +7523,26 @@ ${sysInfo}`;
           </div>
 
           <div class="form-group" style="margin-bottom: 20px;">
-            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Примітки / Комплектація</label>
-            <textarea id="issue-tool-notes" class="form-control" placeholder="Наприклад: в комплекті кейс, насадка 16/20/25 мм..." style="width: 100%; height: 70px; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; resize: none;"></textarea>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Примітки / Комплектація (насадки, АКБ тощо)</label>
+              <span style="font-size: 11px; color: var(--accent-blue); font-weight: 600;">Швидкі підказки:</span>
+            </div>
+            
+            <!-- QUICK CHIPS FOR COMPLETION -->
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+              <button type="button" onclick="appendToolNote('Кейс 🧰')" class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">+ Кейс 🧰</button>
+              <button type="button" onclick="appendToolNote('2x АКБ 🔋')" class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">+ 2x АКБ 🔋</button>
+              <button type="button" onclick="appendToolNote('Зарядка 🔌')" class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">+ Зарядка 🔌</button>
+              <button type="button" onclick="appendToolNote('Насадки 16-20-25 мм ⚙️')" class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">+ Насадки ⚙️</button>
+              <button type="button" onclick="appendToolNote('Інструкція 📄')" class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">+ Інструкція 📄</button>
+            </div>
+
+            <textarea id="issue-tool-notes" class="form-control" placeholder="Вкажіть комплектацію або особливості (наприклад: в комплекті кейс, 2 акумулятори, зарядка, насадки 16/20/25 мм)..." style="width: 100%; height: 75px; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; resize: none;"></textarea>
           </div>
 
-          <div class="modal-footer" style="padding: 0; display: flex; justify-content: flex-end; gap: 10px;">
+          <div class="modal-footer" style="padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
             <button type="button" class="btn btn-secondary" onclick="closeIssueToolModal()">Скасувати</button>
-            <button type="submit" class="btn" style="background-color: #10b981; color: white; border: none; font-weight: 700; padding: 10px 20px; border-radius: 8px;">Підтвердити видачу</button>
+            <button type="submit" class="btn" style="background-color: #10b981; color: white; border: none; font-weight: 700; padding: 10px 22px; border-radius: 8px;">Підтвердити видачу</button>
           </div>
         </form>
       </div>
@@ -7694,6 +7707,19 @@ ${sysInfo}`;
         dropdown.style.display = 'none';
       }
     });
+
+    window.appendToolNote = function(text) {
+      const textarea = document.getElementById('issue-tool-notes');
+      if (!textarea) return;
+      let val = textarea.value.trim();
+      if (val.length > 0) {
+        if (!val.endsWith(',') && !val.endsWith('.')) val += ',';
+        val += ' ' + text;
+      } else {
+        val = text;
+      }
+      textarea.value = val;
+    };
 
     window.setIssueToolDays = function(days) {
       const input = document.getElementById('issue-tool-days');
