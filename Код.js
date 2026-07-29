@@ -58,7 +58,10 @@ function doGet(e) {
     var result = {};
     
     try {
-      if (action === 'login') {
+      if (action === 'inspect') {
+        return ContentService.createTextOutput(testInspectOdometer())
+          .setMimeType(ContentService.MimeType.TEXT);
+      } else if (action === 'login') {
         result = authenticateUser(payload.login, payload.password);
       } else if (action === 'getDeliveries') {
         result = { status: 'success', data: getDeliveries() };
@@ -83,6 +86,8 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'get_employees') {
         result = get_employees();
+      } else if (action === 'getOdometerData') {
+        result = getOdometerData(payload.startDate, payload.endDate);
       } else if (action === 'saveClient') {
         result = saveClient(payload);
       } else if (action === 'deleteClient') {
@@ -91,6 +96,14 @@ function doGet(e) {
         result = saveEmployee(payload);
       } else if (action === 'deleteEmployee') {
         result = deleteEmployee(payload.id);
+      } else if (action === 'resetEmployeePassword') {
+        result = resetEmployeePassword(payload.id);
+      } else if (action === 'sendDeveloperFeedback') {
+        result = sendDeveloperFeedback(payload.messageText, payload.currentUser, payload.screenshotBase64, payload.voiceBase64);
+      } else if (action === 'broadcastMessageToEmployees') {
+        result = broadcastMessageToEmployees(payload);
+      } else if (action === 'cleanupExistingLogins') {
+        result = cleanupExistingLogins();
       } else {
         result = { status: 'error', message: 'Unknown action: ' + action };
       }
@@ -102,7 +115,7 @@ function doGet(e) {
                          .setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
 
-  var template = HtmlService.createTemplateFromFile('Index');
+  var template = HtmlService.createTemplateFromFile('index');
   template.scriptUrl = ScriptApp.getService().getUrl();
   return template.evaluate()
       .setTitle('Календар Propex')
@@ -123,6 +136,9 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'get_employees') {
       return ContentService.createTextOutput(JSON.stringify(get_employees()))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'getOdometerData') {
+      return ContentService.createTextOutput(JSON.stringify(getOdometerData(data.data.startDate, data.data.endDate)))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'get_deliveries') {
       return ContentService.createTextOutput(JSON.stringify(getDeliveries()))
@@ -146,8 +162,17 @@ function doPost(e) {
     } else if (action === 'test_wh') {
       return ContentService.createTextOutput(JSON.stringify(getWarehouseWorkers()))
         .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'delete_delivery') {
+      var result = deleteDelivery(data.data.id);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'update_warehouse_status') {
       var result = updateWarehouseStatus(data.data.deliveryId, data.data.status);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'sendDeveloperFeedback') {
+      var d = data.data || {};
+      var result = sendDeveloperFeedback(d.messageText, d.currentUser, d.screenshotBase64, d.voiceBase64);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'update_driver_photo') {
@@ -161,6 +186,41 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'getDailyCrews') {
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getDailyCrews() }))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'saveClient') {
+      var result = saveClient(data.data);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'get_clients') {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getClients() }))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'registerClient') {
+      var result = registerClient(data.data);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'approveClient') {
+      var result = approveClient(data.data.id, data.data.status);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'saveEmployee') {
+      var result = saveEmployee(data.data);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'deleteClient') {
+      var result = deleteClient(data.data.id);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'deleteEmployee') {
+      var result = deleteEmployee(data.data.id);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'resetEmployeePassword') {
+      var result = resetEmployeePassword(data.data.id);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'updateDriverPhoto') {
+      var result = updateDriverPhoto(data.data.carId, data.data.imageBase64);
+      return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     }
     
@@ -181,6 +241,8 @@ function getDeliveries() {
   var sheet = ss.getSheetByName('Доставки');
   if (!sheet) return [];
   
+  sanitizeRowIds(); // Автоматично виправляємо дублікати та пусті ID в таблиці перед читанням
+  
   var data = sheet.getDataRange().getDisplayValues();
   if (data.length <= 1) return [];
   
@@ -200,6 +262,7 @@ function getDeliveries() {
         obj['ID_Авто'] = val;
       } else if (h === 'водій' || h === 'id_водія' || h === 'водія' || h === 'піб_водія' || h === 'ім\'я водія' || h === 'прізвище') {
         obj['Водій'] = val;
+        obj['ID_Водія'] = val;
       } else if (h === 'дата' || h === 'день') {
         obj['Дата'] = val;
       } else if (h === 'час' || h === 'година') {
@@ -256,6 +319,18 @@ function getClients() {
     // Return empty array if no sheet
     return [];
   }
+  
+  var currentValues = sheet.getDataRange().getValues();
+  var currentHeaders = currentValues[0].map(function(h) { return h.toString().trim(); });
+  if (currentHeaders.indexOf('Client_Telegram_ID') === -1) {
+    currentHeaders.push('Client_Telegram_ID');
+    sheet.getRange(1, currentHeaders.length).setValue('Client_Telegram_ID');
+  }
+  if (currentHeaders.indexOf('Status_Реєстрації') === -1) {
+    currentHeaders.push('Status_Реєстрації');
+    sheet.getRange(1, currentHeaders.length).setValue('Status_Реєстрації');
+  }
+  
   var data = sheet.getDataRange().getDisplayValues();
   if (data.length <= 1) return [];
   var headers = data[0];
@@ -269,8 +344,10 @@ function getClients() {
         obj['ID'] = val;
       } else if (h === 'назва' || h === 'ім\'я' || h === 'name' || h === 'название') {
         obj['Назва'] = val;
-      } else if (h === 'контакт' || h === 'телефон' || h === 'phone') {
+      } else if (h === 'контакт') {
         obj['Контакт'] = val;
+      } else if (h === 'телефон' || h === 'phone') {
+        obj['Телефон'] = val;
       } else {
         obj[header] = val;
       }
@@ -284,78 +361,45 @@ function getDrivers() {
   if (!ss) {
     throw new Error("Не вдалося знайти зв'язок з Google Таблицею. Переконайтеся, що скрипт прикріплений до таблиці або вкажіть SPREADSHEET_ID в Code.gs.");
   }
-  var sheet = ss.getSheetByName('Екіпажі') || ss.getSheetByName('Водії');
-  if (!sheet) {
-    return [
-      { 'ID_Авто': '1', 'Ім\'я': 'Іван Коваленко (Тест)', 'Фото': '' },
-      { 'ID_Авто': '2', 'Ім\'я': 'Олександр Бондар (Тест)', 'Фото': '' },
-      { 'ID_Авто': '3', 'Ім\'я': 'Петро Шевченко (Тест)', 'Фото': '' },
-      { 'ID_Авто': '4', 'Ім\'я': 'Дмитро Кравченко (Тест)', 'Фото': '' }
-    ];
-  }
+  var sheet = ss.getSheetByName('Користувачі');
+  if (!sheet) return [];
   
-  var data = sheet.getDataRange().getDisplayValues();
-  if (data.length <= 1) {
-    return [
-      { 'ID_Авто': '1', 'Ім\'я': 'Іван Коваленко (Тест)', 'Фото': '' },
-      { 'ID_Авто': '2', 'Ім\'я': 'Олександр Бондар (Тест)', 'Фото': '' },
-      { 'ID_Авто': '3', 'Ім\'я': 'Петро Шевченко (Тест)', 'Фото': '' },
-      { 'ID_Авто': '4', 'Ім\'я': 'Дмитро Кравченко (Тест)', 'Фото': '' }
-    ];
-  }
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
   
-  var headers = data[0];
-  var rows = data.slice(1);
+  var headers = data[0].map(function(h) { return h.toString().trim().toLowerCase(); });
+  var roleIdx = headers.indexOf('роль');
+  var nameIdx = headers.indexOf('піб');
+  var fallbackNameIdx = headers.indexOf('ім\'я');
+  var photoIdx = headers.indexOf('фото');
+  var telegramIdx = headers.indexOf('telegram');
+  if (telegramIdx === -1) telegramIdx = headers.indexOf('telegram_id');
+  if (telegramIdx === -1) telegramIdx = headers.indexOf('id_телеграм');
   
-  var photoCol = -1;
-  headers.forEach(function(header, idx) {
-    var h = header.toString().trim().toLowerCase();
-    if (h === 'фото' || h === 'аватар' || h === 'зображення') {
-      photoCol = idx;
+  var drivers = [];
+  
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var role = row[roleIdx] ? row[roleIdx].toString().trim() : '';
+    if (role.toLowerCase() !== 'водій') continue;
+    
+    var name = row[nameIdx] ? row[nameIdx].toString().trim() : '';
+    if (!name && fallbackNameIdx > -1) {
+      name = row[fallbackNameIdx] ? row[fallbackNameIdx].toString().trim() : '';
     }
-  });
-
-  return rows.map(function(row, i) {
-    var obj = {};
-    headers.forEach(function(header, index) {
-      var val = row[index];
-      var h = header.toString().trim().toLowerCase();
-      
-      // Standardize driver keys
-      if (h === 'id_авто' || h === 'id' || h === 'водій_id' || h === 'код' || h === 'номер') {
-        obj['ID_Авто'] = val;
-      } else if (h === 'ім\'я' || h === 'піб' || h === 'водій' || h === 'ім’я' || h === 'фіо') {
-        obj['Ім\'я'] = val;
-      } else if (h === 'фото' || h === 'аватар' || h === 'зображення') {
-        obj['Фото'] = val;
-      } else if (h === 'telegram_id' || h === 'chat_id' || h === 'telegram' || h === 'id_телеграм') {
-        obj['Telegram_ID'] = val;
-      } else {
-        obj[header] = val;
-      }
+    if (!name) continue;
+    
+    var photo = (photoIdx > -1 && row[photoIdx]) ? row[photoIdx].toString() : '';
+    var tgId = (telegramIdx > -1 && row[telegramIdx]) ? row[telegramIdx].toString().trim() : '';
+    
+    drivers.push({
+      'Ім\'я': name,
+      'Фото': photo,
+      'Telegram_ID': tgId
     });
-    
-    // Fallbacks if some headers didn't match standard names
-    if (!obj['ID_Automobile'] && obj['ID_Авто']) obj['ID_Automobile'] = obj['ID_Авто'];
-    if (!obj['ID_Авто'] && obj['ID']) obj['ID_Авто'] = obj['ID'];
-    if (!obj['Ім\'я'] && obj['ПІБ']) obj['Ім\'я'] = obj['ПІБ'];
-    if (!obj['Ім\'я'] && obj['Водій']) obj['Ім\'я'] = obj['Водій'];
-    
-    // Auto-fetch Telegram Profile Photo if empty and Telegram_ID present
-    if (!obj['Фото'] && obj['Telegram_ID']) {
-      var base64Avatar = fetchTelegramAvatarAsBase64(obj['Telegram_ID']);
-      if (base64Avatar) {
-        obj['Фото'] = base64Avatar;
-        // Save to spreadsheet
-        var rowNum = i + 2; // +1 for header, +1 for 1-based index
-        if (photoCol !== -1) {
-          sheet.getRange(rowNum, photoCol + 1).setValue(base64Avatar);
-        }
-      }
-    }
-    
-    return obj;
-  });
+  }
+  
+  return drivers;
 }
 
 function addDelivery(deliveryData) {
@@ -374,6 +418,7 @@ function addDelivery(deliveryData) {
     // Add missing columns if they don't exist
     var hasWorker = headers.indexOf('ID_Комірника') !== -1;
     var hasGatherStatus = headers.indexOf('Статус_збору') !== -1;
+    var hasDriverCol = headers.indexOf('ID_Водія') !== -1;
     
     if (!hasWorker) {
       sheet.getRange(1, headers.length + 1).setValue('ID_Комірника');
@@ -382,6 +427,10 @@ function addDelivery(deliveryData) {
     if (!hasGatherStatus) {
       sheet.getRange(1, headers.length + 1).setValue('Статус_збору');
       headers.push('Статус_збору');
+    }
+    if (!hasDriverCol) {
+      sheet.getRange(1, headers.length + 1).setValue('ID_Водія');
+      headers.push('ID_Водія');
     }
   }
   
@@ -405,6 +454,7 @@ function addDelivery(deliveryData) {
   setVal('Телефон_одержувача', deliveryData.receiver_phone || '');
   setVal('ID_Менеджера', deliveryData.manager_chat_id || '');
   setVal('ID_Комірника', '');
+  setVal('ID_Водія', deliveryData.driver_user_id || '');
   var statusColFound = false;
   for (var k = 0; k < headers.length; k++) {
     var hStr = headers[k].toString().trim().toLowerCase();
@@ -456,6 +506,17 @@ function addDelivery(deliveryData) {
     heads.forEach(function(head) {
       sendTelegramMessage(head.telegram_id, text, kb);
     });
+  }
+  
+  if (deliveryData.driver_user_id) {
+    notifyDriverAboutDelivery(deliveryData);
+  }
+  
+  // Ensure the client is recorded in the clients database
+  try {
+    ensureClientInDatabase(deliveryData.receiver_name, deliveryData.receiver_phone, deliveryData.address);
+  } catch (e) {
+    Logger.log("Error in ensureClientInDatabase during addDelivery: " + e.message);
   }
   
   return { status: 'success', id: id };
@@ -604,6 +665,11 @@ function assignWarehouseWorker(deliveryId, workerId) {
       sheet.getRange(i + 1, gatherCol + 1).setValue('В процесі збору');
       if (orderCol !== -1) orderNum = data[i][orderCol];
       
+      var managerId = "";
+      var managerCol = headers.indexOf('ID_Менеджера');
+      if (managerCol !== -1) managerId = String(data[i][managerCol]).trim().toLowerCase();
+      var isIraOrder = (managerId === '7797165411' || managerId === 'ira order' || managerId === 'ira_order');
+      
       // Get the worker telegram ID to send them a notification
       var whData = getWarehouseWorkers();
       var assignedWorker = null;
@@ -611,11 +677,15 @@ function assignWarehouseWorker(deliveryId, workerId) {
       for (var k = 0; k < whData.workers.length; k++) { if (String(whData.workers[k].id) == String(workerId) || String(whData.workers[k].telegram_id) == String(workerId)) assignedWorker = whData.workers[k]; }
       
       if (assignedWorker && assignedWorker.telegram_id) {
-        var text = "📦 <b>Вам призначено збірку замовлення №" + orderNum + "</b>\n\n" +
-                   "Натисніть 'Підтвердити', коли воно буде готове, або 'Проблема', якщо щось пішло не так.";
+        var text = isIraOrder
+          ? "📥 <b>Вам призначено прийом поставки №" + orderNum + "</b>\n\n" +
+            "Натисніть 'Прийняв доставку', коли товар буде прийнято на склад, або 'Проблема', якщо щось пішло не так."
+          : "📦 <b>Вам призначено збірку замовлення №" + orderNum + "</b>\n\n" +
+            "Натисніть 'Підтвердити', коли воно буде готове, або 'Проблема', якщо щось пішло не так.";
+        var confirmBtnText = isIraOrder ? "✅ Прийняв поставку" : "✅ Підтвердити (Зібрано)";
         var kb = {
           "inline_keyboard": [
-            [{"text": "✅ Підтвердити (Зібрано)", "callback_data": "wh_confirm_" + deliveryId}],
+            [{"text": confirmBtnText, "callback_data": "wh_confirm_" + deliveryId}],
             [{"text": "⚠️ Проблема зі збіркою", "callback_data": "wh_problem_" + deliveryId}]
           ]
         };
@@ -697,7 +767,7 @@ function updateWarehouseStatus(deliveryId, statusStr) {
           sendTelegramMessage(managerId, alertText);
         }
       }
-      return { status: 'success', order_num: orderNum, car_id: carId };
+      return { status: 'success', order_num: orderNum, car_id: carId, manager_id: managerId };
     }
   }
   return { status: 'error' };
@@ -787,6 +857,7 @@ function authenticateUser(login, password) {
   var roleCol = headers.indexOf('Роль');
   var nameCol = headers.indexOf('Ім\'я');
   var telCol = headers.indexOf('Telegram_ID');
+  var altTelCol = headers.indexOf('Telegram');
   
   if (loginCol === -1 || passCol === -1 || roleCol === -1) {
     return { status: 'error', message: 'Некоректний формат листа користувачів' };
@@ -796,13 +867,17 @@ function authenticateUser(login, password) {
     var rowLogin = String(data[i][loginCol]).trim();
     var rowPass = String(data[i][passCol]).trim();
     if (rowLogin === login && rowPass === password) {
+      var tgVal = telCol !== -1 ? String(data[i][telCol]).trim() : '';
+      if (!tgVal && altTelCol !== -1) {
+        tgVal = String(data[i][altTelCol]).trim();
+      }
       return {
         status: 'success',
         user: {
           login: rowLogin,
           role: String(data[i][roleCol]).trim(),
           name: nameCol !== -1 ? String(data[i][nameCol]).trim() : rowLogin,
-          telegramId: telCol !== -1 ? String(data[i][telCol]).trim() : ''
+          telegramId: tgVal
         }
       };
     }
@@ -832,6 +907,12 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
   var nameCol = headers.indexOf('Ім\'я_одержувача');
   var phoneCol = headers.indexOf('Телефон_одержувача');
   var managerCol = headers.indexOf('ID_Менеджера');
+  var driverUserCol = headers.indexOf('ID_Водія');
+  if (driverUserCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('ID_Водія');
+    driverUserCol = headers.length;
+    headers.push('ID_Водія');
+  }
   
   if (idCol === -1) {
     return { status: 'error', message: 'Необхідні заголовки таблиці відсутні' };
@@ -842,11 +923,8 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
     if (!currentIdRaw || currentIdRaw === 'undefined') currentIdRaw = String(i + 1);
     
     var matchId = idCol !== -1 && String(currentIdRaw).trim() === String(deliveryId).trim();
-    var matchOrder = orderCol !== -1 && String(data[i][orderCol]).trim() === String(deliveryId).trim();
-    var matchFallback = idCol !== -1 && String(currentIdRaw).trim() === String(deliveryData.order_num).trim();
-    var matchOrderFallback = orderCol !== -1 && String(data[i][orderCol]).trim() === String(deliveryData.order_num).trim();
     
-    if (matchId || matchOrder || matchFallback || matchOrderFallback) {
+    if (matchId) {
       var rowNum = i + 1;
       
       // Store old values for comparison
@@ -857,16 +935,22 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
       var oldOrderNum = orderCol !== -1 ? data[i][orderCol] : '';
       var managerId = managerCol !== -1 ? data[i][managerCol] : '';
       
-      // Update spreadsheet cells
-      if (carCol !== -1) sheet.getRange(rowNum, carCol + 1).setValue(deliveryData.driver_id);
-      if (dateCol !== -1) sheet.getRange(rowNum, dateCol + 1).setValue(deliveryData.date);
-      if (timeCol !== -1) sheet.getRange(rowNum, timeCol + 1).setValue(deliveryData.time);
-      if (addressCol !== -1) sheet.getRange(rowNum, addressCol + 1).setValue(deliveryData.address);
-      if (orderCol !== -1) sheet.getRange(rowNum, orderCol + 1).setValue(deliveryData.order_num || '');
-      if (payCol !== -1) sheet.getRange(rowNum, payCol + 1).setValue(deliveryData.payment || '');
-      if (commentCol !== -1) sheet.getRange(rowNum, commentCol + 1).setValue(deliveryData.comment || '');
-      if (nameCol !== -1) sheet.getRange(rowNum, nameCol + 1).setValue(deliveryData.receiver_name || '');
-      if (phoneCol !== -1) sheet.getRange(rowNum, phoneCol + 1).setValue(deliveryData.receiver_phone || '');
+      // Update spreadsheet cells safely (only if provided)
+      if (carCol !== -1 && deliveryData.driver_id !== undefined) sheet.getRange(rowNum, carCol + 1).setValue(deliveryData.driver_id);
+      if (dateCol !== -1 && deliveryData.date !== undefined) sheet.getRange(rowNum, dateCol + 1).setValue(deliveryData.date);
+      if (timeCol !== -1 && deliveryData.time !== undefined) sheet.getRange(rowNum, timeCol + 1).setValue(deliveryData.time);
+      if (addressCol !== -1 && deliveryData.address !== undefined) sheet.getRange(rowNum, addressCol + 1).setValue(deliveryData.address);
+      if (orderCol !== -1 && deliveryData.order_num !== undefined) sheet.getRange(rowNum, orderCol + 1).setValue(deliveryData.order_num);
+      if (payCol !== -1 && deliveryData.payment !== undefined) sheet.getRange(rowNum, payCol + 1).setValue(deliveryData.payment);
+      if (commentCol !== -1 && deliveryData.comment !== undefined) sheet.getRange(rowNum, commentCol + 1).setValue(deliveryData.comment);
+      if (nameCol !== -1 && deliveryData.receiver_name !== undefined) sheet.getRange(rowNum, nameCol + 1).setValue(deliveryData.receiver_name);
+      var oldDriverUser = driverUserCol !== -1 ? data[i][driverUserCol] : '';
+      
+      if (driverUserCol !== -1 && deliveryData.driver_user_id !== undefined) sheet.getRange(rowNum, driverUserCol + 1).setValue(deliveryData.driver_user_id);
+      
+      if (deliveryData.driver_user_id && deliveryData.driver_user_id !== oldDriverUser) {
+        notifyDriverAboutDelivery(deliveryData);
+      }
       
       // Check if changes are made by logist/director/admin and notify manager if critical fields shifted
       if (managerId && (userRole === 'logist' || userRole === 'director' || userRole === 'admin')) {
@@ -897,6 +981,17 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
                                  "ℹ️ Будь ласка, врахуйте ці зміни у вашій роботі.";
           sendTelegramMessage(managerId, notificationText);
         }
+      }
+      
+      // Ensure the client is recorded in the clients database
+      var finalName = deliveryData.receiver_name !== undefined ? deliveryData.receiver_name : (nameCol !== -1 ? data[i][nameCol] : '');
+      var finalPhone = deliveryData.receiver_phone !== undefined ? deliveryData.receiver_phone : (phoneCol !== -1 ? data[i][phoneCol] : '');
+      var finalAddress = deliveryData.address !== undefined ? deliveryData.address : (addressCol !== -1 ? data[i][addressCol] : '');
+      
+      try {
+        ensureClientInDatabase(finalName, finalPhone, finalAddress);
+      } catch (e) {
+        Logger.log("Error in ensureClientInDatabase during updateDeliveryDetails: " + e.message);
       }
       
       return { status: 'success', id: deliveryId };
@@ -1061,6 +1156,7 @@ function getDailyCrews() {
 // ====== АВТОМАТИЧНІ РОЗСИЛКИ ======
 
 function setupNotifications() {
+  // Видаляємо всі старі тригери розсилок, щоб уникнути дублювання з Python-ботом
   var triggers = ScriptApp.getProjectTriggers();
   for (var i = 0; i < triggers.length; i++) {
     var handlerName = triggers[i].getHandlerFunction();
@@ -1068,22 +1164,7 @@ function setupNotifications() {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
-  
-  ScriptApp.newTrigger('sendCarSelectionReminders')
-           .timeBased()
-           .everyDays(1)
-           .atHour(11)
-           .nearMinute(0)
-           .create();
-           
-  ScriptApp.newTrigger('sendTodayRoutes')
-           .timeBased()
-           .everyDays(1)
-           .atHour(11)
-           .nearMinute(30)
-           .create();
-           
-  Logger.log('Тригери успішно встановлено!');
+  Logger.log('Усі старі тригери розсилок у Google Apps Script успішно видалено. Тепер розсилки веде виключно Telegram-бот.');
 }
 
 function sendCarSelectionReminders() {
@@ -1108,12 +1189,21 @@ function sendCarSelectionReminders() {
   }
 }
 
-function sendTodayRoutes() {
+function sendTomorrowRoutes() {
   var today = new Date();
-  var todayStr = Utilities.formatDate(today, 'Europe/Kiev', 'yyyy-MM-dd');
+  var tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var tomorrowStr = Utilities.formatDate(tomorrow, 'Europe/Kiev', 'dd.MM.yyyy');
+  var tomorrowStrISO = Utilities.formatDate(tomorrow, 'Europe/Kiev', 'yyyy-MM-dd');
   
-  var deliveries = getDeliveries().filter(function(d) { return d['Дата'] === todayStr; });
-  var dailyCrews = getDailyCrews().filter(function(c) { return c['Дата'] === todayStr; });
+  var allDeliveries = getDeliveries();
+  var deliveries = allDeliveries.filter(function(d) {
+    return d['Дата'] === tomorrowStr || d['Дата'] === tomorrowStrISO;
+  });
+  var allCrews = getDailyCrews();
+  var dailyCrews = allCrews.filter(function(c) {
+    return c['Дата'] === tomorrowStr || c['Дата'] === tomorrowStrISO;
+  });
   
   var carDeliveries = {};
   deliveries.forEach(function(d) {
@@ -1122,41 +1212,19 @@ function sendTodayRoutes() {
   });
   
   dailyCrews.forEach(function(crew) {
-    var workerName = "Невідомий комірник";
-    var workerTgId = "";
-    
-    if (workerId === 'general') {
-      workerName = 'Комірник';
-    } else if (usersSheet) {
-      var data = usersSheet.getDataRange().getValues();
-      var headers = data[0];
-      var tgCol = headers.indexOf('Telegram_ID');
-      var nameCol = headers.indexOf('ПІБ');
-      var idCol = headers.indexOf('ID');
-      
-      if (tgCol !== -1) {
-        for (var i = 1; i < data.length; i++) {
-          var uId = (idCol !== -1 && data[i][idCol]) ? data[i][idCol] : data[i][tgCol];
-          if (String(uId) === String(workerId) || String(data[i][tgCol]) === String(workerId)) {
-            workerName = nameCol !== -1 ? data[i][nameCol] : ('Комірник ' + workerId);
-            workerTgId = data[i][tgCol];
-            break;
-          }
-        }
-      }
-    }  var tgId = crew['Telegram_ID'];
+    var tgId = crew['Telegram_ID'];
     var carId = crew['ID_Авто'];
     if (!tgId || !carId) return;
     
-    var routeMsg = '🗺 Твій маршрут на сьогодні (' + todayStr + ') для Авто ' + carId + ':\n\n';
+    var routeMsg = '🗺 Твій маршрут на завтра (' + tomorrowStr + ') для Авто ' + carId + ':\n\n';
     var dels = carDeliveries[carId] || [];
     
     if (dels.length === 0) {
-      routeMsg += 'На сьогодні доставок поки немає. Відпочивай! 😎';
+      routeMsg += 'На завтра доставок поки немає. Відпочивай! 😎';
     } else {
       dels.sort(function(a, b) { return a['Час'].localeCompare(b['Час']); });
       dels.forEach(function(d, index) {
-        var comp = d['Ім\'я_одержувача'] ? d['Ім\'я_одержувача'] : '';
+        var comp = d["Ім'я_одержувача"] ? d["Ім'я_одержувача"] : '';
         routeMsg += (index + 1) + '. ⏰ ' + d['Час'] + '\n';
         if (comp) routeMsg += '🏢 ' + comp + '\n';
         routeMsg += '📍 ' + d['Адреса'] + '\n';
@@ -1168,8 +1236,17 @@ function sendTodayRoutes() {
     
     try {
       sendTelegramMessage(tgId, routeMsg);
-    } catch (e) {}
+    } catch (e) {
+      Logger.log('Помилка відправки маршруту водію ' + tgId + ': ' + e);
+    }
   });
+  
+  Logger.log('Розсилка маршрутів на завтра (' + tomorrowStr + ') завершена. Водіїв у розкладі: ' + dailyCrews.length);
+}
+
+// Стара функція — залишена для сумісності
+function sendTodayRoutes() {
+  sendTomorrowRoutes();
 }
 
 // ==========================================
@@ -1267,6 +1344,8 @@ function saveClient(payload) {
       if (key === 'Примітки') return payload.notes;
       if (key === 'Додаткові_Контакти') return payload.extra_contacts || '';
       if (key === 'Логотип') return payload.logo || '';
+      if (key === 'Client_Telegram_ID') return payload.Client_Telegram_ID || payload.client_telegram_id || '';
+      if (key === 'Status_Реєстрації') return payload.Status_Реєстрації || payload.status_реєстрації || '';
       return '';
     });
     sheet.appendRow(newRow);
@@ -1296,9 +1375,11 @@ function saveClient(payload) {
         if (key === 'Примітки') val = payload.notes;
         if (key === 'Додаткові_Контакти') val = payload.extra_contacts || '';
         if (key === 'Логотип') val = payload.logo || '';
+        if (key === 'Client_Telegram_ID') val = payload.Client_Telegram_ID || payload.client_telegram_id || '';
+        if (key === 'Status_Реєстрації') val = payload.Status_Реєстрації || payload.status_реєстрації || '';
         
         // We allow overwriting with empty string for extra_contacts to clear them
-        if (val !== '' || key === 'Додаткові_Контакти' || key === 'Логотип') {
+        if (val !== '' || key === 'Додаткові_Контакти' || key === 'Логотип' || key === 'Client_Telegram_ID' || key === 'Status_Реєстрації') {
           sheet.getRange(rowIndex, idx + 1).setValue(val);
         }
       });
@@ -1325,10 +1406,29 @@ function deleteClient(id) {
   return { status: 'error', message: 'Клієнта не знайдено' };
 }
 
+function ensureEmployeeHeaders(sheet) {
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var required = ['Авто', 'Телефон', 'Telegram', 'ПІБ', 'Фото'];
+  var added = false;
+  
+  required.forEach(function(req) {
+    if (headers.indexOf(req) === -1) {
+      var colIndex = headers.length + 1;
+      sheet.getRange(1, colIndex).setValue(req);
+      headers.push(req);
+      added = true;
+    }
+  });
+  return headers;
+}
+
 function get_employees() {
   var ss = getSpreadsheet();
   var sheet = ss.getSheetByName('Користувачі');
   if (!sheet) return { status: 'success', data: [] };
+  
+  ensureEmployeeHeaders(sheet);
   
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return { status: 'success', data: [] };
@@ -1338,12 +1438,16 @@ function get_employees() {
   var result = rows.map(function(row) {
     var obj = {};
     headers.forEach(function(header, index) { obj[header] = row[index]; });
-    // Normalize role string if needed
+    
+    // Normalize role and map names/telegram to standard keys
     obj['Роль'] = (obj['Роль'] || '').toLowerCase().trim();
+    obj['ПІБ'] = obj['ПІБ'] || obj["Ім'я"] || '';
+    obj['Telegram'] = obj['Telegram'] || obj['Telegram_ID'] || '';
+    
     // Use Login as ID if ID is missing
     if (!obj['ID']) obj['ID'] = obj['Логін'];
     return obj;
-  }).filter(function(row) { return row['ID']; });
+  }).filter(function(row) { return row['ID'] || row['ПІБ']; });
   
   return { status: 'success', data: result };
 }
@@ -1356,22 +1460,25 @@ function saveEmployee(payload) {
     sheet.appendRow(['Логін', 'Пароль', 'ПІБ', 'Роль', 'Авто', 'Телефон', 'Telegram']);
   }
   
+  var headers = ensureEmployeeHeaders(sheet);
   var data = sheet.getDataRange().getValues();
-  var headers = data[0];
   var loginIndex = headers.indexOf('Логін');
   
   var isNew = !payload.id;
-  var login = payload.id || ('user' + new Date().getTime());
+  if (isNew) {
+    return { status: 'error', message: 'Створення нових співробітників виконується виключно автономно через реєстрацію в Telegram-боті!' };
+  }
+  var login = payload.id;
   
   if (isNew) {
     var newRow = headers.map(function(h) {
       if (h === 'Логін') return login;
       if (h === 'Пароль') return '1234'; // Default password
-      if (h === 'ПІБ') return payload.name;
+      if (h === 'ПІБ' || h === "Ім'я") return payload.name;
       if (h === 'Роль') return payload.role;
       if (h === 'Авто') return payload.car;
       if (h === 'Телефон') return payload.phone;
-      if (h === 'Telegram') return payload.telegram;
+      if (h === 'Telegram' || h === 'Telegram_ID') return payload.telegram;
       return '';
     });
     sheet.appendRow(newRow);
@@ -1385,16 +1492,16 @@ function saveEmployee(payload) {
     }
     if (rowIndex > -1) {
       headers.forEach(function(h, idx) {
-        // don't overwrite password
         if (h === 'Пароль') return; 
-        var val = '';
+        var val = null;
         if (h === 'Логін') val = payload.id;
-        if (h === 'ПІБ') val = payload.name;
+        if (h === 'ПІБ' || h === "Ім'я") val = payload.name;
         if (h === 'Роль') val = payload.role;
         if (h === 'Авто') val = payload.car;
         if (h === 'Телефон') val = payload.phone;
-        if (h === 'Telegram') val = payload.telegram;
-        if (['Логін', 'ПІБ', 'Роль', 'Авто', 'Телефон', 'Telegram'].indexOf(h) !== -1) {
+        if (h === 'Telegram' || h === 'Telegram_ID') val = payload.telegram;
+        
+        if (val !== null) {
           sheet.getRange(rowIndex, idx + 1).setValue(val);
         }
       });
@@ -1421,6 +1528,60 @@ function deleteEmployee(id) {
   return { status: 'error', message: 'Співробітника не знайдено' };
 }
 
+function deleteDelivery(id) {
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName('Доставки');
+  if (!sheet) return { status: 'error', message: 'Аркуш "Доставки" не знайдено' };
+  
+  var data = sheet.getDataRange().getValues();
+  var idCol = data[0].indexOf('ID');
+  if (idCol === -1) idCol = data[0].indexOf('Код');
+  if (idCol === -1) return { status: 'error', message: 'Колонку ID не знайдено' };
+  
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][idCol]).trim() === String(id).trim()) {
+      sheet.deleteRow(i + 1);
+      return { status: 'success', message: 'Доставку з ID ' + id + ' успішно видалено.' };
+    }
+  }
+  return { status: 'error', message: 'Доставку з ID ' + id + ' не знайдено.' };
+}
+
+function generateNextLogin(role, sheet) {
+  var prefix = 'user';
+  var roleLower = String(role || '').toLowerCase();
+  
+  if (roleLower.indexOf('керівник') > -1 || roleLower.indexOf('director') > -1 || roleLower.indexOf('адмін') > -1) {
+    prefix = 'director';
+  } else if (roleLower.indexOf('менеджер') > -1 || roleLower.indexOf('manager') > -1) {
+    prefix = 'manager';
+  } else if (roleLower.indexOf('водій') > -1 || roleLower.indexOf('driver') > -1) {
+    prefix = 'driver';
+  } else if (roleLower.indexOf('комірник') > -1 || roleLower.indexOf('warehouse') > -1) {
+    prefix = 'warehouse';
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(function(h) { return h.toString().trim(); });
+  var loginIdx = headers.indexOf('Логін');
+  if (loginIdx === -1) return prefix + '1';
+  
+  var maxIndex = 0;
+  var regex = new RegExp('^' + prefix + '(\\d+)$');
+  for (var i = 1; i < data.length; i++) {
+    var cellVal = String(data[i][loginIdx]).trim();
+    var match = cellVal.match(regex);
+    if (match) {
+      var num = parseInt(match[1], 10);
+      if (num > maxIndex) {
+        maxIndex = num;
+      }
+    }
+  }
+  
+  return prefix + (maxIndex + 1);
+}
+
 function register_driver(data) {
   try {
     var ss = getSpreadsheet();
@@ -1430,13 +1591,69 @@ function register_driver(data) {
     if (!sheet) return { status: 'error', message: 'Sheet Користувачі not found' };
     
     var name = data.name || "Невідомий Водій";
-    var telegram_id = data.telegram_id || "";
+    var telegram_id = String(data.telegram_id || "").trim();
+    
+    if (telegram_id) {
+      var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      var tgColIdx = headers.indexOf('Telegram');
+      if (tgColIdx === -1) tgColIdx = headers.indexOf('Telegram_ID');
+      
+      if (tgColIdx !== -1) {
+        var sheetData = sheet.getDataRange().getValues();
+        var foundRowIdx = -1;
+        for (var r = 1; r < sheetData.length; r++) {
+          if (String(sheetData[r][tgColIdx]).trim() === telegram_id) {
+            foundRowIdx = r + 1;
+            break;
+          }
+        }
+        
+        if (foundRowIdx > -1) {
+          var setCellVal = function(colName, val) {
+            var idx = headers.indexOf(colName);
+            if (idx !== -1) {
+              sheet.getRange(foundRowIdx, idx + 1).setValue(val);
+            }
+          };
+          setCellVal('ПІБ', name);
+          setCellVal('Роль', data.role || "driver");
+          if (data.phone) setCellVal('Телефон', data.phone);
+          
+          // Retrieve existing credentials to send them to the user
+          var loginIdx = headers.indexOf('Логін');
+          var pwdIdx = headers.indexOf('Пароль');
+          var existingLogin = loginIdx !== -1 ? String(sheetData[foundRowIdx - 1][loginIdx]).trim() : name;
+          var existingPwd = pwdIdx !== -1 ? String(sheetData[foundRowIdx - 1][pwdIdx]).trim() : '1234';
+          
+          if (telegram_id && telegram_id !== '-' && telegram_id !== '') {
+            var roleLower = String(data.role || "driver").toLowerCase();
+            var isWebUser = roleLower.indexOf('керівник') > -1 || 
+                             roleLower.indexOf('director') > -1 || 
+                             roleLower.indexOf('менеджер') > -1 || 
+                             roleLower.indexOf('manager') > -1 || 
+                             roleLower.indexOf('логіст') > -1 || 
+                             roleLower.indexOf('logist') > -1 || 
+                             roleLower.indexOf('адмін') > -1;
+            
+            var welcomeText;
+            if (isWebUser) {
+              welcomeText = "🎉 <b>Доступ до системи Propex підтверджено!</b>\n\nВаші облікові дані для входу на веб-портал:\n\n👤 Логін: <code>" + existingLogin + "</code>\n🔑 Пароль: <code>" + existingPwd + "</code>\n\n<i>Ви можете увійти в систему вже зараз.</i>";
+            } else {
+              welcomeText = "🎉 <b>Реєстрацію успішно підтверджено!</b>\n\nТепер ви можете користуватися Telegram-ботом.";
+            }
+            sendTelegramMessage(telegram_id, welcomeText);
+          }
+          
+          return { status: 'success', message: 'Driver updated and credentials sent' };
+        }
+      }
+    }
     
     // Generate unique ID and logic
     var id = Utilities.getUuid();
-    var login = "driver_" + telegram_id;
-    var password = "driver_" + Math.floor(1000 + Math.random() * 9000); // e.g. driver_4521
     var role = data.role || "driver";
+    var login = name.trim();
+    var password = String(Math.floor(100000 + Math.random() * 900000));
     
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     var newRow = new Array(headers.length).fill('');
@@ -1461,9 +1678,824 @@ function register_driver(data) {
     
     sheet.appendRow(newRow);
     
+    if (telegram_id && telegram_id !== '-' && telegram_id !== '') {
+      var roleLower = String(role || '').toLowerCase();
+      var isWebUser = roleLower.indexOf('керівник') > -1 || 
+                       roleLower.indexOf('director') > -1 || 
+                       roleLower.indexOf('менеджер') > -1 || 
+                       roleLower.indexOf('manager') > -1 || 
+                       roleLower.indexOf('логіст') > -1 || 
+                       roleLower.indexOf('logist') > -1 || 
+                       roleLower.indexOf('бухгалтер') > -1 || 
+                       roleLower.indexOf('бух') > -1 || 
+                       roleLower.indexOf('адмін') > -1;
+      
+      var welcomeText;
+      if (isWebUser) {
+        welcomeText = "🎉 <b>Реєстрацію успішно підтверджено!</b>\n\nВи отримали доступ до CRM-системи Propex.\n\n👤 Логін: <code>" + login + "</code>\n🔑 Пароль: <code>" + password + "</code>\n\n<i>Збережіть ці дані для входу в систему. Ви можете змінити свій пароль у будь-який час.</i>";
+      } else {
+        welcomeText = "🎉 <b>Реєстрацію успішно підтверджено!</b>\n\nДякуємо за реєстрацію. Тепер ви можете повноцінно користуватися Telegram-ботом.";
+      }
+      sendTelegramMessage(telegram_id, welcomeText);
+    }
+    
     return { status: 'success', message: 'Driver registered' };
   } catch (e) {
     return { status: 'error', message: e.toString() };
   }
 }
 
+function registerClient(payload) {
+  try {
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Клієнти');
+    if (!sheet) {
+      sheet = ss.insertSheet('Клієнти');
+      sheet.appendRow(['ID', 'Тип', 'Назва', 'Контакт', 'Телефон', 'Email', 'Telegram', 'Viber', 'WhatsApp', 'Примітки', 'Додаткові_Контакти', 'Логотип', 'Client_Telegram_ID', 'Status_Реєстрації']);
+    }
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return h.toString().trim(); });
+    
+    // Ensure Client_Telegram_ID and Status_Реєстрації exist
+    var tgIdIdx = headers.indexOf('Client_Telegram_ID');
+    if (tgIdIdx === -1) {
+      headers.push('Client_Telegram_ID');
+      sheet.getRange(1, headers.length).setValue('Client_Telegram_ID');
+      tgIdIdx = headers.length - 1;
+    }
+    var statusIdx = headers.indexOf('Status_Реєстрації');
+    if (statusIdx === -1) {
+      headers.push('Status_Реєстрації');
+      sheet.getRange(1, headers.length).setValue('Status_Реєстрації');
+      statusIdx = headers.length - 1;
+    }
+    
+    var phoneIdx = headers.indexOf('Телефон');
+    var extraContactsIdx = headers.indexOf('Додаткові_Контакти');
+    var idIdx = headers.indexOf('ID');
+    
+    // Normalize payload phone number (remove +, spaces, etc.)
+    var searchPhone = payload.phone.toString().replace(/[^0-9]/g, '');
+    if (searchPhone.length > 9) {
+      searchPhone = searchPhone.slice(-9); // Match last 9 digits to handle country code variation
+    }
+    
+    // Search for existing client by phone number (main column or extra contacts)
+    var rowIndex = -1;
+    for (var i = 1; i < data.length; i++) {
+      // 1. Check main Телефон column
+      var rowPhone = data[i][phoneIdx] ? data[i][phoneIdx].toString().replace(/[^0-9]/g, '') : '';
+      if (rowPhone) {
+        if (rowPhone.length > 9) rowPhone = rowPhone.slice(-9);
+        if (rowPhone === searchPhone) {
+          rowIndex = i + 1;
+          break;
+        }
+      }
+      
+      // 2. Check Додаткові_Контакти column
+      if (extraContactsIdx > -1 && data[i][extraContactsIdx]) {
+        try {
+          var extraStr = data[i][extraContactsIdx].toString().trim();
+          if (extraStr && (extraStr.indexOf('[') === 0 || extraStr.indexOf('{') === 0)) {
+            var contacts = JSON.parse(extraStr);
+            if (Array.isArray(contacts)) {
+              for (var j = 0; j < contacts.length; j++) {
+                var cPhone = contacts[j].phone ? contacts[j].phone.toString().replace(/[^0-9]/g, '') : '';
+                if (cPhone) {
+                  if (cPhone.length > 9) cPhone = cPhone.slice(-9);
+                  if (cPhone === searchPhone) {
+                    rowIndex = i + 1;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore JSON parse errors for corrupt cells
+        }
+      }
+      if (rowIndex > -1) break;
+    }
+    
+    if (rowIndex > -1) {
+      // Client already exists in CRM by phone number!
+      // Auto-approve and link their Telegram ID!
+      sheet.getRange(rowIndex, tgIdIdx + 1).setValue(payload.telegram_id);
+      sheet.getRange(rowIndex, statusIdx + 1).setValue('Підтверджено');
+      return { status: 'success', is_new: false, approved: true };
+    } else {
+      // Client does not exist in CRM yet. Create a new row in pending status
+      var newId = 'CLI-' + new Date().getTime();
+      var newRow = headers.map(function(h) {
+        if (h === 'ID') return newId;
+        if (h === 'Тип') return 'Фізична особа';
+        if (h === 'Назва') return payload.name;
+        if (h === 'Контакт') return payload.name;
+        if (h === 'Телефон') return payload.phone;
+        if (h === 'Client_Telegram_ID') return payload.telegram_id;
+        if (h === 'Status_Реєстрації') return 'Очікує підтвердження';
+        if (h === 'Примітки') return 'Самореєстрація через Telegram: ' + (payload.company || '');
+        return '';
+      });
+      sheet.appendRow(newRow);
+      return { status: 'success', is_new: true, approved: false };
+    }
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function approveClient(clientId, status) {
+  try {
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Клієнти');
+    if (!sheet) return { status: 'error', message: 'Sheet not found' };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return h.toString().trim(); });
+    
+    var idIdx = headers.indexOf('ID');
+    var statusIdx = headers.indexOf('Status_Реєстрації');
+    var tgIdIdx = headers.indexOf('Client_Telegram_ID');
+    
+    var rowIndex = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][idIdx] === clientId) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+    
+    if (rowIndex > -1) {
+      sheet.getRange(rowIndex, statusIdx + 1).setValue(status);
+      var tgId = sheet.getRange(rowIndex, tgIdIdx + 1).getValue().toString();
+      return { status: 'success', telegram_id: tgId };
+    }
+    return { status: 'error', message: 'Client not found' };
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function testInspectOdometer() {
+  return "Database check OK";
+}
+
+function getOdometerData(startDateStr, endDateStr) {
+  try {
+    var ss = SpreadsheetApp.openById('17r2oSP52TFIAiGegGTWlHsxRmHN7iEX2W5M4aYUKM54');
+    var sheets = ss.getSheets();
+    
+    var start = startDateStr ? parseDateString(startDateStr) : null;
+    var end = endDateStr ? parseDateString(endDateStr) : null;
+    
+    var carMileages = {};
+    var carTrips = {};
+    var carFuels = {};
+    var dieselLiters = 0;
+    var dieselUah = 0;
+    var gasolineLiters = 0;
+    var gasolineUah = 0;
+    var dailyRecords = [];
+    
+    // List of known diesel vehicles
+    var dieselCars = ['volkswagen crafter', 'man', 'renault d18', 'renault dokker', 'hyundai ex-8'];
+    var electricCars = ['audi e-tron'];
+    
+    sheets.forEach(function(s) {
+      var name = s.getName().trim();
+      var nameLower = name.toLowerCase();
+      // Skip helper sheets
+      if (name === 'Заправки' || name === 'Аркуш2') return;
+      
+      var data = s.getDataRange().getValues();
+      if (data.length <= 1) return;
+      
+      var headers = data[0].map(function(h) { return h.toString().trim(); });
+      var dateIdx = headers.indexOf('Дата');
+      var driverIdx = headers.indexOf('Менеджер');
+      var kmIdx = headers.indexOf('Пробіг за день (км)');
+      var litIdx = headers.indexOf('Добова витрата палива (л)');
+      var uahIdx = headers.indexOf('Вартість пробігу (грн)');
+      var tripsIdx = headers.indexOf('Кількість поїздок');
+      
+      if (dateIdx === -1) return;
+      
+      var totalKm = 0;
+      var totalLit = 0;
+      var totalUah = 0;
+      var totalTrips = 0;
+      
+      for (var i = 1; i < data.length; i++) {
+        var row = data[i];
+        var rowDateStr = row[dateIdx];
+        if (!rowDateStr) continue;
+        
+        var rowDate = new Date(rowDateStr);
+        // Normalize dates to midnight to prevent timezone issues
+        var d = new Date(rowDate.getFullYear(), rowDate.getMonth(), rowDate.getDate());
+        
+        if (start) {
+          var sNorm = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+          if (d < sNorm) continue;
+        }
+        if (end) {
+          var eNorm = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+          if (d > eNorm) continue;
+        }
+        
+        // Sum values
+        var km = 0, lit = 0, uah = 0, trips = 0;
+        var driverName = '';
+        if (driverIdx > -1) {
+          driverName = String(row[driverIdx] || '').trim();
+        }
+        if (kmIdx > -1) {
+          km = parseFloat(row[kmIdx]) || 0;
+          totalKm += km;
+        }
+        if (litIdx > -1) {
+          lit = parseFloat(row[litIdx]) || 0;
+          totalLit += lit;
+        }
+        if (uahIdx > -1) {
+          uah = parseFloat(row[uahIdx]) || 0;
+          totalUah += uah;
+        }
+        if (tripsIdx > -1) {
+          trips = parseInt(row[tripsIdx]) || 0;
+          totalTrips += trips;
+        }
+        
+        var dateStr = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+        dailyRecords.push({
+          date: dateStr,
+          car: name,
+          driver: driverName,
+          mileage: km,
+          trips: trips,
+          fuel: lit,
+          uah: uah
+        });
+      }
+      
+      // Save car mileage, trips & fuels
+      if (totalKm > 0 || totalTrips > 0 || totalLit > 0) {
+        carMileages[name] = totalKm;
+        carTrips[name] = totalTrips;
+        carFuels[name] = Math.round(totalLit * 10) / 10;
+      }
+      
+      // Classify fuel type
+      var isDiesel = false;
+      var isElectric = false;
+      
+      dieselCars.forEach(function(dc) {
+        if (nameLower.indexOf(dc) > -1) isDiesel = true;
+      });
+      electricCars.forEach(function(ec) {
+        if (nameLower.indexOf(ec) > -1) isElectric = true;
+      });
+      
+      if (isElectric) {
+        // Skip fuel calculations for electric
+      } else if (isDiesel) {
+        dieselLiters += totalLit;
+        dieselUah += totalUah;
+      } else {
+        // Assume Gasoline for new/unmapped combustion engine cars
+        gasolineLiters += totalLit;
+        gasolineUah += totalUah;
+      }
+    });
+    
+    return {
+      status: 'success',
+      data: {
+        carMileages: carMileages,
+        carTrips: carTrips,
+        carFuels: carFuels,
+        dieselLiters: Math.round(dieselLiters * 10) / 10,
+        dieselUah: Math.round(dieselUah),
+        gasolineLiters: Math.round(gasolineLiters * 10) / 10,
+        gasolineUah: Math.round(gasolineUah),
+        dailyRecords: dailyRecords
+      }
+    };
+    
+  } catch(e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function parseDateString(str) {
+  if (str.indexOf('.') > -1) {
+    var parts = str.split('.');
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+  }
+  return new Date(str);
+}
+
+function resetEmployeePassword(loginId) {
+  try {
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Користувачі');
+    if (!sheet) return { status: 'error', message: 'Аркуш "Користувачі" не знайдено' };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return h.toString().trim(); });
+    var loginIdx = headers.indexOf('Логін');
+    var pwdIdx = headers.indexOf('Пароль');
+    var tgIdx = headers.indexOf('Telegram');
+    if (tgIdx === -1) tgIdx = headers.indexOf('Telegram_ID');
+    var nameIdx = headers.indexOf('ПІБ');
+    if (nameIdx === -1) nameIdx = headers.indexOf("Ім'я");
+    
+    if (loginIdx === -1 || pwdIdx === -1) {
+      return { status: 'error', message: 'Некоректні заголовки таблиці користувачів' };
+    }
+    
+    var rowIndex = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][loginIdx] === loginId) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) {
+      return { status: 'error', message: 'Співробітника не знайдено' };
+    }
+    
+    // Generate new random password
+    var newPassword = String(Math.floor(100000 + Math.random() * 900000));
+    
+    // Update password in sheet
+    sheet.getRange(rowIndex, pwdIdx + 1).setValue(newPassword);
+    
+    // Send to Telegram if Telegram ID exists
+    var telegramId = '';
+    if (tgIdx !== -1) {
+      telegramId = String(data[rowIndex - 1][tgIdx]).trim();
+    }
+    var employeeName = nameIdx !== -1 ? data[rowIndex - 1][nameIdx] : loginId;
+    
+    if (telegramId && telegramId !== '-' && telegramId !== 'None' && telegramId !== '') {
+      var messageText = "🔐 <b>Пароль оновлено адміністратором</b>\n\nШановний(а) <b>" + employeeName + "</b>, ваш пароль для входу в CRM-систему був скинутий адміністратором.\n\n🆕 Новий пароль: <code>" + newPassword + "</code>\n\n<i>Збережіть його в безпечному місці. Ви можете змінити його за бажанням.</i>";
+      sendTelegramMessage(telegramId, messageText);
+      return { status: 'success', sentTelegram: true, message: 'Пароль успішно змінено та надіслано в Telegram' };
+    } else {
+      return { status: 'success', sentTelegram: false, message: 'Пароль успішно змінено (користувач не має Telegram ID)' };
+    }
+    
+  } catch(e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function cleanupExistingLogins() {
+  try {
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Користувачі');
+    if (!sheet) return { status: 'error', message: 'Аркуш "Користувачі" не знайдено' };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return h.toString().trim(); });
+    var loginIdx = headers.indexOf('Логін');
+    var roleIdx = headers.indexOf('Роль');
+    var nameIdx = headers.indexOf('ПІБ');
+    if (nameIdx === -1) nameIdx = headers.indexOf("Ім'я");
+    var tgIdx = headers.indexOf('Telegram');
+    if (tgIdx === -1) tgIdx = headers.indexOf('Telegram_ID');
+    
+    if (loginIdx === -1) {
+      return { status: 'error', message: 'Некоректні заголовки таблиці користувачів' };
+    }
+    
+    var rowsToDelete = [];
+    var seenUsers = {}; // Key: telegram_id or PІБ
+    
+    for (var i = 1; i < data.length; i++) {
+      var currentLogin = String(data[i][loginIdx]).trim();
+      var role = roleIdx !== -1 ? String(data[i][roleIdx]).trim() : '';
+      var name = nameIdx !== -1 ? String(data[i][nameIdx]).trim() : '';
+      var tgId = tgIdx !== -1 ? String(data[i][tgIdx]).trim() : '';
+      
+      // Clean up obvious mock/test logins starting with user1783 or user1
+      if (currentLogin.indexOf('user1783') === 0 || currentLogin === 'user1') {
+        rowsToDelete.push(i + 1);
+        continue;
+      }
+      
+      // Identify unique key
+      var uniqueKey = (tgId && tgId !== '-' && tgId !== '') ? tgId : name;
+      
+      if (!uniqueKey || uniqueKey === 'N/A' || uniqueKey === '-') {
+        // Delete rows with no identifying info
+        rowsToDelete.push(i + 1);
+        continue;
+      }
+      
+      // Keep admin as admin
+      if (currentLogin === 'admin' || role.toLowerCase() === 'admin') {
+        sheet.getRange(i + 1, loginIdx + 1).setValue('admin');
+        seenUsers['admin'] = true;
+        continue;
+      }
+      
+      if (seenUsers[uniqueKey]) {
+        // Duplicate! Mark for deletion.
+        rowsToDelete.push(i + 1);
+      } else {
+        seenUsers[uniqueKey] = true;
+        // Clean up login to be their PІБ
+        if (name && currentLogin !== name) {
+          sheet.getRange(i + 1, loginIdx + 1).setValue(name);
+        }
+      }
+    }
+    
+    // Delete duplicate rows in reverse order to keep indices correct
+    rowsToDelete.sort(function(a, b) { return b - a; });
+    var deletedCount = 0;
+    for (var j = 0; j < rowsToDelete.length; j++) {
+      sheet.deleteRow(rowsToDelete[j]);
+      deletedCount++;
+    }
+    
+    // Check if admin exists, if not, append it
+    var finalData = sheet.getDataRange().getValues();
+    var adminExists = false;
+    for (var k = 1; k < finalData.length; k++) {
+      if (String(finalData[k][loginIdx]).trim() === 'admin') {
+        adminExists = true;
+        break;
+      }
+    }
+    if (!adminExists) {
+      var adminRow = headers.map(function(h) {
+        if (h === 'Логін') return 'admin';
+        if (h === 'Пароль') return 'admin123';
+        if (h === 'ПІБ' || h === "Ім'я") return 'Творець системи';
+        if (h === 'Роль') return 'admin';
+        if (h === 'Telegram' || h === 'Telegram_ID') return '-';
+        return '';
+      });
+      sheet.appendRow(adminRow);
+    }
+    
+    return { status: 'success', message: 'Видалено ' + deletedCount + ' дублікатів та тестових акаунтів. Залишились лише унікальні користувачі!' };
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function sendDeveloperFeedback(messageText, currentUser, screenshotBase64, voiceBase64) {
+  try {
+    if ((!messageText || String(messageText).trim() === '') && !voiceBase64) {
+      return { status: 'error', message: 'Повідомлення не може бути порожнім' };
+    }
+    
+    var ss = getSpreadsheet();
+    if (!ss) return { status: 'error', message: 'Не вдалося підключитися до бази даних' };
+    
+    var sheetName = "Зворотній зв'язок";
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow(["Дата", "ПІБ", "Роль", "Telegram ID", "Повідомлення", "Скріншот", "Голосове"]);
+      sheet.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#f3f4f6");
+    }
+    
+    var driveFolder = null;
+    var screenshotUrl = "";
+    var voiceUrl = "";
+
+    try {
+      var folderName = "CRM_Feedback_Attachments";
+      var folders = DriveApp.getFoldersByName(folderName);
+      if (folders.hasNext()) {
+        driveFolder = folders.next();
+      } else {
+        driveFolder = DriveApp.createFolder(folderName);
+        driveFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      }
+    } catch (driveErr) {
+      Logger.log("Drive folder error: " + driveErr.toString());
+    }
+
+    var now = new Date();
+    var timeStampStr = Utilities.formatDate(now, "Europe/Kiev", "yyyyMMdd_HHmmss");
+
+    if (screenshotBase64 && driveFolder) {
+      try {
+        var imgData = screenshotBase64.replace(/^data:image\/(png|jpeg);base64,/, "");
+        var imgBlob = Utilities.newBlob(Utilities.base64Decode(imgData), "image/png", "bug_screen_" + timeStampStr + ".png");
+        var imgFile = driveFolder.createFile(imgBlob);
+        imgFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        screenshotUrl = imgFile.getUrl();
+      } catch (imgErr) {
+        Logger.log("Error saving screenshot: " + imgErr.toString());
+      }
+    }
+
+    if (voiceBase64 && driveFolder) {
+      try {
+        var audioData = voiceBase64.replace(/^data:audio\/(webm|mp3|ogg|wav);base64,/, "");
+        var audioBlob = Utilities.newBlob(Utilities.base64Decode(audioData), "audio/webm", "bug_voice_" + timeStampStr + ".webm");
+        var audioFile = driveFolder.createFile(audioBlob);
+        audioFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        voiceUrl = audioFile.getUrl();
+      } catch (audErr) {
+        Logger.log("Error saving voice note: " + audErr.toString());
+      }
+    }
+
+    var formattedDate = Utilities.formatDate(now, "Europe/Kiev", "dd.MM.yyyy HH:mm:ss");
+    var name = currentUser ? (currentUser.name || currentUser.username || currentUser.login || 'Невідомо') : 'Невідомо';
+    var role = currentUser ? (currentUser.role || 'Невідомо') : 'Невідомо';
+    var tgId = currentUser ? (currentUser.telegramId || '') : '';
+    
+    sheet.appendRow([formattedDate, name, role, "'" + tgId, messageText || "(Голосове повідомлення)", screenshotUrl, voiceUrl]);
+    
+    var usersSheet = ss.getSheetByName('Користувачі');
+    if (usersSheet) {
+      var data = usersSheet.getDataRange().getValues();
+      var headers = data[0];
+      var roleCol = headers.indexOf('Роль');
+      var tgCol = headers.indexOf('Telegram') !== -1 ? headers.indexOf('Telegram') : headers.indexOf('Telegram_ID');
+      
+      var notificationText = "🐛 <b>ПОДОМЛЕННЯ ПРО БАГ / ЗВОРОТНІЙ ЗВ'ЯЗОК</b>\n\n" +
+                             "👤 Від: <b>" + name + "</b> (" + role + ")\n" +
+                             "🆔 Telegram ID: <code>" + tgId + "</code>\n" +
+                             "📅 Дата: " + formattedDate + "\n\n" +
+                             "💬 <b>Опис:</b>\n<i>" + (messageText || "без тексту") + "</i>\n";
+
+      if (screenshotUrl) {
+        notificationText += "\n🖼️ <b>Скріншот:</b> " + screenshotUrl;
+      }
+      if (voiceUrl) {
+        notificationText += "\n🎙️ <b>Голосове повідомлення:</b> " + voiceUrl;
+      }
+                             
+      if (roleCol !== -1 && tgCol !== -1) {
+        for (var i = 1; i < data.length; i++) {
+          var userRole = String(data[i][roleCol]).trim().toLowerCase();
+          var userTg = String(data[i][tgCol]).trim();
+          
+          if (['admin', 'director', 'керівник'].includes(userRole) && userTg && userTg !== '-' && userTg !== '') {
+            sendTelegramMessage(userTg, notificationText);
+          }
+        }
+      }
+    }
+    
+    return { status: 'success', message: 'Повідомлення про баг успішно надіслано!' };
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function broadcastMessageToEmployees(payload) {
+  try {
+    var messageText = payload ? payload.messageText : '';
+    if (!messageText || String(messageText).trim() === '') {
+      return { status: 'error', message: 'Повідомлення не може бути порожнім' };
+    }
+    
+    var ss = getSpreadsheet();
+    if (!ss) return { status: 'error', message: 'Не вдалося підключитися до бази даних' };
+    
+    var usersSheet = ss.getSheetByName('Користувачі');
+    if (!usersSheet) return { status: 'error', message: 'Таблиця користувачів не знайдена' };
+    
+    var data = usersSheet.getDataRange().getValues();
+    var headers = data[0];
+    var tgCol = headers.indexOf('Telegram') !== -1 ? headers.indexOf('Telegram') : headers.indexOf('Telegram_ID');
+    
+    if (tgCol === -1) {
+      return { status: 'error', message: 'Колонка Telegram ID не знайдена в таблиці користувачів' };
+    }
+    
+    var count = 0;
+    var broadcastText = "📢 <b>Офіційне сповіщення від керівництва:</b>\n\n" + messageText;
+    
+    // Set of sent Telegram IDs to avoid duplicates
+    var sentIds = {};
+    
+    for (var i = 1; i < data.length; i++) {
+      var tgId = String(data[i][tgCol]).trim();
+      if (tgId && tgId !== '-' && tgId !== '' && !sentIds[tgId]) {
+        sentIds[tgId] = true;
+        var respText = sendTelegramMessage(tgId, broadcastText);
+        if (respText && respText.indexOf('"ok":true') !== -1) {
+          count++;
+        }
+      }
+    }
+    
+    return { status: 'success', message: 'Повідомлення успішно надіслано в Telegram для ' + count + ' співробітників!' };
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+/**
+ * Автоматично перевіряє стовпчик "ID" у листі "Доставки".
+ * Якщо знайдено порожні комірки або дублікати ID (наприклад, через ручне копіювання в Google Sheets),
+ * присвоює їм нові унікальні ID і записує в таблицю для запобігання дублювання замовлень.
+ */
+function sanitizeRowIds() {
+  var ss = getSpreadsheet();
+  if (!ss) return;
+  var sheet = ss.getSheetByName('Доставки');
+  if (!sheet) return;
+  
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  if (values.length <= 1) return;
+  
+  var headers = values[0];
+  var idCol = headers.indexOf('ID');
+  if (idCol === -1) return;
+  
+  var usedIds = {};
+  var maxId = 0;
+  
+  // Крок 1: Знаходимо максимальний числовий ID серед існуючих коректних унікальних ID
+  for (var i = 1; i < values.length; i++) {
+    var idVal = String(values[i][idCol]).trim();
+    if (idVal && idVal !== 'undefined' && idVal !== 'NaN' && idVal !== '-') {
+      var num = parseInt(idVal, 10);
+      if (!isNaN(num)) {
+        if (num > maxId) maxId = num;
+      }
+    }
+  }
+  
+  // Страховка: якщо maxId надто малий, стартуємо від кількості рядків
+  if (maxId < values.length) {
+    maxId = values.length + 10;
+  }
+  
+  // Крок 2: Знаходимо дублікати та пусті ID, генеруємо для них нові унікальні значення
+  for (var i = 1; i < values.length; i++) {
+    var idVal = String(values[i][idCol]).trim();
+    var isEmpty = !idVal || idVal === 'undefined' || idVal === 'NaN' || idVal === '-';
+    var isDuplicate = usedIds[idVal];
+    
+    if (isEmpty || isDuplicate) {
+      maxId++;
+      sheet.getRange(i + 1, idCol + 1).setValue(maxId);
+      usedIds[maxId] = true;
+    } else {
+      usedIds[idVal] = true;
+    }
+  }
+}
+
+function notifyDriverAboutDelivery(deliveryData) {
+  var driverTarget = deliveryData.driver_user_id;
+  if (!driverTarget || driverTarget === 'Не призначено' || driverTarget === '-') return;
+
+  // Suppress notifications for future deliveries (only notify immediately if the delivery is for today)
+  if (deliveryData.date) {
+    var todayDateStr = Utilities.formatDate(new Date(), 'Europe/Kiev', 'dd.MM.yyyy');
+    var todayDateISO = Utilities.formatDate(new Date(), 'Europe/Kiev', 'yyyy-MM-dd');
+    var delDate = String(deliveryData.date).trim();
+    if (delDate !== todayDateStr && delDate !== todayDateISO) {
+      Logger.log('Suppressing driver notification for future delivery: ' + delDate + ' (Today is: ' + todayDateStr + ')');
+      return;
+    }
+  }
+
+  var ss = getSpreadsheet();
+  if (!ss) return;
+  var userSheet = ss.getSheetByName('Користувачі');
+  var targetTgId = driverTarget;
+
+  if (userSheet) {
+    var uData = userSheet.getDataRange().getValues();
+    var uHeaders = uData[0];
+    var tgCol = uHeaders.indexOf('Telegram_ID');
+    if (tgCol === -1) tgCol = uHeaders.indexOf('Telegram');
+    var pibCol = uHeaders.indexOf('ПІБ');
+    if (pibCol === -1) pibCol = uHeaders.indexOf('Ім\'я');
+
+    for (var i = 1; i < uData.length; i++) {
+      var rowTg = tgCol !== -1 ? String(uData[i][tgCol]).trim() : '';
+      var rowPib = pibCol !== -1 ? String(uData[i][pibCol]).trim() : '';
+      var rowLogin = String(uData[i][0]).trim();
+
+      if (rowTg === driverTarget || rowPib === driverTarget || rowLogin === driverTarget) {
+        if (rowTg && rowTg !== '-') {
+          targetTgId = rowTg;
+          break;
+        }
+      }
+    }
+  }
+
+  if (targetTgId && /^\d+$/.test(targetTgId)) {
+    var carName = getCarName(deliveryData.driver_id || deliveryData.car || '');
+    var text = "🚚 <b>Маршрутний лист / Нова доставка!</b>\n\n" +
+               "📋 <b>Замовлення №:</b> " + (deliveryData.order_num || "Б/Н") + "\n" +
+               "📅 <b>Дата та час:</b> " + (deliveryData.date || "") + " (" + (deliveryData.time || "") + ")\n" +
+               "📍 <b>Адреса:</b> " + (deliveryData.address || "") + "\n" +
+               "👤 <b>Одержувач:</b> " + (deliveryData.receiver_name || "Не вказано") + (deliveryData.receiver_phone ? (" (" + deliveryData.receiver_phone + ")") : "") + "\n" +
+               "💬 <b>Коментар:</b> " + (deliveryData.comment || "Немає") + "\n" +
+               "🚗 <b>Автомобіль:</b> " + carName + "\n\n" +
+               "<i>Вдалого маршруту!</i> 🛣️";
+
+    var kb = null;
+    if (deliveryData.address) {
+      var mapsUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(deliveryData.address);
+      kb = {
+        "inline_keyboard": [
+          [{"text": "🗺️ Відкрити в Навігаторі (Google Maps)", "url": mapsUrl}]
+        ]
+      };
+    }
+    sendTelegramMessage(targetTgId, text, kb);
+  }
+}
+
+function getCarName(carId) {
+  var id = String(carId).trim();
+  if (id === '1') return 'Hyundai EX-8';
+  if (id === '3') return 'Volkswagen Crafter';
+  if (id === '4') return 'Renault Dokker';
+  if (id === '5') return 'Renault D18';
+  if (id === 'Самовивіз') return 'Самовивіз зі складу';
+  if (id === 'Самовивіз Нова Пошта') return 'Нова Пошта';
+  return id || 'Не призначено';
+}
+
+function ensureClientInDatabase(name, phone, address) {
+  if (!name || name.trim() === '') return;
+  name = name.trim();
+  phone = phone ? phone.trim() : '';
+  address = address ? address.trim() : '';
+  
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName('Клієнти');
+  if (!sheet) {
+    sheet = ss.insertSheet('Клієнти');
+    sheet.appendRow(['ID', 'Тип', 'Назва', 'Контакт', 'Телефон', 'Email', 'Telegram', 'Viber', 'WhatsApp', 'Примітки', 'Адреса']);
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(function(h) { return h.toString().trim(); });
+  
+  // Ensure Адреса column exists in Клієнти sheet if not present
+  var addressIndex = headers.indexOf('Адреса');
+  if (addressIndex === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Адреса');
+    headers.push('Адреса');
+    addressIndex = headers.length - 1;
+  }
+  
+  var idIndex = headers.indexOf('ID');
+  var nameIndex = headers.indexOf('Назва');
+  var phoneIndex = headers.indexOf('Телефон');
+  var typeIndex = headers.indexOf('Тип');
+  var notesIndex = headers.indexOf('Примітки');
+  
+  // Find case-insensitive match by client name
+  var rowIndex = -1;
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][nameIndex].toString().trim().toLowerCase() === name.toLowerCase()) {
+      rowIndex = i + 1;
+      break;
+    }
+  }
+  
+  if (rowIndex > -1) {
+    // Client exists. Update phone and/or address if they were empty in database but are supplied now
+    var existingPhone = data[rowIndex - 1][phoneIndex] ? data[rowIndex - 1][phoneIndex].toString().trim() : '';
+    var existingAddress = data[rowIndex - 1][addressIndex] ? data[rowIndex - 1][addressIndex].toString().trim() : '';
+    
+    if (phone && !existingPhone && phoneIndex > -1) {
+      sheet.getRange(rowIndex, phoneIndex + 1).setValue(phone);
+    }
+    if (address && !existingAddress && addressIndex > -1) {
+      sheet.getRange(rowIndex, addressIndex + 1).setValue(address);
+    }
+  } else {
+    // Client does not exist. Create a new client record
+    var newId = 'CLI-' + new Date().getTime();
+    var newRow = new Array(headers.length).fill('');
+    
+    if (idIndex > -1) newRow[idIndex] = newId;
+    if (typeIndex > -1) newRow[typeIndex] = 'Отримувач';
+    if (nameIndex > -1) newRow[nameIndex] = name;
+    if (phoneIndex > -1) newRow[phoneIndex] = phone;
+    if (addressIndex > -1) newRow[addressIndex] = address;
+    if (notesIndex > -1) newRow[notesIndex] = 'Створено автоматично з карти доставки';
+    
+    sheet.appendRow(newRow);
+  }
+}

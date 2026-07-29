@@ -26,3 +26,10 @@ delete_all.py
 temp.*
 out.txt
 log*.txt
+
+id_rsa
+id_rsa.pub
+*.bak
+remote.html
+remote_index.html
+test_remote.html
