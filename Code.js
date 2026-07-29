@@ -1,23 +1,24 @@
 // ВСТАНОВІТЬ ID ВАШОЇ ТАБЛИЦІ ТУТ, ЯКЩО СКРИПТ НЕ ПРИВ'ЯЗАНИЙ ДО ТАБЛИЦІ НАПРЯМУ
 // (Наприклад, скопіюйте з посилання вашої таблиці: '1EJvpjldQvx5-gtQnaBfs33VDEy4jxx9sgBayrteHMIWpeH-8l2a0bVqw')
-var SPREADSHEET_ID = '';
+var SPREADSHEET_ID = '198_7ofajvsBszwRDm5pnbIrGxHUMphqPumX9pNOPZ6w';
 
 // ТОКЕН ВАШОГО TELEGRAM БОТА ДЛЯ АВТОМАТИЧНИХ СПОВІЩЕНЬ
 var BOT_TOKEN = '8662663470:AAGl8KqJHrmxXVUO3d-j1Rakjgg4W60PTzg';
 
 function getSpreadsheet() {
   var ss = null;
-  try {
-    ss = SpreadsheetApp.getActiveSpreadsheet();
-  } catch (e) {
-    Logger.log("Не вдалося отримати активну таблицю: " + e.toString());
-  }
-  
-  if (!ss && SPREADSHEET_ID) {
+  if (SPREADSHEET_ID) {
     try {
       ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     } catch (e) {
       Logger.log("Не вдалося відкрити таблицю за ID: " + e.toString());
+    }
+  }
+  if (!ss) {
+    try {
+      ss = SpreadsheetApp.getActiveSpreadsheet();
+    } catch (e) {
+      Logger.log("Не вдалося отримати активну таблицю: " + e.toString());
     }
   }
   return ss;
@@ -140,12 +141,15 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'assign_warehouse_worker') {
-      var result = assignWarehouseWorker(data.data.deliveryId, data.data.workerId);
+      var payload = data.data || data;
+      var result = assignWarehouseWorker(payload.deliveryId, payload.workerId);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'test_wh') {
-      return ContentService.createTextOutput(JSON.stringify(getWarehouseWorkers()))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({
+        wh: getWarehouseWorkers(),
+        emp: get_employees()
+      })).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'update_warehouse_status') {
       var result = updateWarehouseStatus(data.data.deliveryId, data.data.status);
       return ContentService.createTextOutput(JSON.stringify(result))
@@ -161,6 +165,29 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'getDailyCrews') {
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getDailyCrews() }))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'delete_deliveries_bulk') {
+      var ids = data.ids || [];
+      var ss = getSpreadsheet();
+      var sheet = ss.getSheetByName('Доставки');
+      var deleted = 0;
+      if (sheet && ids.length > 0) {
+        var rows = sheet.getDataRange().getValues();
+        var headers = rows[0];
+        var idIdx = -1;
+        for (var h = 0; h < headers.length; h++) {
+          if (String(headers[h]).toLowerCase().trim() === 'id') { idIdx = h; break; }
+        }
+        // Delete from bottom to top to preserve row indices
+        for (var r = rows.length - 1; r >= 1; r--) {
+          var rowId = String(rows[r][idIdx] || '').trim();
+          if (ids.indexOf(rowId) !== -1 || ids.indexOf(Number(rowId)) !== -1) {
+            sheet.deleteRow(r + 1);
+            deleted++;
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', deleted: deleted }))
         .setMimeType(ContentService.MimeType.JSON);
     }
     
@@ -440,17 +467,16 @@ function addDelivery(deliveryData) {
     
     var shortId = String(id).replace(/-/g, '');
     
-    // Add Head workers as assignees
+    // Build buttons for Head Storekeeper
     heads.forEach(function(h) {
       kb.inline_keyboard.push([{"text": "🧑‍💼 На себе (" + h.name + ")", "callback_data": "awh_" + shortId + "_" + h.telegram_id}]);
     });
     
-    // Always add a generic option to assign to a worker
-    kb.inline_keyboard.push([{"text": "👷 На комірника", "callback_data": "awh_" + shortId + "_general"}]);
-    
-    // Add specific regular workers if any
+    // Build direct buttons for all 4 Storekeepers
     workers.forEach(function(w) {
-      kb.inline_keyboard.push([{"text": "👷 Призначити: " + w.name, "callback_data": "awh_" + shortId + "_" + w.telegram_id}]);
+      if (w.name && w.telegram_id) {
+        kb.inline_keyboard.push([{"text": "👷 Призначити: " + w.name, "callback_data": "awh_" + shortId + "_" + w.telegram_id}]);
+      }
     });
     
     heads.forEach(function(head) {
@@ -610,6 +636,10 @@ function assignWarehouseWorker(deliveryId, workerId) {
       for (var j = 0; j < whData.heads.length; j++) { if (String(whData.heads[j].id) == String(workerId) || String(whData.heads[j].telegram_id) == String(workerId)) assignedWorker = whData.heads[j]; }
       for (var k = 0; k < whData.workers.length; k++) { if (String(whData.workers[k].id) == String(workerId) || String(whData.workers[k].telegram_id) == String(workerId)) assignedWorker = whData.workers[k]; }
       
+      if (!assignedWorker && workerId && workerId !== 'general' && !isNaN(workerId)) {
+        assignedWorker = { id: workerId, telegram_id: workerId, name: 'Комірник' };
+      }
+      
       if (assignedWorker && assignedWorker.telegram_id) {
         var text = "📦 <b>Вам призначено збірку замовлення №" + orderNum + "</b>\n\n" +
                    "Натисніть 'Підтвердити', коли воно буде готове, або 'Проблема', якщо щось пішло не так.";
@@ -622,6 +652,17 @@ function assignWarehouseWorker(deliveryId, workerId) {
         var tgResp = sendTelegramMessage(assignedWorker.telegram_id, text, kb);
         return { status: 'success', tgResp: tgResp };
       } else if (workerId === 'general') {
+        var textGen = "📦 <b>Нове завдання на збірку замовлення №" + orderNum + "</b>\n\n" +
+                      "Натисніть 'Підтвердити', коли воно буде готове, або 'Проблема', якщо щось пішло не так.";
+        var kbGen = {
+          "inline_keyboard": [
+            [{"text": "✅ Підтвердити (Зібрано)", "callback_data": "wh_confirm_" + deliveryId}],
+            [{"text": "⚠️ Проблема зі збіркою", "callback_data": "wh_problem_" + deliveryId}]
+          ]
+        };
+        whData.workers.forEach(function(w) {
+          if (w.telegram_id) sendTelegramMessage(w.telegram_id, textGen, kbGen);
+        });
         return { status: 'success', tgResp: 'ok' };
       } else {
         return { status: 'success', tgResp: 'No assignedWorker or telegram_id found. WorkerId was: ' + workerId };
@@ -705,63 +746,63 @@ function updateWarehouseStatus(deliveryId, statusStr) {
 
 function getWarehouseWorkers() {
   var ss = getSpreadsheet();
-  if (!ss) return { heads: [], workers: [] };
-  
-  var sheet = ss.getSheetByName('Користувачі');
-  if (!sheet) return { heads: [], workers: [] };
-  
-  var data = sheet.getDataRange().getValues();
-  if (data.length < 2) return { heads: [], workers: [] };
-  
-  var headers = data[0];
-  var roleIdx = headers.indexOf('Роль');
-  var nameIdx = headers.indexOf('Ім\'я') !== -1 ? headers.indexOf('Ім\'я') : headers.indexOf('ПІБ');
-  var tgIdx = headers.indexOf('Telegram_ID') !== -1 ? headers.indexOf('Telegram_ID') : headers.indexOf('Telegram');
-  var idIdx = headers.indexOf('ID') !== -1 ? headers.indexOf('ID') : headers.indexOf('Логін');
-  
-  if (roleIdx === -1 || tgIdx === -1) return { heads: [], workers: [] };
-  
   var heads = [];
-  var workers = [];
-  
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    var r = (row[roleIdx] || '').toString().toLowerCase().replace(/_/g, ' ');
-    var tgid = (row[tgIdx] || '').toString().trim();
-    var name = nameIdx !== -1 ? row[nameIdx] : ('Користувач ' + i);
-    var uId = (idIdx !== -1 && row[idIdx]) ? row[idIdx] : tgid;
-    
-    if (!tgid) continue;
-    
-    if (r.includes('головний комірник') || r === 'головний_комірник') {
-      heads.push({ telegram_id: tgid, name: name, id: uId });
-    } else if (r === 'комірник') {
-      workers.push({ telegram_id: tgid, name: name, id: uId });
+  // Real storekeepers only
+  var workers = [
+    { telegram_id: '5227085951', name: 'Приходько.О', id: 'Приходько.О' },
+    { telegram_id: '5617387180', name: 'Бранько Анатолій', id: 'Бранько Анатолій' },
+    { telegram_id: '691693823', name: 'Коваленко Олексій Анатолійович', id: 'Коваленко Олексій Анатолійович' }
+  ];
+
+  // Also read head storekeepers from sheet
+  if (ss) {
+    var sheet = ss.getSheetByName('Користувачі');
+    if (sheet) {
+      var data = sheet.getDataRange().getValues();
+      var headers = data[0].map(function(h) { return String(h).toLowerCase().trim(); });
+      var roleIdx = headers.indexOf('роль');
+      var pibIdx = headers.indexOf('піб');
+      var imyaIdx = headers.indexOf('ім\'я');
+      var tg1Idx = headers.indexOf('telegram');
+      var tg2Idx = headers.indexOf('telegram_id');
+      
+      for (var i = 1; i < data.length; i++) {
+        var row = data[i];
+        var rawRole = roleIdx !== -1 ? String(row[roleIdx] || '').toLowerCase().trim() : '';
+        if (rawRole.indexOf('головний') === -1 && rawRole.indexOf('старший') === -1) continue;
+        
+        var tgid = '';
+        if (tg1Idx !== -1 && row[tg1Idx] && String(row[tg1Idx]).trim() !== '' && String(row[tg1Idx]).trim() !== '-') {
+          tgid = String(row[tg1Idx]).trim();
+        } else if (tg2Idx !== -1 && row[tg2Idx] && String(row[tg2Idx]).trim() !== '' && String(row[tg2Idx]).trim() !== '-') {
+          tgid = String(row[tg2Idx]).trim();
+        }
+        
+        var name = '';
+        if (pibIdx !== -1 && row[pibIdx] && String(row[pibIdx]).trim() !== '') {
+          name = String(row[pibIdx]).trim();
+        } else if (imyaIdx !== -1 && row[imyaIdx] && String(row[imyaIdx]).trim() !== '') {
+          name = String(row[imyaIdx]).trim();
+        }
+        
+        if (tgid && name) {
+          heads.push({ telegram_id: tgid, name: name, id: tgid });
+        }
+      }
     }
   }
-  
-  // Deduplicate by telegram_id for heads and workers separately
-  var uniqueHeads = [];
-  var uniqueWorkers = [];
-  var hMap = {};
-  var wMap = {};
-  
-  heads.forEach(function(h) {
-    if (!hMap[h.telegram_id]) {
-      hMap[h.telegram_id] = true;
-      uniqueHeads.push(h);
-    }
+
+  // Always ensure Serhiy (real head storekeeper) is in heads
+  var knownHeads = [
+    { telegram_id: '6670847663', name: 'Сергій', id: '6670847663' }
+  ];
+  knownHeads.forEach(function(kh) {
+    var found = false;
+    heads.forEach(function(h) { if (h.telegram_id === kh.telegram_id) found = true; });
+    if (!found) heads.push(kh);
   });
-  
-  workers.forEach(function(w) {
-    // Only add to workers if they are NOT a head
-    if (!wMap[w.telegram_id] && !hMap[w.telegram_id]) {
-      wMap[w.telegram_id] = true;
-      uniqueWorkers.push(w);
-    }
-  });
-  
-  return { heads: uniqueHeads, workers: uniqueWorkers };
+
+  return { heads: heads, workers: workers };
 }
 
 function authenticateUser(login, password) {
@@ -1338,8 +1379,6 @@ function get_employees() {
   var result = rows.map(function(row) {
     var obj = {};
     headers.forEach(function(header, index) { obj[header] = row[index]; });
-    // Normalize role string if needed
-    obj['Роль'] = (obj['Роль'] || '').toLowerCase().trim();
     // Use Login as ID if ID is missing
     if (!obj['ID']) obj['ID'] = obj['Логін'];
     return obj;
