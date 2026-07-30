@@ -432,6 +432,7 @@ function addDelivery(deliveryData) {
   setVal('Телефон_одержувача', deliveryData.receiver_phone || '');
   setVal('ID_Менеджера', deliveryData.manager_chat_id || '');
   setVal('ID_Комірника', '');
+  setVal('ID_Водія', deliveryData.driver_user_id || '');
   var statusColFound = false;
   for (var k = 0; k < headers.length; k++) {
     var hStr = headers[k].toString().trim().toLowerCase();
@@ -907,7 +908,15 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
       if (payCol !== -1) sheet.getRange(rowNum, payCol + 1).setValue(deliveryData.payment || '');
       if (commentCol !== -1) sheet.getRange(rowNum, commentCol + 1).setValue(deliveryData.comment || '');
       if (nameCol !== -1) sheet.getRange(rowNum, nameCol + 1).setValue(deliveryData.receiver_name || '');
-      if (phoneCol !== -1) sheet.getRange(rowNum, phoneCol + 1).setValue(deliveryData.receiver_phone || '');
+      var driverUserCol = headers.indexOf('ID_Водія');
+      if (driverUserCol === -1) {
+        sheet.getRange(1, headers.length + 1).setValue('ID_Водія');
+        driverUserCol = headers.length;
+        headers.push('ID_Водія');
+      }
+      if (driverUserCol !== -1 && deliveryData.driver_user_id !== undefined) {
+        sheet.getRange(rowNum, driverUserCol + 1).setValue(deliveryData.driver_user_id || '');
+      }
       
       // Check if changes are made by logist/director/admin and notify manager if critical fields shifted
       if (managerId && (userRole === 'logist' || userRole === 'director' || userRole === 'admin')) {
