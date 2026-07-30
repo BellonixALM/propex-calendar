@@ -116,28 +116,30 @@ function doPost(e) {
     var data = JSON.parse(e.postData.contents);
     var action = data.action;
     
-    if (action === 'add_delivery') {
+    if (action === 'add_delivery' || action === 'addDelivery') {
       return ContentService.createTextOutput(JSON.stringify(addDelivery(data.data)))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'register_driver') {
       return ContentService.createTextOutput(JSON.stringify(register_driver(data.data)))
         .setMimeType(ContentService.MimeType.JSON);
-    } else if (action === 'get_employees') {
+    } else if (action === 'get_employees' || action === 'getEmployees') {
       return ContentService.createTextOutput(JSON.stringify(get_employees()))
         .setMimeType(ContentService.MimeType.JSON);
-    } else if (action === 'get_deliveries') {
+    } else if (action === 'get_deliveries' || action === 'getDeliveries') {
       return ContentService.createTextOutput(JSON.stringify(getDeliveries()))
         .setMimeType(ContentService.MimeType.JSON);
-    } else if (action === 'update_status') {
-      var result = updateDeliveryStatus(data.data.id, data.data.status, data.data.comment);
+    } else if (action === 'update_status' || action === 'updateDeliveryStatus') {
+      var payload = data.data || data;
+      var result = updateDeliveryStatus(payload.id || payload.deliveryId, payload.status || payload.newStatus, payload.comment);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'login') {
       var result = authenticateUser(data.data.login, data.data.password);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
-    } else if (action === 'update_delivery_details') {
-      var result = updateDeliveryDetails(data.data.id, data.data.deliveryData, data.data.userRole);
+    } else if (action === 'update_delivery_details' || action === 'updateDeliveryDetails') {
+      var payload = data.data || data;
+      var result = updateDeliveryDetails(payload.id || payload.deliveryId, payload.deliveryData || payload, payload.userRole);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'assign_warehouse_worker') {
