@@ -2284,8 +2284,8 @@ body.light-theme .login-error {
         this._successHandler = null;
         this._failureHandler = null;
 
-        // Use POST fetch for write actions that can have large payloads (base64 images)
-        const postActions = ['sendDeveloperFeedback', 'saveClient', 'saveEmployee', 'updateDriverPhoto', 'deleteClient', 'deleteEmployee'];
+        // Use POST fetch for write actions that can have large payloads or complex parameters
+        const postActions = ['sendDeveloperFeedback', 'saveClient', 'saveEmployee', 'updateDriverPhoto', 'deleteClient', 'deleteEmployee', 'updateDeliveryDetails', 'addDelivery', 'updateDeliveryStatus'];
         if (postActions.includes(action)) {
           fetch(WEBAPP_URL, {
             method: 'POST',
