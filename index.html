@@ -3134,8 +3134,32 @@ body.light-theme .login-error {
       if (!currentDetailDelivery) return;
       const user = state.currentUser;
       if (user && user.role === 'manager') {
-        const creatorId = currentDetailDelivery['ID_Менеджера'] || '';
-        if (creatorId && creatorId !== user.telegramId) {
+        const creatorId = String(currentDetailDelivery['ID_Менеджера'] || '').trim();
+        const userTg = String(user.telegramId || '').trim();
+        const userLogin = String(user.login || '').trim();
+        const userName = String(user.name || '').trim();
+        
+        let isOwner = false;
+        if (!creatorId) {
+          isOwner = true;
+        } else if (creatorId === userTg || creatorId === userLogin || creatorId === userName) {
+          isOwner = true;
+        } else {
+          // Check if creatorId corresponds to this user's employee record
+          const userEmp = (state.employees || []).find(e => {
+            const l = String(e['Логін'] || e['ID'] || '').trim();
+            return l === userLogin || l === userTg;
+          });
+          if (userEmp) {
+            const empTg = String(userEmp['Telegram_ID'] || userEmp['Telegram'] || '').trim();
+            const empName = String(userEmp['ПІБ'] || userEmp["Ім'я"] || '').trim();
+            if (creatorId === empTg || creatorId === empName || creatorId === userLogin) {
+              isOwner = true;
+            }
+          }
+        }
+        
+        if (!isOwner) {
           alert("Ви не можете редагувати замовлення інших менеджерів!");
           return;
         }
@@ -3967,7 +3991,15 @@ body.light-theme .login-error {
       const user = state.currentUser;
       const carSelect = document.getElementById('form-car');
       if (user) {
-        document.getElementById('form-manager-id').value = user.telegramId || user.name || user.login || '';
+        let mgrVal = user.telegramId || '';
+        if (!mgrVal) {
+          const userEmp = (state.employees || []).find(e => String(e['Логін'] || e['ID'] || '').trim() === String(user.login || '').trim());
+          if (userEmp) {
+            mgrVal = String(userEmp['Telegram_ID'] || userEmp['Telegram'] || '').trim();
+          }
+        }
+        if (!mgrVal) mgrVal = user.login || user.name || '';
+        document.getElementById('form-manager-id').value = mgrVal;
         if (user.role === 'manager') {
           document.getElementById('form-manager-id').disabled = true;
           carSelect.innerHTML = '<option value="Самовивіз">Самовивіз</option><option value="Самовивіз Нова Пошта">Самовивіз Нова Пошта</option><option value="Не призначено">-- Обере логіст --</option><option value="1">Hyundai EX-8</option><option value="3">Volkswagen Crafter</option><option value="4">Renault Dokker</option><option value="5">Renault D18</option>';
