@@ -5515,9 +5515,6 @@ function renderAnalytics(type) {
                       const km = driverMileages[topDriver] || 0;
                       const trips = driverTrips[topDriver] || 0;
                       document.getElementById('analytics-top-manager-count').innerText = `${Math.round(km)} км / ${trips} замовлень`;
-                  } else {
-                      document.getElementById('analytics-top-manager-name').innerText = '-';
-                      document.getElementById('analytics-top-manager-count').innerText = '0 км / 0 замовлень';
                   }
               }
 
@@ -5948,10 +5945,10 @@ function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe, type) {
     
     const currCounts = currDates.map(d => {
         return currDels.filter(del => {
-            let dStr = del['Дата'];
+            let dStr = String(del['Дата'] || '').replace(/^'/, '').trim();
             if (!dStr) return false;
             let parts = dStr.split('.');
-            if (parts.length === 3) dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            if (parts.length === 3) dStr = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
             return dStr === d;
         }).length;
     });
@@ -5962,10 +5959,10 @@ function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe, type) {
         const targetDateStr = targetDate.toISOString().split('T')[0];
         
         return prevDels.filter(del => {
-            let dStr = del['Дата'];
+            let dStr = String(del['Дата'] || '').replace(/^'/, '').trim();
             if (!dStr) return false;
             let parts = dStr.split('.');
-            if (parts.length === 3) dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            if (parts.length === 3) dStr = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
             return dStr === targetDateStr;
         }).length;
     });
