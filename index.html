@@ -5025,10 +5025,10 @@ function filterDeliveriesByDateRange(deliveries, startStr, endStr) {
     const end = new Date(endStr + 'T23:59:59');
     return deliveries.filter(d => {
         if (!d['Дата']) return false;
-        // Format of date might be DD.MM.YYYY or YYYY-MM-DD
-        let dStr = d['Дата'];
+        // Format of date might be 'DD.MM.YYYY', DD.MM.YYYY or YYYY-MM-DD
+        let dStr = String(d['Дата']).replace(/^'/, '').trim();
         let parts = dStr.split('.');
-        if (parts.length === 3) dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        if (parts.length === 3) dStr = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
         const date = new Date(dStr + 'T12:00:00');
         return date >= start && date <= end;
     });
@@ -5363,11 +5363,24 @@ function renderAnalytics(type) {
         currDels.forEach(d => {
             const dateStr = String(d['Дата'] || '').replace(/^'/, '').trim();
             const carId = d['ID_Авто'];
-            if (!carId || carId === 'Самовивіз') return;
+            if (!carId || carId === 'Самовивіз' || carId === 'Не призначено') return;
+            
+            let driverName = null;
             const driverObj = (state.dailyCrews && Array.isArray(state.dailyCrews))
                 ? state.dailyCrews.find(c => String(c['ID_Авто']) === String(carId) && c['Дата'] === dateStr)
                 : null;
-            const driverName = (driverObj && driverObj["Ім'я"]) ? driverObj["Ім'я"] : null;
+            if (driverObj && driverObj["Ім'я"]) {
+                driverName = driverObj["Ім'я"];
+            } else if (d['ID_Водія']) {
+                const empDriver = (state.employees || []).find(e => {
+                    const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
+                    const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
+                    const targetStr = String(d['ID_Водія']).trim();
+                    return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
+                });
+                driverName = empDriver ? (empDriver['ПІБ'] || empDriver["Ім'я"]) : d['ID_Водія'];
+            }
+            
             if (driverName) {
                 driverCounts[driverName] = (driverCounts[driverName] || 0) + 1;
             }
@@ -5375,10 +5388,10 @@ function renderAnalytics(type) {
         const sortedDrivers = Object.keys(driverCounts).map(k => ({ name: k, count: driverCounts[k] })).sort((a,b) => b.count - a.count);
         if (sortedDrivers.length > 0) {
             document.getElementById('analytics-top-manager-name').innerText = sortedDrivers[0].name;
-            document.getElementById('analytics-top-manager-count').innerText = `${sortedDrivers[0].count} рейсів`;
+            document.getElementById('analytics-top-manager-count').innerText = `${sortedDrivers[0].count} доставок`;
         } else {
             document.getElementById('analytics-top-manager-name').innerText = '-';
-            document.getElementById('analytics-top-manager-count').innerText = '0 рейсів';
+            document.getElementById('analytics-top-manager-count').innerText = '0 доставок';
         }
     } else {
         const mgrCounts = {};
@@ -5448,10 +5461,10 @@ function renderAnalytics(type) {
                               // Skip electric
                           } else if (isDiesel) {
                                dieselLiters += (log.fuel || 0);
-                               dieselUah += (log.uah || 0);
+                               dieselUah += (log.cost || 0);
                           } else {
                                gasolineLiters += (log.fuel || 0);
-                               gasolineUah += (log.uah || 0);
+                               gasolineUah += (log.cost || 0);
                           }
                       }
                   });
