@@ -5571,7 +5571,7 @@ function renderAnalytics(type) {
                   }, type);
                   
                   // Render new 3 comparative line charts
-                  renderComparativeFleetLineCharts(allLogs, ranges, type);
+                  renderComparativeFleetLineCharts(allLogs, ranges, type, currDels, prevDels);
               }
           } else {
               console.error("Failed to load odometer data:", response);
@@ -5813,7 +5813,7 @@ function renderComparativeLineChart(canvasId, currValues, prevValues, labels, da
     });
 }
 
-function renderComparativeFleetLineCharts(allLogs, ranges, type) {
+function renderComparativeFleetLineCharts(allLogs, ranges, type, currDels, prevDels) {
     type = type || 'cargo';
     const currDates = [];
     let cur = new Date(ranges.curr.start);
@@ -5835,12 +5835,40 @@ function renderComparativeFleetLineCharts(allLogs, ranges, type) {
         return sum;
     };
     
-    const currTrips = currDates.map(d => getDailySum(d, 'trips'));
-    const prevTrips = currDates.map((d, index) => {
+    let currTrips = currDates.map(d => getDailySum(d, 'trips'));
+    let prevTrips = currDates.map((d, index) => {
         const targetDate = new Date(ranges.prev.start);
         targetDate.setDate(targetDate.getDate() + index);
         return getDailySum(targetDate.toISOString().split('T')[0], 'trips');
     });
+    
+    // If odometer trips are 0 (e.g. not entered in odometer sheet), fallback to actual CRM deliveries count!
+    const totalOdoTrips = currTrips.reduce((a,b)=>a+b, 0);
+    if (totalOdoTrips === 0 && currDels) {
+        currTrips = currDates.map(d => {
+            return currDels.filter(del => {
+                let dStr = String(del['Дата'] || '').replace(/^'/, '').trim();
+                if (!dStr) return false;
+                let parts = dStr.split('.');
+                if (parts.length === 3) dStr = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                return dStr === d;
+            }).length;
+        });
+        if (prevDels) {
+            prevTrips = currDates.map((d, index) => {
+                const targetDate = new Date(ranges.prev.start);
+                targetDate.setDate(targetDate.getDate() + index);
+                const targetDateStr = targetDate.toISOString().split('T')[0];
+                return prevDels.filter(del => {
+                    let dStr = String(del['Дата'] || '').replace(/^'/, '').trim();
+                    if (!dStr) return false;
+                    let parts = dStr.split('.');
+                    if (parts.length === 3) dStr = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                    return dStr === targetDateStr;
+                }).length;
+            });
+        }
+    }
     
     const currFuel = currDates.map(d => Math.round(getDailySum(d, 'fuel') * 10) / 10);
     const prevFuel = currDates.map((d, index) => {
