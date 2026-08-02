@@ -80,10 +80,11 @@ function doGet(e) {
       } else if (action === 'get_clients') {
         result = get_clients();
       } else if (action === 'register_driver') {
-      return ContentService.createTextOutput(JSON.stringify(register_driver(data.data)))
-        .setMimeType(ContentService.MimeType.JSON);
-    } else if (action === 'get_employees') {
+        result = register_driver(payload);
+      } else if (action === 'get_employees') {
         result = get_employees();
+      } else if (action === 'getOdometerData' || action === 'get_odometer_data') {
+        result = getOdometerData(payload.startDate, payload.endDate);
       } else if (action === 'saveClient') {
         result = saveClient(payload);
       } else if (action === 'deleteClient') {
@@ -124,6 +125,11 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'get_employees' || action === 'getEmployees') {
       return ContentService.createTextOutput(JSON.stringify(get_employees()))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'getOdometerData' || action === 'get_odometer_data') {
+      var payload = data.data || data;
+      var result = getOdometerData(payload.startDate, payload.endDate);
+      return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'get_deliveries' || action === 'getDeliveries') {
       return ContentService.createTextOutput(JSON.stringify(getDeliveries()))
@@ -1516,5 +1522,123 @@ function register_driver(data) {
   } catch (e) {
     return { status: 'error', message: e.toString() };
   }
+}
+
+function getOdometerData(startDateStr, endDateStr) {
+  try {
+    var ss = SpreadsheetApp.openById('17r2oSP52TFIAiGegGTWlHsxRmHN7iEX2W5M4aYUKM54');
+    var sheets = ss.getSheets();
+    
+    var start = startDateStr ? parseOdometerDateString(startDateStr) : null;
+    var end = endDateStr ? parseOdometerDateString(endDateStr) : null;
+    
+    var carMileages = {};
+    var dieselLiters = 0;
+    var dieselUah = 0;
+    var gasolineLiters = 0;
+    var gasolineUah = 0;
+    var dailyRecords = [];
+    
+    var dieselCars = ['volkswagen crafter', 'man', 'renault d18', 'renault dokker', 'hyundai ex-8'];
+    var electricCars = ['audi e-tron'];
+    
+    sheets.forEach(function(s) {
+      var name = s.getName().trim();
+      var nameLower = name.toLowerCase();
+      if (name === 'Заправки' || name === 'Аркуш2') return;
+      
+      var data = s.getDataRange().getValues();
+      if (data.length <= 1) return;
+      
+      var headers = data[0].map(function(h) { return h.toString().trim(); });
+      var dateIdx = headers.indexOf('Дата');
+      var kmIdx = headers.indexOf('Пробіг за день (км)');
+      var litIdx = headers.indexOf('Добова витрата палива (л)');
+      var uahIdx = headers.indexOf('Вартість пробігу (грн)');
+      var tripsIdx = headers.indexOf('Кількість ходок');
+      
+      if (dateIdx === -1) return;
+      
+      var totalKm = 0;
+      var totalLit = 0;
+      var totalUah = 0;
+      
+      for (var i = 1; i < data.length; i++) {
+        var row = data[i];
+        var rowDateStr = row[dateIdx];
+        if (!rowDateStr) continue;
+        
+        var rowDate = new Date(rowDateStr);
+        if (start && rowDate < start) continue;
+        if (end && rowDate > end) continue;
+        
+        var km = kmIdx > -1 ? (parseFloat(row[kmIdx]) || 0) : 0;
+        var lit = litIdx > -1 ? (parseFloat(row[litIdx]) || 0) : 0;
+        var uah = uahIdx > -1 ? (parseFloat(row[uahIdx]) || 0) : 0;
+        var trips = tripsIdx > -1 ? (parseInt(row[tripsIdx], 10) || 0) : 0;
+        
+        var formattedDate = Utilities.formatDate(rowDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        dailyRecords.push({
+          date: formattedDate,
+          car: name,
+          mileage: km,
+          fuel: lit,
+          cost: uah,
+          trips: trips
+        });
+        
+        totalKm += km;
+        totalLit += lit;
+        totalUah += uah;
+      }
+      
+      if (totalKm > 0) {
+        carMileages[name] = totalKm;
+      }
+      
+      var isDiesel = false;
+      var isElectric = false;
+      
+      dieselCars.forEach(function(dc) {
+        if (nameLower.indexOf(dc) > -1) isDiesel = true;
+      });
+      electricCars.forEach(function(ec) {
+        if (nameLower.indexOf(ec) > -1) isElectric = true;
+      });
+      
+      if (isElectric) {
+        // Skip fuel
+      } else if (isDiesel) {
+        dieselLiters += totalLit;
+        dieselUah += totalUah;
+      } else {
+        gasolineLiters += totalLit;
+        gasolineUah += totalUah;
+      }
+    });
+    
+    return {
+      status: 'success',
+      data: {
+        carMileages: carMileages,
+        dieselLiters: Math.round(dieselLiters * 10) / 10,
+        dieselUah: Math.round(dieselUah),
+        gasolineLiters: Math.round(gasolineLiters * 10) / 10,
+        gasolineUah: Math.round(gasolineUah),
+        dailyRecords: dailyRecords
+      }
+    };
+    
+  } catch(e) {
+    return { status: 'error', message: e.toString() };
+  }
+}
+
+function parseOdometerDateString(str) {
+  if (str.indexOf('.') > -1) {
+    var parts = str.split('.');
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+  }
+  return new Date(str);
 }
 
