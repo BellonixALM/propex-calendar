@@ -455,6 +455,16 @@ function addDelivery(deliveryData) {
   setVal('ID_Менеджера', deliveryData.manager_chat_id || '');
   setVal('ID_Комірника', '');
   setVal('ID_Водія', deliveryData.driver_user_id || '');
+
+  var invoiceCol = headers.indexOf('Накладна_URL');
+  if (invoiceCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Накладна_URL');
+    headers.push('Накладна_URL');
+    newRow.push(deliveryData.invoice_url || '');
+  } else {
+    setVal('Накладна_URL', deliveryData.invoice_url || '');
+  }
+
   var statusColFound = false;
   for (var k = 0; k < headers.length; k++) {
     var hStr = headers[k].toString().trim().toLowerCase();
@@ -522,6 +532,27 @@ function addDelivery(deliveryData) {
   return { status: 'success', id: id };
 }
 
+function appendOperationHistory(sheet, rowNum, headers, logMessage) {
+  try {
+    var historyCol = headers.indexOf('Історія_Операцій');
+    if (historyCol === -1) {
+      sheet.getRange(1, headers.length + 1).setValue('Історія_Операцій');
+      historyCol = headers.length;
+      headers.push('Історія_Операцій');
+    }
+    
+    var timeStr = Utilities.formatDate(new Date(), 'Europe/Kiev', 'dd.MM HH:mm');
+    var fullLog = timeStr + " — " + logMessage;
+    
+    var existingHistory = sheet.getRange(rowNum, historyCol + 1).getValue().toString();
+    var newHistory = existingHistory ? (existingHistory + " ; " + fullLog) : fullLog;
+    
+    sheet.getRange(rowNum, historyCol + 1).setValue(newHistory);
+  } catch (e) {
+    Logger.log("Error in appendOperationHistory: " + e.toString());
+  }
+}
+
 function updateDeliveryStatus(deliveryId, newStatus, comment) {
   var ss = getSpreadsheet();
   if (!ss) return { status: 'error', message: 'Відсутній зв’язок із таблицею' };
@@ -560,6 +591,10 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
       if (comment && commentCol !== -1) {
         sheet.getRange(rowNum, commentCol + 1).setValue(comment);
       }
+
+      // Log status update to history
+      var logMsg = "Зміна статусу на '" + newStatus + "'" + (comment ? (" (" + comment + ")") : "");
+      appendOperationHistory(sheet, rowNum, headers, logMsg);
       
       // Fetch manager and order details
       var managerId = managerCol !== -1 ? data[i][managerCol] : '';
@@ -571,7 +606,42 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
       if (managerId) {
         var messageText = "";
         
-        if (newStatus === "Виконано") {
+        if (newStatus === "Забрано у постачальника") {
+          messageText = "📥 <b>Товар забрано у постачальника!</b>\n\n" +
+                        "📦 <b>Замовлення №:</b> " + orderNum + "\n" +
+                        "🚗 <b>Автомобіль:</b> Авто " + carId + "\n" +
+                        "📍 <b>Постачальник:</b> " + address + "\n\n" +
+                        "Водій забрав товар і прямує на склад для розвантаження та прийомки.";
+
+          // Notify Head Warehouse Workers about incoming supplier delivery
+          try {
+            var whData = getWarehouseWorkers();
+            var heads = whData.heads;
+            var whText = "📦 <b>ОЧІКУЄТЬСЯ ПРИЙОМКА ЗАКУПІВЛІ НА СКЛАД! (Іра Order)</b>\n\n" +
+                         "📋 <b>Замовлення №:</b> " + orderNum + "\n" +
+                         "🚗 <b>Авто:</b> Авто " + carId + "\n" +
+                         "📍 <b>Постачальник:</b> " + address + "\n\n" +
+                         "Водій підтвердив забір товару. Натисніть нижче для прийомки або призначення працівника складати:";
+            
+            var whKb = {
+              "inline_keyboard": [
+                [{"text": "👷 Призначити комірника", "callback_data": "show_workers_" + deliveryId}],
+                [{"text": "✅ Прийняти особисто на склад", "callback_data": "wh_supplier_receive_" + deliveryId}]
+              ]
+            };
+
+            heads.forEach(function(headId) {
+              if (headId) sendTelegramMessage(headId, whText, whKb);
+            });
+          } catch (eWh) {
+            Logger.log("Error notifying warehouse head: " + eWh.toString());
+          }
+        } else if (newStatus === "Прийнято на склад") {
+          messageText = "🏬 <b>Товар прийнято на склад!</b>\n\n" +
+                        "📦 <b>Замовлення №:</b> " + orderNum + "\n" +
+                        "📍 <b>Адреса:</b> " + address + "\n\n" +
+                        "Комірники підтвердили прийомку закупівлі від постачальника на склад.";
+        } else if (newStatus === "Виконано") {
           messageText = "🟢 <b>Доставка виконана успішно!</b>\n\n" +
                         "📦 <b>Замовлення №:</b> " + orderNum + "\n" +
                         "🚗 <b>Автомобіль:</b> Авто " + carId + "\n" +
@@ -664,6 +734,15 @@ function assignWarehouseWorker(deliveryId, workerId) {
       sheet.getRange(i + 1, workerCol + 1).setValue(workerId);
       sheet.getRange(i + 1, gatherCol + 1).setValue('В процесі збору');
       if (orderCol !== -1) orderNum = data[i][orderCol];
+
+      // Get the worker telegram ID to send them a notification
+      var whData = getWarehouseWorkers();
+      var assignedWorker = null;
+      for (var j = 0; j < whData.heads.length; j++) { if (String(whData.heads[j].id) == String(workerId) || String(whData.heads[j].telegram_id) == String(workerId)) assignedWorker = whData.heads[j]; }
+      for (var k = 0; k < whData.workers.length; k++) { if (String(whData.workers[k].id) == String(workerId) || String(whData.workers[k].telegram_id) == String(workerId)) assignedWorker = whData.workers[k]; }
+      
+      var workerName = assignedWorker ? assignedWorker.name : workerId;
+      appendOperationHistory(sheet, i + 1, headers, "Призначено комірника: " + workerName);
       
       var managerId = "";
       var managerCol = headers.indexOf('ID_Менеджера');
@@ -728,6 +807,7 @@ function updateWarehouseStatus(deliveryId, statusStr) {
     var searchId = String(deliveryId).replace(/-/g, '');
     if (currentId === searchId) {
       sheet.getRange(i + 1, gatherCol + 1).setValue(statusStr);
+      appendOperationHistory(sheet, i + 1, headers, "Складський статус: " + statusStr);
       var orderNum = orderCol !== -1 ? data[i][orderCol] : "Б/Н";
       var workerId = workerCol !== -1 ? data[i][workerCol] : "";
       var carId = carCol !== -1 ? String(data[i][carCol]).trim() : "";
@@ -2401,24 +2481,46 @@ function notifyDriverAboutDelivery(deliveryData) {
 
   if (targetTgId && /^\d+$/.test(targetTgId)) {
     var carName = getCarName(deliveryData.driver_id || deliveryData.car || '');
-    var text = "🚚 <b>Маршрутний лист / Нова доставка!</b>\n\n" +
-               "📋 <b>Замовлення №:</b> " + (deliveryData.order_num || "Б/Н") + "\n" +
-               "📅 <b>Дата та час:</b> " + (deliveryData.date || "") + " (" + (deliveryData.time || "") + ")\n" +
-               "📍 <b>Адреса:</b> " + (deliveryData.address || "") + "\n" +
-               "👤 <b>Одержувач:</b> " + (deliveryData.receiver_name || "Не вказано") + (deliveryData.receiver_phone ? (" (" + deliveryData.receiver_phone + ")") : "") + "\n" +
-               "💬 <b>Коментар:</b> " + (deliveryData.comment || "Немає") + "\n" +
-               "🚗 <b>Автомобіль:</b> " + carName + "\n\n" +
-               "<i>Вдалого маршруту!</i> 🛣️";
+    var isSupplierPickup = String(deliveryData.manager_chat_id || '').toLowerCase().includes('order') || 
+                           String(deliveryData.comment || '').toLowerCase().includes('закупівля') || 
+                           String(deliveryData.comment || '').toLowerCase().includes('постачальник') ||
+                           !!deliveryData.invoice_url;
 
-    var kb = null;
+    var text = "";
+    var kbRows = [];
+
+    if (isSupplierPickup) {
+      text = "📥 <b>ЗАБІР ТОВАРУ У ПОСТАЧАЛЬНИКА! (Іра Order)</b>\n\n" +
+             "📋 <b>Замовлення №:</b> " + (deliveryData.order_num || "Б/Н") + "\n" +
+             "📅 <b>Дата та час:</b> " + (deliveryData.date || "") + " (" + (deliveryData.time || "") + ")\n" +
+             "📍 <b>Адреса постачальника:</b> " + (deliveryData.address || "") + "\n" +
+             "👤 <b>Контакт постачальника:</b> " + (deliveryData.receiver_name || "Не вказано") + (deliveryData.receiver_phone ? (" (" + deliveryData.receiver_phone + ")") : "") + "\n" +
+             "💬 <b>Примітки:</b> " + (deliveryData.comment || "Немає") + "\n" +
+             "🚗 <b>Автомобіль:</b> " + carName + "\n\n" +
+             "<i>Отримайте товар за прибутковою накладною та підтвердіть забір у боті!</i> 📦";
+      
+      var delId = deliveryData.id || deliveryData.ID || 'mock';
+      kbRows.push([{"text": "📥 Отримав товар від постачальника", "callback_data": "confirm_supplier_" + delId}]);
+      if (deliveryData.invoice_url) {
+        kbRows.push([{"text": "📄 Переглянути прибуткову накладну", "callback_data": "view_invoice_" + delId}]);
+      }
+    } else {
+      text = "🚚 <b>Маршрутний лист / Нова доставка!</b>\n\n" +
+             "📋 <b>Замовлення №:</b> " + (deliveryData.order_num || "Б/Н") + "\n" +
+             "📅 <b>Дата та час:</b> " + (deliveryData.date || "") + " (" + (deliveryData.time || "") + ")\n" +
+             "📍 <b>Адреса:</b> " + (deliveryData.address || "") + "\n" +
+             "👤 <b>Одержувач:</b> " + (deliveryData.receiver_name || "Не вказано") + (deliveryData.receiver_phone ? (" (" + deliveryData.receiver_phone + ")") : "") + "\n" +
+             "💬 <b>Коментар:</b> " + (deliveryData.comment || "Немає") + "\n" +
+             "🚗 <b>Автомобіль:</b> " + carName + "\n\n" +
+             "<i>Вдалого маршруту!</i> 🛣️";
+    }
+
     if (deliveryData.address) {
       var mapsUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(deliveryData.address);
-      kb = {
-        "inline_keyboard": [
-          [{"text": "🗺️ Відкрити в Навігаторі (Google Maps)", "url": mapsUrl}]
-        ]
-      };
+      kbRows.push([{"text": "🗺️ Відкрити в Навігаторі (Google Maps)", "url": mapsUrl}]);
     }
+    
+    var kb = { "inline_keyboard": kbRows };
     sendTelegramMessage(targetTgId, text, kb);
   }
 }
