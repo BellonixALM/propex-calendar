@@ -681,6 +681,87 @@ async function openGlobalMap() {
   transform: scale(0.95);
 }
 
+.activity-timeline-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 12px;
+  width: 2px;
+  background: var(--border-color);
+  z-index: 1;
+}
+.timeline-item {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.timeline-icon-node {
+  position: absolute;
+  left: -28px;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  border: 2px solid var(--bg-color);
+}
+.timeline-icon-blue { background: #0284c7; color: white; }
+.timeline-icon-yellow { background: #eab308; color: black; }
+.timeline-icon-purple { background: #8b5cf6; color: white; }
+.timeline-icon-orange { background: #f97316; color: white; }
+.timeline-icon-green { background: #10b981; color: white; }
+.timeline-icon-red { background: #ef4444; color: white; }
+.timeline-icon-gray { background: #6b7280; color: white; }
+
+.timeline-title {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text-color);
+  line-height: 1.3;
+}
+.timeline-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.timeline-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  width: fit-content;
+  margin-top: 2px;
+}
+.timeline-time {
+  font-size: 10px;
+  color: var(--text-dark);
+  margin-top: 2px;
+}
+
+/* Custom Scrollbar for Activity Timeline */
+.timeline-scroll-container::-webkit-scrollbar {
+  width: 5px;
+}
+.timeline-scroll-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+.timeline-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+  transition: var(--transition);
+}
+.timeline-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
 .bug-modal-header-icon {
   width: 38px;
   height: 38px;
@@ -1218,6 +1299,7 @@ body.light-theme .login-error {
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
 </script>
 
@@ -1797,7 +1879,19 @@ body.light-theme .login-error {
         </div>
 
         <div class="dash-panel" style="margin-top: 20px;">
-          <h3 class="panel-title">Порівняльна аналітика вантажного автопарку</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <h3 class="panel-title" style="margin: 0;">Порівняльна аналітика вантажного автопарку</h3>
+            <div style="display: flex; align-items: center; gap: 16px; font-family: var(--font-title); font-size: 13px; font-weight: 700;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 28px; height: 12px; background: rgba(30, 58, 138, 0.9); border: 2px solid #3b82f6; border-radius: 4px; display: inline-block;"></span>
+                <span>Пробіг (км)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 28px; height: 12px; background: rgba(176, 28, 36, 0.9); border: 2px solid #ef4444; border-radius: 4px; display: inline-block;"></span>
+                <span>Поїздки</span>
+              </div>
+            </div>
+          </div>
           <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 15px;">
             <div style="flex: 1; min-width: 320px;">
               <h4 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
@@ -1819,8 +1913,15 @@ body.light-theme .login-error {
         </div>
         
         <div class="dash-panel" style="margin-top: 20px;">
-          <h3 class="panel-title">Частота поїздок до контрагентів / адрес (для консолідації)</h3>
-          <div class="chart-container" style="height: 380px; position: relative; width: 100%; margin-top: 15px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+            <h3 class="panel-title" style="margin: 0;">Частота поїздок до контрагентів / адрес (для консолідації)</h3>
+            <div style="display: flex; gap: 6px; background: var(--bg-color); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+              <button class="btn btn-secondary btn-chart-type active" id="btn-chart-doughnut" onclick="setClientChartType('doughnut')" style="font-size: 11px; padding: 4px 10px; border-radius: 6px;">🍩 Донат (Кільце)</button>
+              <button class="btn btn-secondary btn-chart-type" id="btn-chart-pie" onclick="setClientChartType('pie')" style="font-size: 11px; padding: 4px 10px; border-radius: 6px;">🟢 Повне коло</button>
+              <button class="btn btn-secondary btn-chart-type" id="btn-chart-bar" onclick="setClientChartType('bar')" style="font-size: 11px; padding: 4px 10px; border-radius: 6px;">📊 Стовпчики</button>
+            </div>
+          </div>
+          <div class="chart-container" style="height: 380px; position: relative; width: 100%;">
             <canvas id="clientTripsFrequencyChart"></canvas>
           </div>
         </div>
@@ -2189,82 +2290,99 @@ body.light-theme .login-error {
 
   
   <div class="modal" id="details-modal">
-    <div class="modal-content">
+    <div class="modal-content" style="width: 900px; max-width: 95vw; max-height: 90vh;">
       <div class="modal-header">
-        <h2>Деталі доставки</h2>
+        <div>
+          <h2 id="modal-details-title" style="font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            📋 Деталі замовлення
+          </h2>
+          <span style="font-size: 12px; color: var(--text-muted);">Картка замовлення та стрічка активності (Activity Timeline)</span>
+        </div>
         <button class="modal-close-btn" onclick="closeModal('details-modal')">
           <i data-lucide="x" style="width:20px;height:20px;"></i>
         </button>
       </div>
-      <div class="modal-body">
-        <div class="detail-grid">
-          <div class="detail-item">
-            <div class="detail-label">Автомобіль</div>
-            <div class="detail-value" id="det-car">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Час та дата</div>
-            <div class="detail-value" id="det-time-date">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Номер замовлення</div>
-            <div class="detail-value" id="det-order">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Статус оплати</div>
-            <div class="detail-value" id="det-payment">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Менеджер</div>
-            <div class="detail-value" id="det-manager">-</div>
-          </div>
-          <div class="detail-item full-width">
-            <div class="detail-label">Адреса доставки</div>
-            <div class="detail-value" id="det-address">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Ім'я одержувача</div>
-            <div class="detail-value" id="det-receiver-name">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Телефон одержувача</div>
-            <div class="detail-value" id="det-receiver-phone">-</div>
-          </div>
-          <div class="detail-item full-width">
-            <div class="detail-label">Статус доставки</div>
-            <div class="detail-value" id="det-status">-</div>
-          </div>
-          <div class="detail-item full-width" style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 8px;">
-            <div class="detail-label">Змінити статус доставки</div>
-            <div style="display: flex; gap: 10px; margin-top: 6px;">
-              <select id="det-status-select" class="select-custom" style="flex-grow: 1; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; font-weight: 600; color: var(--text-color); outline: none;">
-                <option value="Заплановано">⚪ Заплановано</option>
-                <option value="В процесі">🔵 В процесі (в дорозі)</option>
-                <option value="Забрано у постачальника">📥 Забрано у постачальника</option>
-                <option value="Прийнято на склад">🏬 Прийнято на склад</option>
-                <option value="Виконано">🟢 Виконано</option>
-                <option value="Проблема">🔴 Проблема / Аварія</option>
-                <option value="Скасовано">🚫 Скасовано</option>
-              </select>
-              <button class="btn" id="update-status-btn" onclick="submitStatusUpdate()" style="padding: 8px 16px;">Оновити</button>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start;">
+          
+          <!-- LEFT COLUMN: Primary Details -->
+          <div class="detail-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="detail-item">
+              <div class="detail-label">Автомобіль</div>
+              <div class="detail-value" id="det-car">-</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Час та дата</div>
+              <div class="detail-value" id="det-time-date">-</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Номер замовлення</div>
+              <div class="detail-value" id="det-order">-</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Статус оплати</div>
+              <div class="detail-value" id="det-payment">-</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Менеджер</div>
+              <div class="detail-value" id="det-manager">-</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Статус доставки</div>
+              <div class="detail-value" id="det-status">-</div>
+            </div>
+            <div class="detail-item full-width">
+              <div class="detail-label">Адреса доставки</div>
+              <div class="detail-value" id="det-address">-</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Ім'я одержувача</div>
+              <div class="detail-value" id="det-receiver-name">-</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Телефон одержувача</div>
+              <div class="detail-value" id="det-receiver-phone">-</div>
+            </div>
+            <div class="detail-item full-width" style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 4px;">
+              <div class="detail-label">Змінити статус доставки</div>
+              <div style="display: flex; gap: 8px; margin-top: 6px;">
+                <select id="det-status-select" class="select-custom" style="flex-grow: 1; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; font-weight: 600; color: var(--text-color); outline: none;">
+                  <option value="Заплановано">⚪ Заплановано</option>
+                  <option value="В процесі">🔵 В процесі (в дорозі)</option>
+                  <option value="Забрано у постачальника">📥 Забрано у постачальника</option>
+                  <option value="Прийнято на склад">🏬 Прийнято на склад</option>
+                  <option value="Виконано">🟢 Виконано</option>
+                  <option value="Проблема">🔴 Проблема / Аварія</option>
+                  <option value="Скасовано">🚫 Скасовано</option>
+                </select>
+                <button class="btn" id="update-status-btn" onclick="submitStatusUpdate()" style="padding: 8px 14px;">Оновити</button>
+              </div>
+            </div>
+            <div class="detail-item full-width" id="det-invoice-container" style="display: none;">
+              <div class="detail-label">📄 Прибуткова накладна 1С</div>
+              <div class="detail-value" id="det-invoice-content" style="margin-top: 6px;">-</div>
+            </div>
+            <div class="detail-item full-width">
+              <div class="detail-label">Коментар / Примітки</div>
+              <div class="detail-value" id="det-comment">-</div>
             </div>
           </div>
-          <div class="detail-item full-width" id="det-invoice-container" style="display: none;">
-            <div class="detail-label">📄 Прибуткова накладна 1С</div>
-            <div class="detail-value" id="det-invoice-content" style="margin-top: 6px;">-</div>
-          </div>
-          <div class="detail-item full-width" id="det-history-container" style="border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 12px;">
-            <div class="detail-label" style="color: var(--accent-blue); font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 6px;">
-              📜 Історія складських операцій та виконань
+
+          <!-- RIGHT COLUMN: Real-time Omnichannel Activity Timeline -->
+          <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; max-height: 480px;">
+            <div style="font-family: var(--font-title); font-size: 13px; font-weight: 800; color: var(--text-color); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
+              <span>⚡ Activity Timeline</span>
+              <span style="font-size: 10px; color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); padding: 2px 6px; border-radius: 10px; font-weight: 600;">Real-time</span>
             </div>
-            <div id="det-history-content" style="margin-top: 8px; font-size: 12px; display: flex; flex-direction: column; gap: 6px;">
-              <span style="color: var(--text-muted); font-size: 11px;">Немає записів складських операцій</span>
+            
+            <div class="timeline-scroll-container" style="overflow-y: auto; flex-grow: 1; padding-right: 6px; margin-right: -4px;">
+              <div id="det-history-content" class="activity-timeline-wrapper" style="position: relative; padding-left: 28px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Timeline vertical line element generated via CSS -->
+                <span style="color: var(--text-muted); font-size: 11px;">Завантаження історії...</span>
+              </div>
             </div>
           </div>
-          <div class="detail-item full-width">
-            <div class="detail-label">Коментар / Примітки</div>
-            <div class="detail-value" id="det-comment">-</div>
-          </div>
+
         </div>
       </div>
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -4153,27 +4271,220 @@ body.light-theme .login-error {
         }
       }
 
-      // Parse and display operation history
+      // Parse and display operation history in Activity Timeline format
       const historyContent = document.getElementById('det-history-content');
       if (historyContent) {
         const rawHistory = del['Історія_Операцій'] || del['Історія'] || del['History'] || '';
+        
+        let timelineItems = [];
+        
+        // 1. Initial creation entry if history is empty or to ensure first step exists
+        const managerId = del['ID_Менеджера'];
+        let managerFullName = 'Менеджер';
+        if (managerId) {
+          const emp = (state.employees || []).find(e => {
+            const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
+            return tgId && String(tgId).trim() === String(managerId).trim();
+          });
+          if (emp) managerFullName = emp['ПІБ'] || emp["Ім'я"] || managerId;
+          else managerFullName = `Менеджер (ID: ${managerId})`;
+        }
+        
         if (rawHistory) {
-          const entries = rawHistory.split(';').filter(e => e.trim());
-          historyContent.innerHTML = entries.map(entry => {
-            let icon = '📌';
-            if (entry.includes('Призначено комірника')) icon = '👷';
-            else if (entry.includes('Зібрано') || entry.includes('Скомплектовано')) icon = '📦';
-            else if (entry.includes('Забрано у постачальника')) icon = '📥';
-            else if (entry.includes('Прийнято на склад')) icon = '🏬';
-            else if (entry.includes('Виконано')) icon = '🟢';
-            else if (entry.includes('Проблема') || entry.includes('Відмова')) icon = '🔴';
-            
-            return `<div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                      <span>${icon} ${entry.trim()}</span>
-                    </div>`;
-          }).join('');
+          const rawEntries = rawHistory.split(';').filter(e => e.trim());
+          timelineItems = rawEntries.map(entry => {
+            const str = entry.trim();
+            let timePart = "";
+            let textPart = str;
+            if (str.includes(" — ")) {
+              const parts = str.split(" — ");
+              timePart = parts[0];
+              textPart = parts.slice(1).join(" — ");
+            }
+
+            let iconClass = 'timeline-icon-blue';
+            let iconText = '📌';
+            let title = textPart;
+            let subtitle = 'Системна дія';
+            let badgeText = 'Оновлено';
+            let badgeClass = 'rgba(59, 130, 246, 0.15)';
+            let badgeColor = '#3b82f6';
+
+            if (textPart.includes('Створено') || textPart.includes('створено')) {
+              iconClass = 'timeline-icon-blue';
+              iconText = '✈️';
+              title = `Замовлення розміщено — №${del['Номер_замовлення'] || ''}`;
+              subtitle = managerFullName;
+              badgeText = 'Створено';
+            } else if (textPart.includes('Накладна') || textPart.includes('накладна')) {
+              iconClass = 'timeline-icon-yellow';
+              iconText = '📄';
+              title = `Додано PDF / Скріншот 1С`;
+              subtitle = managerFullName;
+              badgeText = '1С Документ';
+              badgeClass = 'rgba(234, 179, 8, 0.15)';
+              badgeColor = '#eab308';
+            } else if (textPart.includes('Призначено комірника')) {
+              iconClass = 'timeline-icon-purple';
+              iconText = '👷';
+              title = textPart;
+              subtitle = 'Призначив: Сергій (Головний комірник)';
+              badgeText = 'Склад';
+              badgeClass = 'rgba(139, 92, 246, 0.15)';
+              badgeColor = '#8b5cf6';
+            } else if (textPart.includes('Зібрано') || textPart.includes('Скомплектовано')) {
+              iconClass = 'timeline-icon-orange';
+              iconText = '📦';
+              title = `Товар зібрано на складі`;
+              subtitle = `Комірник складу`;
+              badgeText = 'Зібрано';
+              badgeClass = 'rgba(249, 115, 22, 0.15)';
+              badgeColor = '#f97316';
+            } else if (textPart.includes('Забрано у постачальника')) {
+              iconClass = 'timeline-icon-purple';
+              iconText = '📥';
+              title = `Отримано товар від постачальника`;
+              subtitle = `Водій: ${driverText}`;
+              badgeText = 'Забрано';
+              badgeClass = 'rgba(139, 92, 246, 0.15)';
+              badgeColor = '#8b5cf6';
+            } else if (textPart.includes('Прийнято на склад')) {
+              iconClass = 'timeline-icon-green';
+              iconText = '🏬';
+              title = `Товар прийнято на склад`;
+              subtitle = `Головний комірник складу`;
+              badgeText = 'Прийнято';
+              badgeClass = 'rgba(16, 185, 129, 0.15)';
+              badgeColor = '#10b981';
+            } else if (textPart.includes('Виконано') || textPart.includes('виконано')) {
+              iconClass = 'timeline-icon-green';
+              iconText = '🟢';
+              title = `Замовлення виконано та доставлено`;
+              subtitle = `Водій: ${driverText}`;
+              badgeText = 'Виконано';
+              badgeClass = 'rgba(16, 185, 129, 0.15)';
+              badgeColor = '#10b981';
+            } else if (textPart.includes('Проблема') || textPart.includes('Відмова')) {
+              iconClass = 'timeline-icon-red';
+              iconText = '🚨';
+              title = textPart;
+              subtitle = 'Офіс / Водій';
+              badgeText = 'Проблема';
+              badgeClass = 'rgba(239, 68, 68, 0.15)';
+              badgeColor = '#ef4444';
+            }
+
+            return `
+              <div class="timeline-item">
+                <div class="timeline-icon-node ${iconClass}">${iconText}</div>
+                <div class="timeline-title">${title}</div>
+                <div class="timeline-sub">${subtitle}</div>
+                <div class="timeline-badge" style="background: ${badgeClass}; color: ${badgeColor};">${badgeText}</div>
+                <div class="timeline-time">${timePart || 'Нещодавно'}</div>
+              </div>
+            `;
+          });
+
+          historyContent.innerHTML = timelineItems.join('');
         } else {
-          historyContent.innerHTML = '<span style="color: var(--text-muted); font-size: 11px;">Немає записів складських операцій</span>';
+          // Default initial fallback timeline items
+          const initialTime = del['Дата'] ? `${del['Дата']} ${del['Час'] || ''}` : 'Нещодавно';
+          let defaultItemsHtml = `
+            <div class="timeline-item">
+              <div class="timeline-icon-node timeline-icon-blue">✈️</div>
+              <div class="timeline-title">Замовлення створено — №${del['Номер_замовлення'] || ''}</div>
+              <div class="timeline-sub">${managerFullName}</div>
+              <div class="timeline-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">Створено</div>
+              <div class="timeline-time">${initialTime}</div>
+            </div>
+          `;
+          
+          if (invoiceUrl) {
+            defaultItemsHtml += `
+              <div class="timeline-item">
+                <div class="timeline-icon-node timeline-icon-yellow">📄</div>
+                <div class="timeline-title">Додано 1С прибуткову накладну</div>
+                <div class="timeline-sub">${managerFullName}</div>
+                <div class="timeline-badge" style="background: rgba(234, 179, 8, 0.15); color: #eab308;">1С Документ</div>
+                <div class="timeline-time">${initialTime}</div>
+              </div>
+            `;
+          }
+
+          if (driverText && driverText !== 'Не призначено') {
+            defaultItemsHtml += `
+              <div class="timeline-item">
+                <div class="timeline-icon-node timeline-icon-purple">🚚</div>
+                <div class="timeline-title">Призначено водія — ${driverText}</div>
+                <div class="timeline-sub">Логіст: Юрій Бортовщук / Авто: ${window.getCarName(del['ID_Авто'])}</div>
+                <div class="timeline-badge" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">Призначено</div>
+                <div class="timeline-time">${initialTime}</div>
+              </div>
+            `;
+          }
+
+          // Look up warehouse worker name if assigned
+          const warehouseWorkerId = del['ID_Комірника'] || del['ID_Склад'];
+          let warehouseWorkerText = '';
+          if (warehouseWorkerId) {
+            const empWorker = (state.employees || []).find(e => {
+              const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
+              const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
+              const targetStr = String(warehouseWorkerId).trim();
+              return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
+            });
+            warehouseWorkerText = empWorker ? (empWorker['ПІБ'] || empWorker["Ім'я"] || warehouseWorkerId) : warehouseWorkerId;
+          }
+
+          // Head warehouse worker reception step
+          defaultItemsHtml += `
+            <div class="timeline-item">
+              <div class="timeline-icon-node timeline-icon-blue">🏬</div>
+              <div class="timeline-title">Передано на склад</div>
+              <div class="timeline-sub">Головний комірник: Сергій</div>
+              <div class="timeline-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">Склад</div>
+              <div class="timeline-time">${initialTime}</div>
+            </div>
+          `;
+
+          if (warehouseWorkerText) {
+            defaultItemsHtml += `
+              <div class="timeline-item">
+                <div class="timeline-icon-node timeline-icon-purple">👷</div>
+                <div class="timeline-title">Призначено збірку комірнику</div>
+                <div class="timeline-sub">Призначив: Сергій ➔ Комірник: ${warehouseWorkerText}</div>
+                <div class="timeline-badge" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">Склад</div>
+                <div class="timeline-time">${initialTime}</div>
+              </div>
+            `;
+          }
+
+          const warehouseStatus = del['Статус_збору'] || del['Статус_Склад'];
+          if (warehouseStatus && warehouseStatus !== 'Очікує') {
+            defaultItemsHtml += `
+              <div class="timeline-item">
+                <div class="timeline-icon-node timeline-icon-orange">📦</div>
+                <div class="timeline-title">Складський статус: ${warehouseStatus}</div>
+                <div class="timeline-sub">${warehouseWorkerText ? 'Комірник: ' + warehouseWorkerText : 'Складська операція'}</div>
+                <div class="timeline-badge" style="background: rgba(249, 115, 22, 0.15); color: #f97316;">${warehouseStatus}</div>
+                <div class="timeline-time">${initialTime}</div>
+              </div>
+            `;
+          }
+
+          if (del['Статус'] && del['Статус'] !== 'Заплановано') {
+            defaultItemsHtml += `
+              <div class="timeline-item">
+                <div class="timeline-icon-node timeline-icon-green">🟢</div>
+                <div class="timeline-title">Поточний статус: ${del['Статус']}</div>
+                <div class="timeline-sub">Системна відмітка</div>
+                <div class="timeline-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">${del['Статус']}</div>
+                <div class="timeline-time">${initialTime}</div>
+              </div>
+            `;
+          }
+
+          historyContent.innerHTML = defaultItemsHtml;
         }
       }
 
@@ -4657,7 +4968,50 @@ function renderClients() {
         container.innerHTML = '';
         
         const query = (document.getElementById('clients-search-input').value || '').toLowerCase();
-        let clients = state.clients || [];
+        
+        // 1. Gather registered clients
+        let clientMap = new Map();
+        (state.clients || []).forEach(c => {
+          const name = (c['Назва'] || c['ПІБ'] || c['Одержувач'] || '').toString().trim();
+          if (name) {
+            clientMap.set(name.toLowerCase(), {
+              'Назва': name,
+              'Телефон': c['Телефон'] || c['Телефон_одержувача'] || '-',
+              'Адреса': c['Адреса'] || c['Адреса доставки'] || '-',
+              'Тип': c['Тип'] || 'person',
+              'Категорія': c['Категорія'] || 'Клієнт',
+              'Знижка': c['Знижка'] || '0%',
+              'Замовлень': c['Замовлень'] || 1
+            });
+          }
+        });
+
+        // 2. Auto-extract clients from delivery history if not already registered
+        (state.deliveries || []).forEach(del => {
+          const rawName = del["Ім'я_одержувача"] || del["Ім'я одержувача"] || del["Одержувач"] || "";
+          const name = rawName.toString().trim();
+          if (name) {
+            const key = name.toLowerCase();
+            if (!clientMap.has(key)) {
+              clientMap.set(key, {
+                'Назва': name,
+                'Телефон': (del['Телефон_одержувача'] || del['Телефон'] || '-').toString().trim(),
+                'Адреса': (del['Адреса'] || '-').toString().trim(),
+                'Тип': 'person',
+                'Категорія': 'Клієнт з замовлень',
+                'Знижка': '0%',
+                'Замовлень': 1
+              });
+            } else {
+              const existing = clientMap.get(key);
+              if (existing['Телефон'] === '-' && del['Телефон_одержувача']) existing['Телефон'] = del['Телефон_одержувача'];
+              if (existing['Адреса'] === '-' && del['Адреса']) existing['Адреса'] = del['Адреса'];
+              existing['Замовлень'] = (existing['Замовлень'] || 1) + 1;
+            }
+          }
+        });
+
+        let clients = Array.from(clientMap.values());
         
         // Apply Filters
         const typeFilter = document.getElementById('client-filter-type');
@@ -5744,6 +6098,10 @@ function renderFleetCharts(odo, type) {
         if (fleetActivityChartInstance[type]) {
             fleetActivityChartInstance[type].destroy();
         }
+        // Propex Brand Colors: Deep Navy Blue (#112349 / #1E3A8A) & Propex Red (#b01c24 / #dc2626)
+        const propexNavy = '#1E3A8A';
+        const propexRed = '#b01c24';
+
         fleetActivityChartInstance[type] = new Chart(ctxActivity.getContext('2d'), {
             type: 'bar',
             plugins: [inlineDatalabelsPlugin],
@@ -5753,17 +6111,19 @@ function renderFleetCharts(odo, type) {
                     {
                         label: 'Пробіг (км)',
                         data: mileageData,
-                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        backgroundColor: 'rgba(30, 58, 138, 0.9)', // Propex Deep Navy
                         borderColor: '#3b82f6',
-                        borderWidth: 1,
+                        borderWidth: 2,
+                        borderRadius: 6,
                         yAxisID: 'y'
                     },
                     {
                         label: 'Поїздки',
                         data: tripsData,
-                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
-                        borderColor: '#10b981',
-                        borderWidth: 1,
+                        backgroundColor: 'rgba(176, 28, 36, 0.9)', // Propex Signature Red
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        borderRadius: 6,
                         yAxisID: 'y1'
                     }
                 ]
@@ -5773,32 +6133,32 @@ function renderFleetCharts(odo, type) {
                 maintainAspectRatio: false,
                 scales: {
                     x: {
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: activeColor, font: { family: 'Outfit' } }
+                        grid: { color: 'rgba(255,255,255,0.08)' },
+                        ticks: { color: activeColor, font: { family: 'Outfit', size: 12, weight: '600' } }
                     },
                     y: {
                         position: 'left',
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: activeColor, font: { family: 'Outfit' } },
-                        title: { display: true, text: 'Кілометраж (км)', color: activeColor }
+                        grid: { color: 'rgba(255,255,255,0.08)' },
+                        ticks: { color: '#60a5fa', font: { family: 'Outfit', size: 12, weight: 'bold' } },
+                        title: { display: true, text: 'Кілометраж (км)', color: '#60a5fa', font: { family: 'Outfit', size: 12, weight: 'bold' } }
                     },
                     y1: {
                         position: 'right',
                         grid: { drawOnChartArea: false },
-                        ticks: { color: activeColor, font: { family: 'Outfit' } },
-                        title: { display: true, text: 'Кількість поїздок', color: activeColor }
+                        ticks: { color: '#f87171', font: { family: 'Outfit', size: 12, weight: 'bold' } },
+                        title: { display: true, text: 'Кількість поїздок', color: '#f87171', font: { family: 'Outfit', size: 12, weight: 'bold' } }
                     }
                 },
                 plugins: {
                     legend: {
-                        labels: { color: activeColor, font: { family: 'Outfit' } }
+                        display: false
                     }
                 }
             }
         });
     }
     
-    // Fuel consumption chart
+    // Fuel consumption chart - Propex Signature Red
     const canvasIdFuel = type === 'passenger' ? 'fleetFuelChartPassenger' : 'fleetFuelChart';
     const ctxFuel = document.getElementById(canvasIdFuel);
     if (ctxFuel) {
@@ -5813,9 +6173,10 @@ function renderFleetCharts(odo, type) {
                 datasets: [{
                     label: 'Витрати (л)',
                     data: fuelData,
-                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                    backgroundColor: 'rgba(176, 28, 36, 0.9)', // Propex Red
                     borderColor: '#ef4444',
-                    borderWidth: 1
+                    borderWidth: 2,
+                    borderRadius: 6
                 }]
             },
             options: {
@@ -5824,16 +6185,16 @@ function renderFleetCharts(odo, type) {
                 scales: {
                     x: {
                         grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: activeColor, font: { family: 'Outfit' } }
+                        ticks: { color: activeColor, font: { family: 'Outfit', size: 12, weight: '600' } }
                     },
                     y: {
                         grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: activeColor, font: { family: 'Outfit' } }
+                        ticks: { color: activeColor, font: { family: 'Outfit', size: 12, weight: '600' } }
                     }
                 },
                 plugins: {
                     legend: {
-                        labels: { color: activeColor, font: { family: 'Outfit' } }
+                        labels: { color: activeColor, font: { family: 'Outfit', size: 13, weight: 'bold' } }
                     }
                 }
             }
@@ -6147,7 +6508,21 @@ function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe, type) {
     });
 }
 
+let currentClientChartType = 'doughnut';
+
+function setClientChartType(type) {
+    currentClientChartType = type;
+    document.querySelectorAll('.btn-chart-type').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.getElementById(`btn-chart-${type}`);
+    if (activeBtn) activeBtn.classList.add('active');
+    
+    const currDels = state.lastClientTripsDels || state.deliveries || [];
+    renderClientTripsFrequencyChart(currDels);
+}
+
 function renderClientTripsFrequencyChart(currDels) {
+    if (currDels) state.lastClientTripsDels = currDels;
+    
     if (clientTripsFrequencyChartInstance) {
         clientTripsFrequencyChartInstance.destroy();
     }
@@ -6201,67 +6576,148 @@ function renderClientTripsFrequencyChart(currDels) {
         .map(k => ({ label: k, value: counts[k] }))
         .filter(item => item.label && item.label !== '-')
         .sort((a, b) => b.value - a.value)
-        .slice(0, 15);
+        .slice(0, 10);
         
     const labels = sorted.map(item => item.label);
     const dataValues = sorted.map(item => item.value);
     
     const isDark = !document.body.classList.contains('light-theme');
-    const activeColor = getComputedStyle(document.body).getPropertyValue('--text-color').trim() || '#1f2937';
+    const activeColor = getComputedStyle(document.body).getPropertyValue('--text-color').trim() || '#ffffff';
     const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
     
     const ctx = canvas.getContext('2d');
+    
+    const vibrantColors = [
+      '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', 
+      '#06b6d4', '#f97316', '#6366f1', '#84cc16', '#14b8a6'
+    ];
+    
+    const isBar = currentClientChartType === 'bar';
+    const isPie = currentClientChartType === 'pie';
+    const isDoughnut = currentClientChartType === 'doughnut';
+
+    // Pop-out offset slice for the top #1 client in Pie/Doughnut mode!
+    const offsets = dataValues.map((_, i) => (i === 0 ? 16 : 0));
+
+    let datasetConfig = {
+        label: 'Кількість поїздок',
+        data: dataValues,
+        backgroundColor: vibrantColors,
+        borderColor: isDark ? '#1c1c1e' : '#ffffff',
+        borderWidth: 2,
+        hoverOffset: 12
+    };
+
+    if (isDoughnut || isPie) {
+        datasetConfig.offset = offsets;
+        datasetConfig.cutout = isDoughnut ? '55%' : '0%';
+    } else {
+        // Bar configuration
+        const backgroundGradients = labels.map((_, i) => {
+          const color = vibrantColors[i % vibrantColors.length];
+          const gradient = ctx.createLinearGradient(0, 0, 400, 0);
+          gradient.addColorStop(0, color);
+          gradient.addColorStop(1, color + '77');
+          return gradient;
+        });
+        datasetConfig.backgroundColor = backgroundGradients;
+        datasetConfig.borderColor = vibrantColors;
+        datasetConfig.borderWidth = 1.5;
+        datasetConfig.borderRadius = 6;
+        datasetConfig.barThickness = 18;
+    }
+
+    const pluginsList = (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : [];
+
     clientTripsFrequencyChartInstance = new Chart(ctx, {
-        type: 'bar',
+        type: isBar ? 'bar' : (isDoughnut ? 'doughnut' : 'pie'),
+        plugins: pluginsList,
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Кількість поїздок',
-                data: dataValues,
-                backgroundColor: 'rgba(59, 130, 246, 0.75)',
-                borderColor: '#3b82f6',
-                borderWidth: 1,
-                borderRadius: 4,
-                barThickness: 16
-            }]
+            datasets: [datasetConfig]
         },
         options: {
-            indexAxis: 'y',
+            indexAxis: isBar ? 'y' : undefined,
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false },
+                datalabels: {
+                    display: function(context) {
+                        return !isBar; // Only display on Doughnut and Pie charts
+                    },
+                    anchor: 'end',
+                    align: 'outer',
+                    offset: 8,
+                    formatter: function(value, context) {
+                        const name = context.chart.data.labels[context.dataIndex] || '';
+                        return name.length > 16 ? name.substring(0, 14) + '…' : name;
+                    },
+                    color: isDark ? '#ffffff' : '#111827',
+                    backgroundColor: isDark ? 'rgba(28, 28, 30, 0.85)' : 'rgba(255, 255, 255, 0.95)',
+                    borderColor: function(context) {
+                        return vibrantColors[context.dataIndex % vibrantColors.length];
+                    },
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                    padding: { top: 3, bottom: 3, left: 7, right: 7 },
+                    font: {
+                        family: 'Outfit',
+                        size: 11,
+                        weight: '700'
+                    }
+                },
+                legend: {
+                    display: !isBar,
+                    position: 'right',
+                    labels: {
+                        color: activeColor,
+                        font: { family: 'Outfit', size: 12, weight: '600' },
+                        padding: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
                 tooltip: {
+                    backgroundColor: isDark ? '#1c1c1e' : '#ffffff',
+                    titleColor: isDark ? '#ffffff' : '#111827',
+                    bodyColor: isDark ? '#3b82f6' : '#1d4ed8',
+                    borderColor: 'rgba(59, 130, 246, 0.4)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    padding: 12,
                     callbacks: {
                         label: function(context) {
-                            return ` Рейсів: ${context.parsed.x}`;
+                            const val = isBar ? context.parsed.x : context.parsed;
+                            const total = dataValues.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                            return ` 🚚 Рейсів: ${val} (${pct}% від усього)`;
                         }
                     }
                 }
             },
-            scales: {
+            scales: isBar ? {
                 x: {
                     grid: { color: gridColor },
                     ticks: {
                         color: activeColor,
-                        font: { family: 'Inter', size: 11 },
+                        font: { family: 'Outfit', size: 12, weight: '600' },
                         stepSize: 1
                     },
                     title: {
                         display: true,
                         text: 'Кількість поїздок за обраний період',
                         color: activeColor,
-                        font: { family: 'Outfit', size: 12, weight: 'bold' }
+                        font: { family: 'Outfit', size: 13, weight: 'bold' }
                     }
                 },
                 y: {
                     grid: { display: false },
                     ticks: {
                         color: activeColor,
-                        font: { family: 'Inter', size: 11 }
+                        font: { family: 'Outfit', size: 12, weight: '600' }
                     }
                 }
-            }
+            } : {}
         }
     });
 }
@@ -7497,13 +7953,18 @@ ${sysInfo}`;
 
 
   <script>
-    // --- TOOLS MODULE LOGIC ---
-    let toolsData = [
-      { id: 'T1', sn: 'S/N: 88410', name: 'Прес-кліщі REMS Akku-Press', client: 'ТОВ «БудСервіс» (Олексій)', issueDate: '20.07.2026', freeDays: 5, status: 'rented', daysOverdue: 2 },
-      { id: 'T2', sn: 'S/N: 99201', name: 'Зварювальний апарат поліпропілену', client: 'Кавчук О.М.', issueDate: '24.07.2026', freeDays: 3, status: 'rented', daysOverdue: 0 },
-      { id: 'T3', sn: 'S/N: 33412', name: 'Детектор прихованої проводки Bosch', client: 'Атланта Сіті', issueDate: '25.07.2026', freeDays: 7, status: 'rented', daysOverdue: -5 },
-      { id: 'T4', sn: 'S/N: 11029', name: 'Гідравлічний трубогин Rothenberger', client: '—', issueDate: '—', freeDays: 0, status: 'stock', daysOverdue: 0 }
+    let defaultToolsList = [
+      { id: 'T5', sn: 'S/N: 720203', name: 'прес-кліщі Tece', condition: 'Відмінний (Новий)', category: 'Прес-інструмент (Кліщі)', client: '—', issueDate: '—', freeDays: 0, status: 'stock', daysOverdue: 0, photo: '' }
     ];
+
+    let savedTools = null;
+    try {
+      savedTools = localStorage.getItem('propex_tools_db');
+      if (savedTools) savedTools = JSON.parse(savedTools);
+    } catch(e) { savedTools = null; }
+
+    window.toolsData = (savedTools && Array.isArray(savedTools) && savedTools.length > 0) ? savedTools : defaultToolsList;
+    let toolsData = window.toolsData;
 
     function handleToolsTabClick() {
       const user = state.currentUser || {};
@@ -7531,7 +7992,12 @@ ${sysInfo}`;
     }
 
     window.renderToolsView = function() {
-      if (!window.toolsData) window.toolsData = [];
+      if (!window.toolsData || window.toolsData.length === 0) {
+        window.toolsData = [
+          { id: 'T5', sn: 'S/N: 720203', name: 'прес-кліщі Tece', condition: 'Відмінний (Новий)', category: 'Прес-інструмент (Кліщі)', client: '—', issueDate: '—', freeDays: 0, status: 'stock', daysOverdue: 0, photo: '' }
+        ];
+        try { localStorage.setItem('propex_tools_db', JSON.stringify(window.toolsData)); } catch(e){}
+      }
       const search = (document.getElementById('tools-search-input')?.value || '').toLowerCase();
       const filter = 'all';
       const tbody = document.getElementById('tools-table-body');
@@ -7577,19 +8043,26 @@ ${sysInfo}`;
           let conditionBadge = `<span style="font-size: 12px; font-weight: 600;">${item.condition || '🟢 Добрий (Справний)'}</span>`;
 
           let actionBtn = item.status === 'stock'
-            ? `<button onclick="window.openIssueToolModal('${item.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Видати</button>`
-            : `<button onclick="window.returnTool('${item.id}')" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Прийняти</button>`;
+            ? `<button onclick="event.stopPropagation(); window.openIssueToolModal('${item.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Видати</button>`
+            : `<button onclick="event.stopPropagation(); window.returnTool('${item.id}')" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Прийняти</button>`;
+
+          let photoThumb = item.photo 
+            ? `<img src="${item.photo}" style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color); vertical-align: middle; margin-right: 8px;">` 
+            : `<span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 14px; margin-right: 8px; vertical-align: middle;">🧰</span>`;
 
           html += `
-            <tr style="border-bottom: 1px solid var(--border-color);">
+            <tr onclick="window.openEditToolModal('${item.id}')" style="border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
               <td style="padding: 14px; font-family: var(--font-title); font-weight: 700; color: var(--text-color); white-space: nowrap;">${item.sn}</td>
-              <td style="padding: 14px; font-weight: 600; min-width: 180px;">${item.name}</td>
+              <td style="padding: 14px; font-weight: 600; min-width: 180px;">${photoThumb}<span style="color: var(--accent-blue); text-decoration: underline; text-underline-offset: 3px;">${item.name}</span></td>
               <td style="padding: 14px; white-space: nowrap;">${conditionBadge}</td>
               <td style="padding: 14px; color: var(--text-muted); min-width: 160px;">${item.client}</td>
               <td style="padding: 14px; white-space: nowrap;">${item.issueDate}</td>
               <td style="padding: 14px; white-space: nowrap;">${timerBadge}</td>
               <td style="padding: 14px; white-space: nowrap;">${statusBadge}</td>
-              <td style="padding: 14px; text-align: right; white-space: nowrap;">${actionBtn}</td>
+              <td style="padding: 14px; text-align: right; white-space: nowrap;">
+                <button onclick="event.stopPropagation(); window.openEditToolModal('${item.id}')" style="background: rgba(255,255,255,0.08); color: var(--text-color); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; margin-right: 6px;" title="Редагувати або додати фото">✏️ Редагувати</button>
+                ${actionBtn}
+              </td>
             </tr>
           `;
         });
@@ -7729,6 +8202,14 @@ ${sysInfo}`;
             </div>
           </div>
 
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">📷 Фото інструмента</label>
+            <input type="file" id="add-tool-photo-file" accept="image/*" class="form-control" onchange="previewAddToolPhoto(this)" style="width: 100%; padding: 8px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 12px;">
+            <div id="add-tool-photo-preview" style="margin-top: 8px; display: none;">
+              <img id="add-tool-photo-img" src="" style="max-height: 80px; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
+            </div>
+          </div>
+
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
             <div class="form-group">
               <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Дата наступного техогляду (ТО)</label>
@@ -7757,6 +8238,81 @@ ${sysInfo}`;
         </form>
       </div>
     </div>
+  <!-- MODAL: EDIT TOOL & DETAILS WITH PHOTO -->
+  <div class="modal" id="modal-edit-tool" onclick="if(event.target===this) closeEditToolModal()">
+    <div class="modal-content" style="max-width: 540px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="wrench" style="width: 20px; height: 20px;"></i>
+          </div>
+          <div>
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700;">Картка інструмента</h2>
+            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Перегляд, редагування та завантаження фото</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeEditToolModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-tool-form" onsubmit="event.preventDefault(); submitEditToolForm();">
+          <input type="hidden" id="edit-tool-id">
+          
+          <div style="text-align: center; margin-bottom: 16px;">
+            <div id="edit-tool-photo-container" style="position: relative; display: inline-block;">
+              <img id="edit-tool-photo-img" src="" style="width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border-color); background: rgba(255,255,255,0.05); display: none;">
+              <div id="edit-tool-photo-placeholder" style="width: 120px; height: 120px; border-radius: 12px; border: 2px dashed var(--border-color); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px; cursor: pointer; background: rgba(255,255,255,0.02);" onclick="document.getElementById('edit-tool-photo-file').click()">
+                <span style="font-size: 28px; margin-bottom: 4px;">📸</span>
+                <span>Додати фото</span>
+              </div>
+            </div>
+            <div style="margin-top: 8px;">
+              <input type="file" id="edit-tool-photo-file" accept="image/*" onchange="previewEditToolPhoto(this)" style="display: none;">
+              <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-tool-photo-file').click()" style="font-size: 11px; padding: 4px 10px;">📷 Завантажити / Змінити фото</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Назва інструмента / Обладнання *</label>
+            <input type="text" id="edit-tool-name" class="form-control" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px; font-weight: 700;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Серійний номер (S/N) *</label>
+              <input type="text" id="edit-tool-sn" class="form-control" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; font-family: var(--font-title); font-weight: 700;">
+            </div>
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Технічний стан *</label>
+              <select id="edit-tool-condition" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; font-weight: 600;">
+                <option value="Відмінний (Новий)">🟢 Відмінний (Новий)</option>
+                <option value="Добрий (Справний)">🟢 Добрий (Справний)</option>
+                <option value="Задовільний (Знос)">🟡 Задовільний (Знос)</option>
+                <option value="Потребує ТО / Ремонту">🔴 Потребує ТО / Ремонту</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Поточний статус</label>
+              <input type="text" id="edit-tool-status-text" class="form-control" readonly style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 13px; font-weight: 600;">
+            </div>
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Орендар / Одержувач</label>
+              <input type="text" id="edit-tool-client-text" class="form-control" readonly style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 13px;">
+            </div>
+          </div>
+
+          <div class="modal-footer" style="padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="btn" onclick="deleteToolItem()" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); padding: 9px 16px; border-radius: 8px; font-weight: 600; font-size: 12px;">🗑 Видалити</button>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" class="btn btn-secondary" onclick="closeEditToolModal()" style="padding: 10px 18px; border-radius: 8px;">Скасувати</button>
+              <button type="submit" class="btn" style="background-color: #3b82f6; color: white; border: none; font-weight: 700; padding: 10px 22px; border-radius: 8px;">Зберегти зміни</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
 
@@ -7764,10 +8320,7 @@ ${sysInfo}`;
     // --- COMPLETE TOOLS MODULE GLOBAL FUNCTIONS ---
     if (!window.toolsData) {
       window.toolsData = [
-        { id: 'T1', sn: 'S/N: 88410', name: 'Прес-кліщі REMS Akku-Press', client: 'ТОВ «БудСервіс» (Олексій)', issueDate: '20.07.2026', freeDays: 5, status: 'rented', daysOverdue: 2 },
-        { id: 'T2', sn: 'S/N: 99201', name: 'Зварювальний апарат поліпропілену', client: 'Кавчук О.М.', issueDate: '24.07.2026', freeDays: 3, status: 'rented', daysOverdue: 0 },
-        { id: 'T3', sn: 'S/N: 33412', name: 'Детектор прихованої проводки Bosch', client: 'Атланта Сіті', issueDate: '25.07.2026', freeDays: 7, status: 'rented', daysOverdue: -5 },
-        { id: 'T4', sn: 'S/N: 11029', name: 'Гідравлічний трубогин Rothenberger', client: '—', issueDate: '—', freeDays: 0, status: 'stock', daysOverdue: 0 }
+        { id: 'T5', sn: 'S/N: 720203', name: 'Прес-кліщі Tece', condition: 'Відмінний (Новий)', category: 'Прес-інструмент (Кліщі)', client: '—', issueDate: '—', freeDays: 0, status: 'stock', daysOverdue: 0, photo: '' }
       ];
     }
 
@@ -7958,6 +8511,7 @@ ${sysInfo}`;
       tool.freeDays = freeDays;
       tool.daysOverdue = -freeDays;
 
+      window.saveToolsToStorage();
       window.closeIssueToolModal();
       alert(`✅ Інструмент "${tool.name}" успішно видано клієнту ${clientName} на ${freeDays} днів!${!clientExists ? '\n\n(Клієнта "' + clientName + '" автоматично додано в базу клієнтів)' : ''}`);
       window.renderToolsView();
@@ -7983,6 +8537,50 @@ ${sysInfo}`;
       if (modal) modal.classList.remove('show');
     };
 
+    window.saveToolsToStorage = function() {
+      try {
+        localStorage.setItem('propex_tools_db', JSON.stringify(window.toolsData));
+      } catch(e) {
+        console.error("Error saving tools:", e);
+      }
+    };
+
+    let currentAddToolPhotoBase64 = '';
+    let currentEditToolPhotoBase64 = '';
+
+    window.previewAddToolPhoto = function(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          currentAddToolPhotoBase64 = e.target.result;
+          const img = document.getElementById('add-tool-photo-img');
+          const container = document.getElementById('add-tool-photo-preview');
+          if (img && container) {
+            img.src = e.target.result;
+            container.style.display = 'block';
+          }
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    };
+
+    window.previewEditToolPhoto = function(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          currentEditToolPhotoBase64 = e.target.result;
+          const img = document.getElementById('edit-tool-photo-img');
+          const placeholder = document.getElementById('edit-tool-photo-placeholder');
+          if (img && placeholder) {
+            img.src = e.target.result;
+            img.style.display = 'inline-block';
+            placeholder.style.display = 'none';
+          }
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    };
+
     window.submitAddToolForm = function() {
       const name = document.getElementById('add-tool-name').value.trim();
       let sn = document.getElementById('add-tool-sn').value.trim();
@@ -7999,7 +8597,7 @@ ${sysInfo}`;
       }
 
       window.toolsData.push({
-        id: 'T' + (window.toolsData.length + 1),
+        id: 'T' + (Date.now()),
         sn: sn,
         name: name,
         condition: condition,
@@ -8009,12 +8607,84 @@ ${sysInfo}`;
         issueDate: '—',
         freeDays: 0,
         status: 'stock',
-        daysOverdue: 0
+        daysOverdue: 0,
+        photo: currentAddToolPhotoBase64 || ''
       });
 
+      window.saveToolsToStorage();
+      currentAddToolPhotoBase64 = '';
       window.closeAddToolModal();
       alert(`✅ Новий інструмент "${name}" (${sn}) успішно додано на склад!`);
       window.renderToolsView();
+    };
+
+    window.openEditToolModal = function(toolId) {
+      const tool = window.toolsData.find(t => t.id === toolId);
+      if (!tool) return;
+
+      document.getElementById('edit-tool-id').value = tool.id;
+      document.getElementById('edit-tool-name').value = tool.name || '';
+      document.getElementById('edit-tool-sn').value = tool.sn || '';
+      document.getElementById('edit-tool-condition').value = tool.condition || '🟢 Добрий (Справний)';
+      document.getElementById('edit-tool-status-text').value = tool.status === 'stock' ? '🟢 На складі' : '🔵 В користуванні';
+      document.getElementById('edit-tool-client-text').value = tool.client || '—';
+
+      currentEditToolPhotoBase64 = tool.photo || '';
+      const img = document.getElementById('edit-tool-photo-img');
+      const placeholder = document.getElementById('edit-tool-photo-placeholder');
+
+      if (tool.photo) {
+        img.src = tool.photo;
+        img.style.display = 'inline-block';
+        placeholder.style.display = 'none';
+      } else {
+        img.src = '';
+        img.style.display = 'none';
+        placeholder.style.display = 'flex';
+      }
+
+      const modal = document.getElementById('modal-edit-tool');
+      if (modal) modal.classList.add('show');
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    };
+
+    window.closeEditToolModal = function() {
+      const modal = document.getElementById('modal-edit-tool');
+      if (modal) modal.classList.remove('show');
+    };
+
+    window.submitEditToolForm = function() {
+      const toolId = document.getElementById('edit-tool-id').value;
+      const tool = window.toolsData.find(t => t.id === toolId);
+      if (!tool) return;
+
+      tool.name = document.getElementById('edit-tool-name').value.trim();
+      let sn = document.getElementById('edit-tool-sn').value.trim();
+      if (!sn.toUpperCase().startsWith('S/N')) sn = 'S/N: ' + sn;
+      tool.sn = sn;
+      tool.condition = document.getElementById('edit-tool-condition').value;
+
+      if (currentEditToolPhotoBase64) {
+        tool.photo = currentEditToolPhotoBase64;
+      }
+
+      window.saveToolsToStorage();
+      window.closeEditToolModal();
+      alert(`✅ Інформацію про інструмент "${tool.name}" оновлено!`);
+      window.renderToolsView();
+    };
+
+    window.deleteToolItem = function() {
+      const toolId = document.getElementById('edit-tool-id').value;
+      const tool = window.toolsData.find(t => t.id === toolId);
+      if (!tool) return;
+
+      if (confirm(`Ви впевнені, що хочете видалити "${tool.name}" (${tool.sn}) з системи?`)) {
+        window.toolsData = window.toolsData.filter(t => t.id !== toolId);
+        window.saveToolsToStorage();
+        window.closeEditToolModal();
+        window.renderToolsView();
+      }
     };
 
     window.returnTool = function(toolId) {
@@ -8024,6 +8694,7 @@ ${sysInfo}`;
         tool.client = '—';
         tool.issueDate = '—';
         tool.daysOverdue = 0;
+        window.saveToolsToStorage();
         alert(`✅ Інструмент "${tool.name}" успішно прийнято на склад!`);
         window.renderToolsView();
       }

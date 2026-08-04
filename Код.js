@@ -483,6 +483,12 @@ function addDelivery(deliveryData) {
   }
 
   sheet.appendRow(newRow);
+
+  var newRowNum = sheet.getLastRow();
+  appendOperationHistory(sheet, newRowNum, headers, "Замовлення створено (Менеджер: " + (deliveryData.manager_chat_id || "Менеджер") + ")");
+  if (deliveryData.invoice_url) {
+    appendOperationHistory(sheet, newRowNum, headers, "Додано 1С прибуткову накладну");
+  }
   
   // Notify Head Warehouse Workers
   var whData = getWarehouseWorkers();
@@ -807,9 +813,21 @@ function updateWarehouseStatus(deliveryId, statusStr) {
     var searchId = String(deliveryId).replace(/-/g, '');
     if (currentId === searchId) {
       sheet.getRange(i + 1, gatherCol + 1).setValue(statusStr);
-      appendOperationHistory(sheet, i + 1, headers, "Складський статус: " + statusStr);
-      var orderNum = orderCol !== -1 ? data[i][orderCol] : "Б/Н";
       var workerId = workerCol !== -1 ? data[i][workerCol] : "";
+      var workerName = workerId;
+      var whData = getWarehouseWorkers();
+      var assignedWorker = null;
+      for (var j = 0; j < whData.heads.length; j++) { if (String(whData.heads[j].id) == String(workerId) || String(whData.heads[j].telegram_id) == String(workerId)) assignedWorker = whData.heads[j]; }
+      for (var k = 0; k < whData.workers.length; k++) { if (String(whData.workers[k].id) == String(workerId) || String(whData.workers[k].telegram_id) == String(workerId)) assignedWorker = whData.workers[k]; }
+      if (assignedWorker) workerName = assignedWorker.name;
+
+      if (statusStr === 'Зібрано' || statusStr === 'Скомплектовано') {
+        appendOperationHistory(sheet, i + 1, headers, "Зібрано на складі (Комірник: " + (workerName || "Комірник") + ")");
+      } else {
+        appendOperationHistory(sheet, i + 1, headers, "Складський статус: " + statusStr + (workerName ? " (" + workerName + ")" : ""));
+      }
+
+      var orderNum = orderCol !== -1 ? data[i][orderCol] : "Б/Н";
       var carId = carCol !== -1 ? String(data[i][carCol]).trim() : "";
       var managerCol = headers.indexOf('ID_Менеджера');
       var managerId = managerCol !== -1 ? String(data[i][managerCol]).trim() : "";
@@ -1030,6 +1048,7 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
       
       if (deliveryData.driver_user_id && deliveryData.driver_user_id !== oldDriverUser) {
         notifyDriverAboutDelivery(deliveryData);
+        appendOperationHistory(sheet, rowNum, headers, "Призначено водія: " + deliveryData.driver_user_id + " (Авто: " + (deliveryData.driver_id || 'Не призначено') + ")");
       }
       
       // Check if changes are made by logist/director/admin and notify manager if critical fields shifted
