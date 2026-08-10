@@ -1008,6 +1008,8 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
   var commentCol = headers.indexOf('Коментар');
   var nameCol = headers.indexOf('Ім\'я_одержувача');
   var phoneCol = headers.indexOf('Телефон_одержувача');
+  if (phoneCol === -1) phoneCol = headers.indexOf('Telephone');
+  if (phoneCol === -1) phoneCol = headers.indexOf('Телефон');
   var managerCol = headers.indexOf('ID_Менеджера');
   var driverUserCol = headers.indexOf('ID_Водія');
   if (driverUserCol === -1) {
