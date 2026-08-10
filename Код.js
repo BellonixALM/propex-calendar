@@ -451,7 +451,11 @@ function addDelivery(deliveryData) {
   setVal('Статус', 'Заплановано');
   setVal('Коментар', deliveryData.comment || '');
   setVal('Ім\'я_одержувача', deliveryData.receiver_name || '');
-  setVal('Телефон_одержувача', deliveryData.receiver_phone || '');
+  var cleanPhone = (deliveryData.receiver_phone || '').toString().trim();
+  if (cleanPhone.indexOf('=') === 0 || cleanPhone.indexOf('+') === 0) {
+    cleanPhone = "'" + cleanPhone;
+  }
+  setVal('Телефон_одержувача', cleanPhone);
   setVal('ID_Менеджера', deliveryData.manager_chat_id || '');
   setVal('ID_Комірника', '');
   setVal('ID_Водія', deliveryData.driver_user_id || '');
@@ -1042,6 +1046,13 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
       if (payCol !== -1 && deliveryData.payment !== undefined) sheet.getRange(rowNum, payCol + 1).setValue(deliveryData.payment);
       if (commentCol !== -1 && deliveryData.comment !== undefined) sheet.getRange(rowNum, commentCol + 1).setValue(deliveryData.comment);
       if (nameCol !== -1 && deliveryData.receiver_name !== undefined) sheet.getRange(rowNum, nameCol + 1).setValue(deliveryData.receiver_name);
+      if (phoneCol !== -1 && deliveryData.receiver_phone !== undefined) {
+        var cleanPhoneEdit = String(deliveryData.receiver_phone || '').trim();
+        if (cleanPhoneEdit.indexOf('=') === 0 || cleanPhoneEdit.indexOf('+') === 0) {
+          cleanPhoneEdit = "'" + cleanPhoneEdit;
+        }
+        sheet.getRange(rowNum, phoneCol + 1).setValue(cleanPhoneEdit);
+      }
       var oldDriverUser = driverUserCol !== -1 ? data[i][driverUserCol] : '';
       
       if (driverUserCol !== -1 && deliveryData.driver_user_id !== undefined) sheet.getRange(rowNum, driverUserCol + 1).setValue(deliveryData.driver_user_id);

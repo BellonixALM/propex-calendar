@@ -4623,6 +4623,10 @@ body.light-theme .login-error {
       const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
       const driverUserId = document.getElementById('form-driver-select') ? document.getElementById('form-driver-select').value.trim() : '';
       const invoice_url = document.getElementById('form-invoice-url') ? document.getElementById('form-invoice-url').value.trim() : '';
+      let cleanReceiverPhone = receiver_phone;
+      if (cleanReceiverPhone.startsWith('=') || cleanReceiverPhone.startsWith('+')) {
+        cleanReceiverPhone = "'" + cleanReceiverPhone;
+      }
       const deliveryData = {
         driver_id: car,
         driver_user_id: driverUserId,
@@ -4633,7 +4637,7 @@ body.light-theme .login-error {
         order_num: order_num,
         payment: payment,
         receiver_name: receiver_name,
-        receiver_phone: receiver_phone,
+        receiver_phone: cleanReceiverPhone,
         comment: comment,
         invoice_url: invoice_url
       };
