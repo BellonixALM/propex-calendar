@@ -1024,7 +1024,8 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
     var currentIdRaw = data[i][idCol];
     if (!currentIdRaw || currentIdRaw === 'undefined') currentIdRaw = String(i + 1);
     
-    var matchId = idCol !== -1 && String(currentIdRaw).trim() === String(deliveryId).trim();
+    var rowNumStr = String(i + 1);
+    var matchId = (idCol !== -1 && String(currentIdRaw).trim() === String(deliveryId).trim()) || (rowNumStr === String(deliveryId).trim());
     
     if (matchId) {
       var rowNum = i + 1;
