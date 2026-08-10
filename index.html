@@ -4249,7 +4249,18 @@ body.light-theme .login-error {
       document.getElementById('det-payment').textContent = del['Статус_оплати'] || 'Не вказано';
       document.getElementById('det-address').textContent = del['Адреса'];
       document.getElementById('det-receiver-name').textContent = del['Ім\'я_одержувача'] || 'Не вказано';
-      document.getElementById('det-receiver-phone').textContent = del['Телефон_одержувача'] || 'Не вказано';
+      let phoneDisplay = del['Телефон_одержувача'] || del['Telephone'] || '';
+      if (phoneDisplay.includes('#ERROR!')) {
+        const receiverName = (del["Ім'я_одержувача"] || '').trim().toLowerCase();
+        const foundClient = (state.deliveries || []).find(d => 
+          d["Ім'я_одержувача"] && 
+          d["Ім'я_одержувача"].trim().toLowerCase() === receiverName && 
+          d['Телефон_одержувача'] && 
+          !d['Телефон_одержувача'].includes('#ERROR!')
+        );
+        phoneDisplay = foundClient ? (foundClient['Телефон_одержувача'] || foundClient['Telephone']) : 'Не вказано';
+      }
+      document.getElementById('det-receiver-phone').textContent = phoneDisplay || 'Не вказано';
       document.getElementById('det-status').textContent = del['Статус'] || 'Заплановано';
       document.getElementById('det-comment').textContent = del['Коментар'] || 'Немає коментарів';
       document.getElementById('det-status-select').value = del['Статус'] || 'Заплановано';
