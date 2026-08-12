@@ -835,6 +835,30 @@ function updateWarehouseStatus(deliveryId, statusStr) {
       var carId = carCol !== -1 ? String(data[i][carCol]).trim() : "";
       var managerCol = headers.indexOf('ID_Менеджера');
       var managerId = managerCol !== -1 ? String(data[i][managerCol]).trim() : "";
+      var driverUserCol = headers.indexOf('ID_Водія');
+      var driverUserId = driverUserCol !== -1 ? String(data[i][driverUserCol]).trim() : "";
+
+      if ((statusStr === 'Зібрано' || statusStr === 'Скомплектовано') && carId && carId.toLowerCase().indexOf('самовивіз') === -1) {
+        var rowDeliveryData = {
+          id: data[i][idCol],
+          driver_id: carId,
+          driver_user_id: driverUserId,
+          date: dateCol !== -1 ? data[i][dateCol] : '',
+          time: timeCol !== -1 ? data[i][timeCol] : '',
+          address: addressCol !== -1 ? data[i][addressCol] : '',
+          order_num: orderNum,
+          payment: payCol !== -1 ? data[i][payCol] : '',
+          receiver_name: nameCol !== -1 ? data[i][nameCol] : '',
+          receiver_phone: phoneCol !== -1 ? data[i][phoneCol] : '',
+          comment: commentCol !== -1 ? data[i][commentCol] : '',
+          manager_chat_id: managerId
+        };
+        try {
+          notifyDriverAboutDelivery(rowDeliveryData);
+        } catch (errNotify) {
+          Logger.log("Error notifying driver on warehouse collect: " + errNotify.message);
+        }
+      }
       
       // If it's a problem or refusal, notify Heads and Manager
       if (statusStr.indexOf('Проблема') === 0 || statusStr.indexOf('Відмова') === 0) {
@@ -2558,6 +2582,27 @@ function notifyDriverAboutDelivery(deliveryData) {
     
     var kb = { "inline_keyboard": kbRows };
     sendTelegramMessage(targetTgId, text, kb);
+
+    // Record notification in Activity Timeline
+    try {
+      var sheet = getSpreadsheet().getSheetByName('Доставки');
+      if (sheet) {
+        var data = sheet.getDataRange().getValues();
+        var headers = data[0];
+        var idCol = headers.indexOf('ID');
+        var delIdTarget = deliveryData.id || deliveryData.ID;
+        if (idCol !== -1 && delIdTarget) {
+          for (var r = 1; r < data.length; r++) {
+            if (String(data[r][idCol]).replace(/-/g, '') === String(delIdTarget).replace(/-/g, '')) {
+              appendOperationHistory(sheet, r + 1, headers, "Надіслано сповіщення водію " + (carName ? ("(" + carName + ")") : ""));
+              break;
+            }
+          }
+        }
+      }
+    } catch (eHistory) {
+      Logger.log("Error logging driver notification timeline: " + eHistory.message);
+    }
   }
 }
 
