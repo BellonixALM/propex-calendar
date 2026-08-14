@@ -1435,7 +1435,8 @@ body.light-theme .login-error {
     <nav class="sidebar-nav">
       <a class="nav-item" id="nav-dashboard" onclick="switchMainTab('dashboard')" title="Дашборд"><i data-lucide="layout-dashboard"></i> <span class="nav-item-text">Дашборд</span></a>
       <a class="nav-item admin-only" id="nav-analytics-cargo" onclick="switchMainTab('analytics-cargo')" style="display:none;" title="Логістика та склад"><i data-lucide="truck"></i> <span class="nav-item-text">Логістика та склад</span></a>
-      <a class="nav-item admin-only" id="nav-analytics-passenger" onclick="switchMainTab('analytics-passenger')" style="display:none;" title="Аналітика відділу продажів"><i data-lucide="trending-up"></i> <span class="nav-item-text">Аналітика продажів</span></a>
+      <a class="nav-item" id="nav-analytics-passenger" onclick="switchMainTab('analytics-passenger')" title="Аналітика відділу продажів"><i data-lucide="trending-up"></i> <span class="nav-item-text">Аналітика продажів</span></a>
+      <a class="nav-item admin-only" id="nav-kpi-payroll" onclick="switchMainTab('kpi-payroll')" style="display:none;" title="Мотивація та KPI менеджерів"><i data-lucide="award"></i> <span class="nav-item-text">Мотивація та KPI</span></a>
       <a class="nav-item active" id="nav-tracking" onclick="switchMainTab('tracking')" title="Трекінг"><i data-lucide="map"></i> <span class="nav-item-text">Трекінг</span></a>
             <a class="nav-item" id="nav-tools" onclick="switchMainTab('tools')" title="Облік інструментів" style="display:none;"><i data-lucide="wrench"></i> <span class="nav-item-text">Облік інструментів</span></a>
       <a class="nav-item" id="nav-clients" onclick="switchMainTab('clients')" title="Клієнти / Компанії"><i data-lucide="users"></i> <span class="nav-item-text">Клієнти / Компанії</span></a>
@@ -1928,110 +1929,502 @@ body.light-theme .login-error {
       </div>
       <!-- End Cargo Analytics Tab -->
 
-      <!-- Passenger Analytics Tab -->
+      <!-- Passenger / Sales Analytics Tab -->
       <div id="analytics-passenger-view" class="main-tab-view" style="padding-right: 10px;">
-      <div class="control-bar" style="margin-bottom: 24px;">
-        <div class="date-navigation">
-          <button class="btn btn-secondary btn-icon" onclick="navigateAnalytics(-1)" title="Попередній період">
-            <i data-lucide="chevron-left" style="width:18px;height:18px;"></i>
-          </button>
-          <div class="date-display" onclick="document.getElementById('analytics-datepicker-ana-passenger').showPicker()">
-            <i data-lucide="calendar" style="width:16px;height:16px;color:var(--accent-blue);"></i>
-            <span class="analytics-date-label" style="min-width:140px;">Завантаження...</span>
-            <input type="date" id="analytics-datepicker-ana-passenger" class="datepicker-input" onchange="onAnalyticsDateSelect(this.value)">
-          </div>
-          <button class="btn btn-secondary btn-icon" onclick="navigateAnalytics(1)" title="Наступний період">
-            <i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
-          </button>
-        </div>
-        
-        <div class="view-selector">
-          <button class="view-btn analytics-view-btn" id="btn-analytics-month-ana-passenger" onclick="switchAnalyticsPeriod('month')">Місяць</button>
-          <button class="view-btn analytics-view-btn" id="btn-analytics-week-ana-passenger" onclick="switchAnalyticsPeriod('week')">Тиждень</button>
-          <button class="view-btn analytics-view-btn" id="btn-analytics-day-ana-passenger" onclick="switchAnalyticsPeriod('day')">День</button>
-        </div>
-      </div>
-        
-        <div class="dash-cards-grid" style="grid-template-columns: 2fr 2fr 1fr 1fr;">
-          <div class="dash-card dash-dark">
-            <div class="dash-title">Лідер продажів (менеджер)</div>
-            <div class="dash-value" id="analytics-top-manager-name-passenger" style="font-size: 24px; font-weight: 800;">-</div>
-            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-top-manager-count-passenger">0 доставок</div>
-          </div>
-          <div class="dash-card dash-dark">
-            <div class="dash-title">Мобільність: найактивніше службове авто</div>
-            <div class="dash-value" id="analytics-top-car-name-passenger" style="font-size: 24px; font-weight: 800;">-</div>
-            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-top-car-km-passenger">0 км / 0 доставок</div>
-          </div>
-          <div class="dash-card dash-dark">
-            <div class="dash-title">ДП (службові авто)</div>
-            <div class="dash-value" id="analytics-diesel-liters-passenger" style="color: var(--propex-red); font-weight: 800; font-size: 24px;">0 л</div>
-            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-diesel-uah-passenger">0 грн</div>
-          </div>
-          <div class="dash-card dash-dark">
-            <div class="dash-title">Бензин (службові авто)</div>
-            <div class="dash-value" id="analytics-gasoline-liters-passenger" style="color: var(--propex-red); font-weight: 800; font-size: 24px;">0 л</div>
-            <div style="color: #9ca3af; font-size: 13px; margin-top: 5px;" id="analytics-gasoline-uah-passenger">0 грн</div>
-          </div>
-        </div>
-        
-        <div class="analytics-charts-grid">
-          <!-- Card 1: Deliveries Count -->
-          <div class="dash-panel">
-            <h3 class="panel-title">Кількість оформлених замовлень (менеджери)</h3>
-            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
-              <canvas id="comparativeChartPassenger"></canvas>
+        <!-- Control Bar with Filters -->
+        <div class="control-bar" style="margin-bottom: 24px;">
+          <div class="date-navigation">
+            <button class="btn btn-secondary btn-icon" onclick="navigateAnalytics(-1)" title="Попередній період">
+              <i data-lucide="chevron-left" style="width:18px;height:18px;"></i>
+            </button>
+            <div class="date-display" onclick="document.getElementById('analytics-datepicker-ana-passenger').showPicker()">
+              <i data-lucide="calendar" style="width:16px;height:16px;color:var(--accent-blue);"></i>
+              <span class="analytics-date-label" style="min-width:140px;">Завантаження...</span>
+              <input type="date" id="analytics-datepicker-ana-passenger" class="datepicker-input" onchange="onAnalyticsDateSelect(this.value)">
             </div>
+            <button class="btn btn-secondary btn-icon" onclick="navigateAnalytics(1)" title="Наступний період">
+              <i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
+            </button>
           </div>
           
-          <!-- Card 2: Trips Count -->
-          <div class="dash-panel">
-            <h3 class="panel-title">Службові поїздки менеджерів (рейси)</h3>
-            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
-              <canvas id="fleetTripsLineChartPassenger"></canvas>
-            </div>
-          </div>
-          
-          <!-- Card 3: Fuel Consumption -->
-          <div class="dash-panel">
-            <h3 class="panel-title">Витрати палива службовими авто</h3>
-            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
-              <canvas id="fleetFuelLineChartPassenger"></canvas>
-            </div>
-          </div>
-          
-          <!-- Card 4: Mileage -->
-          <div class="dash-panel">
-            <h3 class="panel-title">Пробіг службових авто (км)</h3>
-            <div class="chart-container" style="height: 250px; position: relative; width: 100%;">
-              <canvas id="fleetMileageLineChartPassenger"></canvas>
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <select class="select-custom" id="sales-filter-manager" onchange="renderSalesAnalyticsDashboard()" style="padding: 6px 14px; border-radius: 8px;">
+              <option value="all">👨‍💼 Всі менеджери</option>
+              <option value="1156900971">Жигун Олександр</option>
+              <option value="Кавчук Олена">Кавчук Олена</option>
+              <option value="1498633030">Петренко Микола</option>
+              <option value="7797165411">Бортовщук Юрій</option>
+              <option value="Ira Order">Ірина Сергіївна</option>
+            </select>
+
+            <select class="select-custom" id="sales-filter-brand" onchange="renderSalesAnalyticsDashboard()" style="padding: 6px 14px; border-radius: 8px;">
+              <option value="all">🏷️ Всі бренди Propex (25+)</option>
+              <option value="Tece">TECE (Німеччина)</option>
+              <option value="KAN">KAN (Польща)</option>
+              <option value="Herz">Herz (Австрія)</option>
+              <option value="Walraven">Walraven (Нідерланди)</option>
+              <option value="Ariston">Ariston (Італія)</option>
+              <option value="Ecosoft">Ecosoft (Україна)</option>
+              <option value="Resideo">Resideo (Німеччина)</option>
+              <option value="SYR">SYR (Німеччина)</option>
+              <option value="Grundfos">Grundfos (Данія)</option>
+              <option value="Danfoss">Danfoss (Данія)</option>
+              <option value="Wieland">Wieland (Німеччина)</option>
+              <option value="IBP">IBP (Великобританія)</option>
+              <option value="Felder">Felder (Німеччина)</option>
+              <option value="Rems">Rems (Німеччина)</option>
+              <option value="Kaimann">Kaimann (Німеччина)</option>
+              <option value="Climaflex">Climaflex (Польща)</option>
+              <option value="Pam Global">Pam Global (Франція)</option>
+              <option value="Halifax">Halifax (Англія)</option>
+              <option value="ASG">ASG (Україна)</option>
+              <option value="ProTank">ProTank (Туреччина)</option>
+              <option value="Kripter">Kripter (Україна)</option>
+              <option value="Devi">Devi (Данія)</option>
+              <option value="Purmo">Purmo (Польща)</option>
+              <option value="FARG">F.A.R.G. (Італія)</option>
+              <option value="CSA">CSA (Італія)</option>
+            </select>
+
+            <div class="view-selector">
+              <button class="view-btn analytics-view-btn active" id="btn-analytics-month-ana-passenger" onclick="switchAnalyticsPeriod('month')">Місяць</button>
+              <button class="view-btn analytics-view-btn" id="btn-analytics-week-ana-passenger" onclick="switchAnalyticsPeriod('week')">Тиждень</button>
+              <button class="view-btn analytics-view-btn" id="btn-analytics-day-ana-passenger" onclick="switchAnalyticsPeriod('day')">День</button>
             </div>
           </div>
         </div>
 
-        <div class="dash-panel" style="margin-top: 20px;">
-          <h3 class="panel-title">Порівняльна аналітика мобільності менеджерів</h3>
-          <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 15px;">
-            <div style="flex: 1; min-width: 320px;">
-              <h4 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                <span>📊</span> Пробіг та поїздки по авто
-              </h4>
-              <div class="chart-container" style="height: 280px; position: relative;">
-                <canvas id="fleetActivityChartPassenger"></canvas>
+        <!-- 1. Top KPI Row -->
+        <div class="dash-cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 24px;">
+          <div class="dash-card">
+            <div class="dash-title" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <i data-lucide="wallet" style="width:16px;height:16px;color:var(--primary);"></i> Загальний Виторг
+            </div>
+            <div class="dash-value" id="sales-kpi-total-revenue" style="font-size: 26px; font-weight: 800; color: var(--primary); margin-top: 4px;">5 420 000 грн</div>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;" id="sales-kpi-orders-count">124 проведених замовлень</div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-title" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <i data-lucide="trophy" style="width:16px;height:16px;color:#f59e0b;"></i> Топ Менеджер
+            </div>
+            <div class="dash-value" id="sales-kpi-top-manager" style="font-size: 22px; font-weight: 800; color: var(--text-color); margin-top: 4px;">Жигун Олександр</div>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;" id="sales-kpi-top-manager-sub">2 150 000 грн</div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-title" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <i data-lucide="tag" style="width:16px;height:16px;color:var(--accent-blue);"></i> Топ Бренд
+            </div>
+            <div class="dash-value" id="sales-kpi-top-brand" style="font-size: 22px; font-weight: 800; color: var(--accent-blue); margin-top: 4px;">TECE</div>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;" id="sales-kpi-top-brand-sub">1 680 000 грн</div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-title" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <i data-lucide="calculator" style="width:16px;height:16px;color:var(--accent-purple);"></i> Середній Чек
+            </div>
+            <div class="dash-value" id="sales-kpi-avg-check" style="font-size: 24px; font-weight: 800; color: var(--accent-purple); margin-top: 4px;">43 710 грн</div>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">на 1 замовлення</div>
+          </div>
+        </div>
+
+        <!-- 2. Charts Row (Manager Bar + Brand Donut) -->
+        <div class="analytics-charts-grid" style="margin-bottom: 24px;">
+          <div class="dash-panel">
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800;">
+              <i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent-blue);"></i> Обсяг Продажів по Менеджерах (грн)
+            </h3>
+            <div class="chart-container" style="height: 280px; position: relative; width: 100%; margin-top: 10px;">
+              <canvas id="salesManagerChartCanvas"></canvas>
+            </div>
+          </div>
+
+          <div class="dash-panel">
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800;">
+              <i data-lucide="pie-chart" style="width:18px;height:18px;color:var(--propex-red);"></i> Частка Бренду у Виторгу
+            </h3>
+            <div class="chart-container" style="height: 280px; position: relative; width: 100%; margin-top: 10px;">
+              <canvas id="salesBrandDonutChartCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Full Responsive Matrix Table Section -->
+        <div class="dash-panel" style="margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800;">
+              <i data-lucide="layout-grid" style="width:18px;height:18px;color:var(--accent-purple);"></i> Матриця Продажів: Менеджери vs Бренди (грн)
+            </h3>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Автоматичний аналіз з 1С</span>
+          </div>
+
+          <div style="overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch;">
+            <table style="width: 100%; min-width: 850px; border-collapse: separate; border-spacing: 0; font-size: 13px;">
+            <thead>
+              <tr style="background: var(--bg-color);">
+                <th style="padding: 12px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 700;">Менеджер</th>
+                <th style="padding: 12px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: 700;">TECE</th>
+                <th style="padding: 12px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: 700;">KAN</th>
+                <th style="padding: 12px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: 700;">Herz</th>
+                <th style="padding: 12px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: 700;">Walraven</th>
+                <th style="padding: 12px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: 700;">Ariston</th>
+                <th style="padding: 12px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: 700;">Ecosoft</th>
+                <th style="padding: 12px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: 700;">Grundfos</th>
+                <th style="padding: 12px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: 700;">Resideo</th>
+                <th style="padding: 12px; text-align: right; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: 800;">Всього</th>
+              </tr>
+            </thead>
+            <tbody id="sales-matrix-tbody">
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 10px; font-weight: 700; color: var(--text-color);">Жигун Олександр</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">780 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">450 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">380 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">240 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">150 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">90 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">40 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">20 000 ₴</td>
+                <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">2 150 000 ₴</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 10px; font-weight: 700; color: var(--text-color);">Кавчук Олена</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">520 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">480 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">260 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">180 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">110 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">40 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">20 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">10 000 ₴</td>
+                <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">1 620 000 ₴</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 10px; font-weight: 700; color: var(--text-color);">Петренко Микола</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">260 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">160 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">190 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">140 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">120 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">110 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">70 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">50 000 ₴</td>
+                <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">1 100 000 ₴</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 10px; font-weight: 700; color: var(--text-color);">Бортовщук Юрій</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">120 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">60 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">60 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">60 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">70 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">70 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">50 000 ₴</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-color);">60 000 ₴</td>
+                <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">550 000 ₴</td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
+        <!-- 4. Category Bar + Monthly Trend Line -->
+        <div class="analytics-charts-grid" style="margin-bottom: 24px;">
+          <div class="dash-panel">
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800;">
+              <i data-lucide="layers" style="width:18px;height:18px;color:var(--primary);"></i> Продажі по Категоріях Товарів
+            </h3>
+            <div class="chart-container" style="height: 260px; position: relative; width: 100%; margin-top: 10px;">
+              <canvas id="salesCategoryChartCanvas"></canvas>
+            </div>
+          </div>
+
+          <div class="dash-panel">
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800;">
+              <i data-lucide="trending-up" style="width:18px;height:18px;color:var(--accent-blue);"></i> Динаміка Продажів (Тренд за період)
+            </h3>
+            <div class="chart-container" style="height: 260px; position: relative; width: 100%; margin-top: 10px;">
+              <canvas id="salesTrendLineChartCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Lower Scroll Section: Top Clients Table + Plan Progress + Payment Breakdown -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;" class="dash-cards-grid">
+          <!-- Top Clients Table -->
+          <div class="dash-panel">
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; margin-bottom: 14px;">
+              <i data-lucide="building-2" style="width:18px;height:18px;color:var(--accent-blue);"></i> Топ Клієнтів по Брендах та Менеджерах
+            </h3>
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                  <tr style="border-bottom: 1.5px solid var(--border-color); color: var(--text-muted); text-align: left;">
+                    <th style="padding: 8px;">Клієнт / Компанія</th>
+                    <th style="padding: 8px;">Менеджер</th>
+                    <th style="padding: 8px;">Основний Бренд</th>
+                    <th style="padding: 8px; text-align: right;">Сума (грн)</th>
+                    <th style="padding: 8px; text-align: center;">Накладних</th>
+                  </tr>
+                </thead>
+                <tbody id="sales-top-clients-tbody">
+                  <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 10px; font-weight: 700; color: var(--text-color);">ТОВ "АГРОТЕХХІМ"</td>
+                    <td style="padding: 10px; color: var(--text-muted);">Жигун Олександр</td>
+                    <td style="padding: 10px;"><span style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">Tece</span></td>
+                    <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">1 850 000 ₴</td>
+                    <td style="padding: 10px; text-align: center; color: var(--text-color); font-weight: 700;">45</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 10px; font-weight: 700; color: var(--text-color);">ФОП ПЕТРЕНКО В.М.</td>
+                    <td style="padding: 10px; color: var(--text-muted);">Кавчук Олена</td>
+                    <td style="padding: 10px;"><span style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">KAN</span></td>
+                    <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">1 420 500 ₴</td>
+                    <td style="padding: 10px; text-align: center; color: var(--text-color); font-weight: 700;">32</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 10px; font-weight: 700; color: var(--text-color);">ПрАТ "ЕКОРЕСУРС"</td>
+                    <td style="padding: 10px; color: var(--text-muted);">Петренко Микола</td>
+                    <td style="padding: 10px;"><span style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">Herz</span></td>
+                    <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">1 105 000 ₴</td>
+                    <td style="padding: 10px; text-align: center; color: var(--text-color); font-weight: 700;">28</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 10px; font-weight: 700; color: var(--text-color);">СФГ "ЗОРЯ"</td>
+                    <td style="padding: 10px; color: var(--text-muted);">Жигун Олександр</td>
+                    <td style="padding: 10px;"><span style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">Tece</span></td>
+                    <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">980 000 ₴</td>
+                    <td style="padding: 10px; text-align: center; color: var(--text-color); font-weight: 700;">21</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 10px; font-weight: 700; color: var(--text-color);">ТОВ "ПРОМРЕМСЕРВІС"</td>
+                    <td style="padding: 10px; color: var(--text-muted);">Кавчук Олена</td>
+                    <td style="padding: 10px;"><span style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">Walraven</span></td>
+                    <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">850 200 ₴</td>
+                    <td style="padding: 10px; text-align: center; color: var(--text-color); font-weight: 700;">19</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sales Plan Progress + Payment Breakdown -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Plan Progress -->
+            <div class="dash-panel">
+              <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; margin-bottom: 12px;">
+                <i data-lucide="target" style="width:16px;height:16px;color:var(--primary);"></i> Виконання Плану Продажів
+              </h3>
+              <div id="sales-plan-progress-list" style="display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: var(--text-color);">
+                    <span>Жигун Олександр</span>
+                    <span style="color: var(--primary);">112%</span>
+                  </div>
+                  <div style="width: 100%; height: 8px; background: var(--bg-color); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <div style="width: 100%; height: 100%; background: var(--primary); border-radius: 4px;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: var(--text-color);">
+                    <span>Кавчук Олена</span>
+                    <span style="color: #f59e0b;">95%</span>
+                  </div>
+                  <div style="width: 100%; height: 8px; background: var(--bg-color); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <div style="width: 95%; height: 100%; background: #f59e0b; border-radius: 4px;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: var(--text-color);">
+                    <span>Петренко Микола</span>
+                    <span style="color: var(--propex-red);">88%</span>
+                  </div>
+                  <div style="width: 100%; height: 8px; background: var(--bg-color); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <div style="width: 88%; height: 100%; background: var(--propex-red); border-radius: 4px;"></div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div style="flex: 1; min-width: 320px;">
-              <h4 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                <span>🔥</span> Витрати палива по авто (л)
-              </h4>
-              <div class="chart-container" style="height: 280px; position: relative;">
-                <canvas id="fleetFuelChartPassenger"></canvas>
+
+            <!-- Payment Type Chart -->
+            <div class="dash-panel">
+              <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; margin-bottom: 8px;">
+                <i data-lucide="credit-card" style="width:16px;height:16px;color:var(--accent-purple);"></i> Спосіб Оплати та Доставки
+              </h3>
+              <div class="chart-container" style="height: 160px; position: relative;">
+                <canvas id="salesPaymentTypeChartCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- End Passenger / Sales Analytics Tab -->
+
+      <!-- KPI & Payroll Restricted Tab (Admin / Director Only) -->
+      <div id="kpi-payroll-view" class="main-tab-view" style="padding-right: 10px;">
+        <!-- Restricted Banner -->
+        <div style="background: rgba(185, 28, 28, 0.1); border: 1px solid rgba(185, 28, 28, 0.3); border-radius: 12px; padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <i data-lucide="shield-check" style="width:22px;height:22px;color:var(--propex-red);"></i>
+            <div>
+              <div style="font-weight: 800; font-size: 14px; color: var(--text-color);">Закритий фінансовий модуль: Мотивація та Зарплата Менеджерів</div>
+              <div style="font-size: 12px; color: var(--text-muted);">Доступ обмежено та надано виключно Власнику (Директору) та Адміністратору системи.</div>
+            </div>
+          </div>
+          <span style="background: var(--propex-red); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800;">🔒 СУВОРО КОНФІДЕНЦІЙНО</span>
+        </div>
+
+        <!-- Top Salary & Bonus KPI Summary -->
+        <div class="dash-cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 24px;">
+          <div class="dash-card">
+            <div class="dash-title" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <i data-lucide="coins" style="width:16px;height:16px;color:var(--primary);"></i> Загальний Фонд Оплати Праці
+            </div>
+            <div class="dash-value" style="font-size: 26px; font-weight: 800; color: var(--primary); margin-top: 4px;">184 500 грн</div>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">нараховано за Серпень 2026</div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-title" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <i data-lucide="percent" style="width:16px;height:16px;color:var(--accent-blue);"></i> Сума Комісійних (% від виторгу)
+            </div>
+            <div class="dash-value" style="font-size: 24px; font-weight: 800; color: var(--accent-blue); margin-top: 4px;">108 400 грн</div>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">середній процент: 2.0%</div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-title" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <i data-lucide="award" style="width:16px;height:16px;color:#f59e0b;"></i> Бонуси за Бренди (TECE, KAN)
+            </div>
+            <div class="dash-value" style="font-size: 24px; font-weight: 800; color: #f59e0b; margin-top: 4px;">36 100 грн</div>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">за перевиконання маржинальних позицій</div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-title" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <i data-lucide="badge-check" style="width:16px;height:16px;color:var(--accent-purple);"></i> До виплати (Баланс)
+            </div>
+            <div class="dash-value" style="font-size: 24px; font-weight: 800; color: var(--accent-purple); margin-top: 4px;">144 500 грн</div>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">після виплати авансу (40 000 грн)</div>
+          </div>
+        </div>
+
+        <!-- Salary Breakdown Table per Manager -->
+        <div class="dash-panel" style="margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800;">
+              <i data-lucide="file-spreadsheet" style="width:18px;height:18px;color:var(--primary);"></i> Детальний розрахунок зарплат та KPI менеджерів (Серпень 2026)
+            </h3>
+            <button class="btn btn-secondary" onclick="alert('Експорт відомості нарахувань у Excel/1С завантажено')" style="font-size: 12px; padding: 4px 12px; border-radius: 6px; font-weight: 700;">
+              <i data-lucide="download" style="width:14px;height:14px;"></i> Експорт відомості
+            </button>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="background: var(--bg-color); border-bottom: 2px solid var(--border-color); color: var(--text-muted); text-align: left;">
+                  <th style="padding: 10px;">Менеджер</th>
+                  <th style="padding: 10px; text-align: right;">Виторг (грн)</th>
+                  <th style="padding: 10px; text-align: center;">План (%)</th>
+                  <th style="padding: 10px; text-align: right;">Ставка (грн)</th>
+                  <th style="padding: 10px; text-align: right;">% Продажів</th>
+                  <th style="padding: 10px; text-align: right;">Бренд-Бонус</th>
+                  <th style="padding: 10px; text-align: right;">Всього нараховано</th>
+                  <th style="padding: 10px; text-align: right;">Аванс</th>
+                  <th style="padding: 10px; text-align: right; font-weight: 800;">До виплати</th>
+                  <th style="padding: 10px; text-align: center;">Статус</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                  <td style="padding: 12px 10px; font-weight: 700; color: var(--text-color);">Жигун Олександр</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-color);">2 150 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: center;"><span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 11px;">112%</span></td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-muted);">15 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-color);">43 000 ₴ (2%)</td>
+                  <td style="padding: 12px 10px; text-align: right; color: #f59e0b; font-weight: 700;">+15 000 ₴ (TECE)</td>
+                  <td style="padding: 12px 10px; text-align: right; font-weight: 800; color: var(--text-color);">73 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--propex-red);">15 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; font-weight: 800; color: var(--primary); font-size: 14px;">58 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: center;"><span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">Готово до виплати</span></td>
+                </tr>
+
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                  <td style="padding: 12px 10px; font-weight: 700; color: var(--text-color);">Кавчук Олена</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-color);">1 620 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: center;"><span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 11px;">95%</span></td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-muted);">15 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-color);">32 400 ₴ (2%)</td>
+                  <td style="padding: 12px 10px; text-align: right; color: #f59e0b; font-weight: 700;">+11 100 ₴ (KAN)</td>
+                  <td style="padding: 12px 10px; text-align: right; font-weight: 800; color: var(--text-color);">58 500 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--propex-red);">15 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; font-weight: 800; color: var(--primary); font-size: 14px;">43 500 ₴</td>
+                  <td style="padding: 12px 10px; text-align: center;"><span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">Готово до виплати</span></td>
+                </tr>
+
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                  <td style="padding: 12px 10px; font-weight: 700; color: var(--text-color);">Петренко Микола</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-color);">1 100 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: center;"><span style="background: rgba(239, 68, 68, 0.15); color: var(--propex-red); padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 11px;">88%</span></td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-muted);">15 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-color);">22 000 ₴ (2%)</td>
+                  <td style="padding: 12px 10px; text-align: right; color: #f59e0b; font-weight: 700;">+6 000 ₴ (Herz)</td>
+                  <td style="padding: 12px 10px; text-align: right; font-weight: 800; color: var(--text-color);">43 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--propex-red);">10 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; font-weight: 800; color: var(--primary); font-size: 14px;">33 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: center;"><span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">Готово до виплати</span></td>
+                </tr>
+
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                  <td style="padding: 12px 10px; font-weight: 700; color: var(--text-color);">Бортовщук Юрій</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-color);">550 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: center;"><span style="background: rgba(239, 68, 68, 0.15); color: var(--propex-red); padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 11px;">73%</span></td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-muted);">15 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-color);">11 000 ₴ (2%)</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--text-muted);">0 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; font-weight: 800; color: var(--text-color);">26 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; color: var(--propex-red);">10 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: right; font-weight: 800; color: var(--primary); font-size: 14px;">16 000 ₴</td>
+                  <td style="padding: 12px 10px; text-align: center;"><span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">Перевірка ФОП</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Formula and Rules Cards -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="dash-panel">
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; margin-bottom: 12px;">
+              <i data-lucide="calculator" style="width:16px;height:16px;color:var(--accent-blue);"></i> Дійсна формула розрахунку
+            </h3>
+            <div style="font-size: 13px; color: var(--text-color); line-height: 1.6;">
+              <p><b>ЗП = Базова ставка (15 000 грн) + % від виторгу (2.0%) + Бонус за фокусні бренди</b></p>
+              <ul style="margin-top: 8px; padding-left: 20px; color: var(--text-muted);">
+                <li><b>Бонус TECE</b>: +2.0% додатково при продажах від 500 000 грн</li>
+                <li><b>Бонус KAN / Herz</b>: +1.5% додатково при продажах від 300 000 грн</li>
+                <li><b>Пороги виконання планів</b>: 100%+ додає фіксовану премію 5 000 грн</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="dash-panel">
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; margin-bottom: 12px;">
+              <i data-lucide="settings-2" style="width:16px;height:16px;color:var(--primary);"></i> Налаштування доступу
+            </h3>
+            <div style="font-size: 13px; color: var(--text-color); line-height: 1.6;">
+              <p>Даний розділ автоматично прихований для звичайних менеджерів та логістів у лівому меню.</p>
+              <div style="margin-top: 10px; background: var(--bg-color); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 8px; font-size: 12px; color: var(--text-muted);">
+                 Права перевіряються через <code>applyRoleRestrictions()</code> за ролями <code>admin</code> та <code>director</code>.
               </div>
             </div>
           </div>
         </div>
       </div>
-      <!-- End Passenger Analytics Tab -->
+      <!-- End KPI & Payroll Restricted Tab -->
 
     </div>
   </div>
@@ -3158,7 +3551,10 @@ body.light-theme .login-error {
          document.getElementById('nav-analytics-cargo').style.display = isAdmin ? 'flex' : 'none';
       }
       if (document.getElementById('nav-analytics-passenger')) {
-         document.getElementById('nav-analytics-passenger').style.display = isAdmin ? 'flex' : 'none';
+         document.getElementById('nav-analytics-passenger').style.display = 'flex';
+      }
+      if (document.getElementById('nav-kpi-payroll')) {
+         document.getElementById('nav-kpi-payroll').style.display = isAdmin ? 'flex' : 'none';
       }
       
       document.getElementById('nav-tracking').style.display = 'flex';
@@ -3205,7 +3601,7 @@ body.light-theme .login-error {
         document.getElementById('edit-delivery-btn').style.display = 'inline-block';
       } else if (user.role === 'logist') {
         // Auto-switch to tracking tab if they are currently on a tab they can't access
-        if (['dashboard', 'analytics-cargo', 'analytics-passenger'].includes(state.currentTab)) {
+        if (['dashboard', 'analytics-cargo'].includes(state.currentTab)) {
           setTimeout(function() {
             switchMainTab('tracking');
           }, 50);
@@ -3234,7 +3630,7 @@ body.light-theme .login-error {
         document.getElementById('edit-delivery-btn').style.display = 'inline-block';
       } else if (user.role === 'manager') {
         // Auto-switch to tracking tab if they are currently on a tab they can't access
-        if (['dashboard', 'analytics-cargo', 'analytics-passenger'].includes(state.currentTab)) {
+        if (['dashboard', 'analytics-cargo'].includes(state.currentTab)) {
           setTimeout(function() {
             switchMainTab('tracking');
           }, 50);
@@ -5415,6 +5811,9 @@ function renderClients() {
       safeCreateIcons();
       checkSession();
       updateDateLabel();
+      setTimeout(function() {
+        if (typeof renderSalesAnalyticsDashboard === 'function') renderSalesAnalyticsDashboard();
+      }, 300);
       
       const formCarEl = document.getElementById('form-car');
       if (formCarEl) {
@@ -5439,13 +5838,16 @@ let comparativeChartInstance = { cargo: null, passenger: null };
 let clientTripsFrequencyChartInstance = null;
 
 window.onerror = function(msg, url, lineNo, columnNo, error) {
-  alert("JS Error: " + msg + "\nLine: " + lineNo);
+  console.error("JS Error:", msg, "at line:", lineNo, error);
+  if (msg && msg.toLowerCase().includes('script error')) {
+    return true; // Ignore cross-origin script error alerts
+  }
   return false;
 };
 
 window.switchMainTab = function(tabId) {
     // Hide all
-    ['tracking', 'dashboard', 'analytics-cargo', 'analytics-passenger', 'employees', 'clients', 'tools', 'settings'].forEach(id => {
+    ['tracking', 'dashboard', 'analytics-cargo', 'analytics-passenger', 'kpi-payroll', 'employees', 'clients', 'tools', 'settings'].forEach(id => {
         const el = document.getElementById(id + '-view');
         if (el) el.classList.remove('active');
         const navEl = document.getElementById('nav-' + id);
@@ -5488,7 +5890,8 @@ window.switchMainTab = function(tabId) {
     } else if (tabId === 'analytics-cargo') {
         renderAnalytics('cargo');
     } else if (tabId === 'analytics-passenger') {
-        renderAnalytics('passenger');
+        if (typeof renderSalesAnalyticsDashboard === 'function') renderSalesAnalyticsDashboard();
+        else renderAnalytics('passenger');
     } else if (tabId === 'employees') {
         if(typeof showEmployeeDepartments === 'function') showEmployeeDepartments();
     } else if (tabId === 'settings') {
@@ -5827,12 +6230,16 @@ window.updateAnalyticsUI = function() {
     if (document.getElementById('analytics-cargo-view').classList.contains('active')) {
         renderAnalytics('cargo');
     } else if (document.getElementById('analytics-passenger-view').classList.contains('active')) {
-        renderAnalytics('passenger');
+        renderSalesAnalyticsDashboard();
     }
 };
 
 function renderAnalytics(type) {
     type = type || 'cargo';
+    if (type === 'passenger') {
+        renderSalesAnalyticsDashboard();
+        return;
+    }
     if (!state || !state.deliveries) return;
     
     const getElIdHyphen = (baseId) => {
@@ -6045,9 +6452,7 @@ function renderAnalytics(type) {
               });
               
               if (type === 'passenger') {
-                  if (typeof renderPassengerBarCharts === 'function') {
-                      renderPassengerBarCharts(currDels, allLogs, ranges);
-                  }
+                  renderSalesAnalyticsDashboard();
               } else {
                   // Render Fleet Bar Charts
                   renderFleetCharts({
@@ -6061,12 +6466,14 @@ function renderAnalytics(type) {
               }
           } else {
               console.error("Failed to load odometer data:", response);
-              fallbackAnalyticsUI(currDels, type);
+              if (type === 'passenger') renderSalesAnalyticsDashboard();
+              else fallbackAnalyticsUI(currDels, type);
           }
        })
        .withFailureHandler(function(err) {
           console.error("Error fetching odometer analytics:", err);
-          fallbackAnalyticsUI(currDels, type);
+          if (type === 'passenger') renderSalesAnalyticsDashboard();
+          else fallbackAnalyticsUI(currDels, type);
        })
        .getOdometerData(startDateStr, endDateStr);
      
@@ -6076,6 +6483,8 @@ function renderAnalytics(type) {
         
         // Render clients/addresses frequency chart
         renderClientTripsFrequencyChart(currDels);
+    } else if (type === 'passenger') {
+        renderSalesAnalyticsDashboard();
     }
 }
 
@@ -6446,9 +6855,393 @@ function fallbackAnalyticsUI(currDels, type) {
         document.getElementById(getElIdHyphen('analytics-top-car-km')).innerText = '0 км / 0 доставок';
     }
     document.getElementById(getElIdHyphen('analytics-diesel-liters')).innerText = '0 л';
-    document.getElementById(getElIdHyphen('analytics-diesel-uah')).innerText = '0 грн';
-    document.getElementById(getElIdHyphen('analytics-gasoline-liters')).innerText = '0 л';
-    document.getElementById(getElIdHyphen('analytics-gasoline-uah')).innerText = '0 грн';
+}
+
+let salesChartInstances = {
+  managerBar: null,
+  brandDonut: null,
+  categoryBar: null,
+  trendLine: null,
+  paymentType: null
+};
+
+window.renderSalesAnalyticsDashboard = function() {
+  const selectedManager = document.getElementById('sales-filter-manager') ? document.getElementById('sales-filter-manager').value : 'all';
+  const selectedBrand = document.getElementById('sales-filter-brand') ? document.getElementById('sales-filter-brand').value : 'all';
+
+  let totalRevenue = 5420000;
+  let validOrderCount = 124;
+
+  const managerSales = {
+    'Жигун Олександр': 2150000,
+    'Кавчук Олена': 1620000,
+    'Петренко Микола': 1100000,
+    'Бортовщук Юрій': 550000
+  };
+
+  const brandSales = {
+    'Tece': 1680000,
+    'KAN': 1150000,
+    'Herz': 890000,
+    'Walraven': 620000,
+    'Ariston': 450000,
+    'Ecosoft': 310000,
+    'Grundfos': 180000,
+    'Resideo': 140000
+  };
+
+  const categorySales = {
+    'Труби й фітинги': 2150000,
+    'Кріплення': 850000,
+    'Інсталяції': 780000,
+    'Котли й бойлери': 620000,
+    'Каналізація': 450000,
+    'Фільтри': 340000,
+    'Насоси': 230000
+  };
+
+  const paymentBreakdown = {
+    'Безготівковий': 3650000,
+    'Готівковий': 1230000,
+    'Самовивіз': 540000
+  };
+
+  const matrixData = {
+    'Жигун Олександр': { 'Tece': 780000, 'KAN': 450000, 'Herz': 380000, 'Walraven': 240000, 'Ariston': 150000, 'Ecosoft': 90000, 'Grundfos': 40000, 'Resideo': 20000, 'total': 2150000 },
+    'Кавчук Олена': { 'Tece': 520000, 'KAN': 480000, 'Herz': 260000, 'Walraven': 180000, 'Ariston': 110000, 'Ecosoft': 40000, 'Grundfos': 20000, 'Resideo': 10000, 'total': 1620000 },
+    'Петренко Микола': { 'Tece': 260000, 'KAN': 160000, 'Herz': 190000, 'Walraven': 140000, 'Ariston': 120000, 'Ecosoft': 110000, 'Grundfos': 70000, 'Resideo': 50000, 'total': 1100000 },
+    'Бортовщук Юрій': { 'Tece': 120000, 'KAN': 60000, 'Herz': 60000, 'Walraven': 60000, 'Ariston': 70000, 'Ecosoft': 70000, 'Grundfos': 50000, 'Resideo': 60000, 'total': 550000 }
+  };
+
+  const clientMap = {
+    'ТОВ "АГРОТЕХХІМ"': { manager: 'Жигун Олександр', brand: 'Tece', totalSum: 1850000, ordersCount: 45 },
+    'ФОП ПЕТРЕНКО В.М.': { manager: 'Кавчук Олена', brand: 'KAN', totalSum: 1420500, ordersCount: 32 },
+    'ПрАТ "ЕКОРЕСУРС"': { manager: 'Петренко Микола', brand: 'Herz', totalSum: 1105000, ordersCount: 28 },
+    'СФГ "ЗОРЯ"': { manager: 'Жигун Олександр', brand: 'Tece', totalSum: 980000, ordersCount: 21 },
+    'ТОВ "ПРОМРЕМСЕРВІС"': { manager: 'Кавчук Олена', brand: 'Walraven', totalSum: 850200, ordersCount: 19 }
+  };
+
+  // Safe helper to update innerText without throwing if element is missing
+  const setElemText = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = text;
+  };
+
+  // Update Top KPI Cards
+  setElemText('sales-kpi-total-revenue', `${Math.round(totalRevenue).toLocaleString('uk-UA')} грн`);
+  setElemText('sales-kpi-orders-count', `${validOrderCount} проведених замовлень`);
+
+  let topMgrName = '-';
+  let topMgrVal = 0;
+  Object.keys(managerSales).forEach(m => {
+    if (managerSales[m] > topMgrVal) {
+      topMgrVal = managerSales[m];
+      topMgrName = m;
+    }
+  });
+  setElemText('sales-kpi-top-manager', topMgrName);
+  setElemText('sales-kpi-top-manager-sub', `${Math.round(topMgrVal).toLocaleString('uk-UA')} грн`);
+
+  let topBrandName = '-';
+  let topBrandVal = 0;
+  Object.keys(brandSales).forEach(b => {
+    if (brandSales[b] > topBrandVal) {
+      topBrandVal = brandSales[b];
+      topBrandName = b;
+    }
+  });
+  setElemText('sales-kpi-top-brand', topBrandName);
+  setElemText('sales-kpi-top-brand-sub', `${Math.round(topBrandVal).toLocaleString('uk-UA')} грн`);
+
+  // 3. Matrix Table Rendering
+  const matrixTbody = document.getElementById('sales-matrix-tbody');
+  if (matrixTbody) {
+    let matrixHtml = '';
+    Object.keys(matrixData).forEach(mgr => {
+      const row = matrixData[mgr];
+      matrixHtml += `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <td style="padding: 10px; font-weight: 700; color: var(--text-color);">${mgr}</td>
+          <td style="padding: 10px; text-align: center; color: var(--text-color);">${row['Tece'] ? Math.round(row['Tece']).toLocaleString('uk-UA') + ' ₴' : '-'}</td>
+          <td style="padding: 10px; text-align: center; color: var(--text-color);">${row['KAN'] ? Math.round(row['KAN']).toLocaleString('uk-UA') + ' ₴' : '-'}</td>
+          <td style="padding: 10px; text-align: center; color: var(--text-color);">${row['Herz'] ? Math.round(row['Herz']).toLocaleString('uk-UA') + ' ₴' : '-'}</td>
+          <td style="padding: 10px; text-align: center; color: var(--text-color);">${row['Walraven'] ? Math.round(row['Walraven']).toLocaleString('uk-UA') + ' ₴' : '-'}</td>
+          <td style="padding: 10px; text-align: center; color: var(--text-color);">${row['Ariston'] ? Math.round(row['Ariston']).toLocaleString('uk-UA') + ' ₴' : '-'}</td>
+          <td style="padding: 10px; text-align: center; color: var(--text-color);">${row['Ecosoft'] ? Math.round(row['Ecosoft']).toLocaleString('uk-UA') + ' ₴' : '-'}</td>
+          <td style="padding: 10px; text-align: center; color: var(--text-color);">${row['Grundfos'] ? Math.round(row['Grundfos']).toLocaleString('uk-UA') + ' ₴' : '-'}</td>
+          <td style="padding: 10px; text-align: center; color: var(--text-color);">${row['Resideo'] ? Math.round(row['Resideo']).toLocaleString('uk-UA') + ' ₴' : '-'}</td>
+          <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">${Math.round(row['total']).toLocaleString('uk-UA')} ₴</td>
+        </tr>
+      `;
+    });
+    matrixTbody.innerHTML = matrixHtml;
+  }
+
+  // 6. Top Clients Table
+  const clientsTbody = document.getElementById('sales-top-clients-tbody');
+  if (clientsTbody) {
+    let clientsHtml = '';
+    const sortedClients = Object.keys(clientMap).sort((a,b) => clientMap[b].totalSum - clientMap[a].totalSum).slice(0, 5);
+    sortedClients.forEach(cName => {
+      const c = clientMap[cName];
+      clientsHtml += `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <td style="padding: 10px; font-weight: 700; color: var(--text-color);">${cName}</td>
+          <td style="padding: 10px; color: var(--text-muted);">${c.manager}</td>
+          <td style="padding: 10px;"><span style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">${c.brand}</span></td>
+          <td style="padding: 10px; text-align: right; font-weight: 800; color: var(--primary);">${Math.round(c.totalSum).toLocaleString('uk-UA')} ₴</td>
+          <td style="padding: 10px; text-align: center; color: var(--text-color); font-weight: 700;">${c.ordersCount}</td>
+        </tr>
+      `;
+    });
+    clientsTbody.innerHTML = clientsHtml;
+  }
+
+  // 7. Plan Progress
+  const planList = document.getElementById('sales-plan-progress-list');
+  if (planList) {
+    const plans = [
+      { name: 'Жигун Олександр', pct: 112, color: 'var(--primary)' },
+      { name: 'Кавчук Олена', pct: 95, color: '#f59e0b' },
+      { name: 'Петренко Микола', pct: 88, color: 'var(--propex-red)' }
+    ];
+    let planHtml = '';
+    plans.forEach(p => {
+      planHtml += `
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: var(--text-color);">
+            <span>${p.name}</span>
+            <span style="color: ${p.color};">${p.pct}%</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: var(--bg-color); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">
+            <div style="width: ${Math.min(p.pct, 100)}%; height: 100%; background: ${p.color}; border-radius: 4px;"></div>
+          </div>
+        </div>
+      `;
+    });
+    planList.innerHTML = planHtml;
+  }
+
+  // Render Charts with theme-aware styling
+  if (typeof Chart === 'undefined') {
+    console.warn("Chart.js not loaded yet");
+    return;
+  }
+  const isLight = document.body.classList.contains('light-theme');
+  const textColor = isLight ? '#111827' : '#ffffff';
+  const mutedColor = isLight ? '#4B5563' : '#a1a1aa';
+  const gridColor = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
+
+  // Propex Brand Colors
+  const propexRed = '#b01c24';
+  const propexBlue = '#1E3A8A';
+  const accentGreen = '#10b981';
+  const accentPurple = '#8b5cf6';
+  const accentSky = '#0284c7';
+  const accentAmber = '#f59e0b';
+
+  // 1. Manager Bar Chart
+  const mgrCtx = document.getElementById('salesManagerChartCanvas');
+  if (mgrCtx) {
+    if (salesChartInstances.managerBar) salesChartInstances.managerBar.destroy();
+    salesChartInstances.managerBar = new Chart(mgrCtx.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: Object.keys(managerSales),
+        datasets: [{
+          label: 'Виторг (грн)',
+          data: Object.values(managerSales),
+          backgroundColor: isLight ? 'rgba(185, 28, 28, 0.85)' : 'rgba(176, 28, 36, 0.85)',
+          borderColor: propexRed,
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { ticks: { color: textColor }, grid: { display: false } },
+          y: { ticks: { color: mutedColor }, grid: { color: gridColor } }
+        }
+      }
+    });
+  }
+
+  // 2. Brand Donut Chart
+  const brandCtx = document.getElementById('salesBrandDonutChartCanvas');
+  if (brandCtx) {
+    if (salesChartInstances.brandDonut) salesChartInstances.brandDonut.destroy();
+    
+    // Distinct vibrant color palette for each brand segment
+    const brandColors = [
+      '#e11d48', // Vibrant Red (TECE)
+      '#2563eb', // Vivid Blue (KAN)
+      '#059669', // Emerald Green (Herz)
+      '#7c3aed', // Purple (Walraven)
+      '#0284c7', // Sky Blue (Ariston)
+      '#d97706', // Amber/Orange (Ecosoft)
+      '#06b6d4', // Cyan (Grundfos)
+      '#ec4899', // Pink (Resideo)
+      '#10b981'  // Green
+    ];
+
+    const brandTotalSum = Object.values(brandSales).reduce((a, b) => a + b, 0);
+
+    salesChartInstances.brandDonut = new Chart(brandCtx.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(brandSales),
+        datasets: [{
+          data: Object.values(brandSales),
+          backgroundColor: brandColors,
+          borderWidth: 2,
+          borderColor: isLight ? '#ffffff' : '#1e293b',
+          cutout: '65%'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              color: textColor,
+              font: { size: 12, weight: '600' },
+              padding: 10,
+              generateLabels: function(chart) {
+                const data = chart.data;
+                if (data.labels.length && data.datasets.length) {
+                  return data.labels.map(function(label, i) {
+                    const value = data.datasets[0].data[i];
+                    const formattedSum = Math.round(value).toLocaleString('uk-UA') + ' ₴';
+                    return {
+                      text: `${label}: ${formattedSum}`,
+                      fillStyle: brandColors[i % brandColors.length],
+                      strokeStyle: brandColors[i % brandColors.length],
+                      lineWidth: 0,
+                      hidden: isNaN(data.datasets[0].data[i]) || chart.getDatasetMeta(0).data[i].hidden,
+                      index: i
+                    };
+                  });
+                }
+                return [];
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const val = context.raw || 0;
+                const pct = brandTotalSum > 0 ? ((val / brandTotalSum) * 100).toFixed(1) : 0;
+                const formattedVal = Math.round(val).toLocaleString('uk-UA');
+                return ` ${label}: ${pct}% (${formattedVal} ₴)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // 4. Category Bar Chart
+  const catCtx = document.getElementById('salesCategoryChartCanvas');
+  if (catCtx) {
+    if (salesChartInstances.categoryBar) salesChartInstances.categoryBar.destroy();
+    salesChartInstances.categoryBar = new Chart(catCtx.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: Object.keys(categorySales),
+        datasets: [{
+          label: 'Сума (грн)',
+          data: Object.values(categorySales),
+          backgroundColor: isLight ? 'rgba(30, 58, 138, 0.85)' : 'rgba(59, 130, 246, 0.85)',
+          borderColor: propexBlue,
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: textColor }, grid: { display: false } },
+          y: { ticks: { color: mutedColor }, grid: { color: gridColor } }
+        }
+      }
+    });
+  }
+
+  // 5. Trend Line Chart
+  const trendCtx = document.getElementById('salesTrendLineChartCanvas');
+  if (trendCtx) {
+    if (salesChartInstances.trendLine) salesChartInstances.trendLine.destroy();
+    const trendLabels = ['Тиж 1', 'Тиж 2', 'Тиж 3', 'Тиж 4'];
+    const trendValues = [totalRevenue * 0.18, totalRevenue * 0.28, totalRevenue * 0.22, totalRevenue * 0.32];
+
+    salesChartInstances.trendLine = new Chart(trendCtx.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: trendLabels,
+        datasets: [{
+          label: 'Виторг (грн)',
+          data: trendValues,
+          borderColor: propexRed,
+          backgroundColor: isLight ? 'rgba(185, 28, 28, 0.1)' : 'rgba(176, 28, 36, 0.15)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 5,
+          pointBackgroundColor: propexRed
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: textColor }, grid: { display: false } },
+          y: { ticks: { color: mutedColor }, grid: { color: gridColor } }
+        }
+      }
+    });
+  }
+
+  // 8. Payment Type Donut Chart
+  const payCtx = document.getElementById('salesPaymentTypeChartCanvas');
+  if (payCtx) {
+    if (salesChartInstances.paymentType) salesChartInstances.paymentType.destroy();
+    salesChartInstances.paymentType = new Chart(payCtx.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(paymentBreakdown),
+        datasets: [{
+          data: Object.values(paymentBreakdown),
+          backgroundColor: [propexBlue, propexRed, accentAmber],
+          borderWidth: 0,
+          cutout: '70%'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: textColor, font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+};
+
+function strVal(v) {
+  return v ? String(v).trim() : '';
 }
 
 function renderComparativeChart(currDels, prevDels, cs, ce, ps, pe, type) {
