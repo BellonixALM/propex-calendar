@@ -1007,6 +1007,45 @@ async function openGlobalMap() {
 /* Dashboard & Analytics Styles */
 .main-tab-view { display: none; flex-direction: column; width: 100%; height: 100%; overflow-y: auto; }
 .main-tab-view.active { display: flex; }
+
+/* Deals Kanban Board Styles */
+.deals-container { display: flex; flex-direction: column; gap: 16px; height: 100%; }
+.deals-kpi-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; }
+.deals-kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+.deals-kpi-title { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.deals-kpi-val { font-size: 22px; font-weight: 800; color: var(--text-color); font-family: var(--font-title); }
+
+.kanban-board { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 16px; flex-grow: 1; align-items: flex-start; min-height: 520px; -webkit-overflow-scrolling: touch; }
+.kanban-column { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; min-width: 290px; width: 290px; flex-shrink: 0; display: flex; flex-direction: column; max-height: calc(100vh - 220px); }
+.kanban-col-header { padding: 12px 14px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 13px; border-top-left-radius: 14px; border-top-right-radius: 14px; background: rgba(255,255,255,0.02); }
+.kanban-col-count { background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+body.light-theme .kanban-col-count { background: rgba(0,0,0,0.06); }
+.kanban-col-total { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+
+.kanban-cards-wrapper { padding: 10px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex-grow: 1; min-height: 120px; }
+
+.deal-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: all 0.2s ease; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+.deal-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); border-color: var(--primary); }
+
+.deal-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.deal-id { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color); }
+.deal-source-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+.source-bot { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+.source-phone { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+.source-telegram { background: rgba(14, 165, 233, 0.15); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.3); }
+.source-website { background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+.source-manual { background: rgba(107, 114, 128, 0.15); color: #6b7280; border: 1px solid rgba(107, 114, 128, 0.3); }
+
+.deal-title { font-size: 13px; font-weight: 700; color: var(--text-color); line-height: 1.3; margin: 2px 0; }
+.deal-client { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; font-weight: 500; }
+.deal-amount { font-size: 15px; font-weight: 800; color: var(--propex-red, #b01c24); letter-spacing: -0.3px; }
+
+.deal-import-badge { font-size: 11px; background: rgba(245, 158, 11, 0.12); color: #d97706; padding: 4px 8px; border-radius: 6px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(245, 158, 11, 0.25); }
+.deal-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 2px; }
+.deal-manager { display: flex; align-items: center; gap: 4px; font-weight: 600; }
+.deal-action-btn { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; color: var(--text-color); cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s ease; }
+.deal-action-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
 .dash-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px; }
 .dash-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; position: relative; overflow: hidden; }
 .dash-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
@@ -1436,6 +1475,7 @@ body.light-theme .login-error {
       <a class="nav-item" id="nav-dashboard" onclick="switchMainTab('dashboard')" title="Дашборд"><i data-lucide="layout-dashboard"></i> <span class="nav-item-text">Дашборд</span></a>
       <a class="nav-item admin-only" id="nav-analytics-cargo" onclick="switchMainTab('analytics-cargo')" style="display:none;" title="Логістика та склад"><i data-lucide="truck"></i> <span class="nav-item-text">Логістика та склад</span></a>
       <a class="nav-item" id="nav-analytics-passenger" onclick="switchMainTab('analytics-passenger')" title="Аналітика відділу продажів"><i data-lucide="trending-up"></i> <span class="nav-item-text">Аналітика продажів</span></a>
+      <a class="nav-item admin-only" id="nav-deals" onclick="switchMainTab('deals')" style="display:none;" title="Воронка продажів"><i data-lucide="kanban"></i> <span class="nav-item-text">Воронка продажів</span></a>
       <a class="nav-item admin-only" id="nav-kpi-payroll" onclick="switchMainTab('kpi-payroll')" style="display:none;" title="Мотивація та KPI менеджерів"><i data-lucide="award"></i> <span class="nav-item-text">Мотивація та KPI</span></a>
       <a class="nav-item active" id="nav-tracking" onclick="switchMainTab('tracking')" title="Трекінг"><i data-lucide="map"></i> <span class="nav-item-text">Трекінг</span></a>
             <a class="nav-item" id="nav-tools" onclick="switchMainTab('tools')" title="Облік інструментів" style="display:none;"><i data-lucide="wrench"></i> <span class="nav-item-text">Облік інструментів</span></a>
@@ -1717,6 +1757,82 @@ body.light-theme .login-error {
         <div class="dash-card dash-dark" style="max-width: 800px;">
           <h3>Системні Налаштування</h3>
           <p style="color:var(--text-muted); font-size:14px; margin-top:8px;">Основні параметри системи знаходяться у процесі розробки.</p>
+        </div>
+      </div>
+
+      <!-- DEALS / SALES FUNNEL KANBAN VIEW -->
+      <div id="deals-view" class="main-tab-view" style="padding-right: 10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 24px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px;">
+              <i data-lucide="kanban" style="color: var(--propex-red, #b01c24); width: 28px; height: 28px;"></i>
+              Воронки продажів (Угоди)
+            </h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">Управління первинною кваліфікацією, основними угодами та поставками Propex</p>
+          </div>
+
+          <!-- Multi-Funnel Switcher -->
+          <div style="display: flex; align-items: center; gap: 4px; background: var(--card-bg); padding: 4px; border-radius: 10px; border: 1px solid var(--border-color);">
+            <button id="funnel-tab-telemarketing" onclick="switchActiveFunnel('telemarketing')" class="view-btn active" style="font-weight: 700; border-radius: 8px;">
+              <i data-lucide="folder-kanban" style="width:15px;height:15px;color:#3b82f6;"></i> 1. Проєктна воронка
+            </button>
+            <button id="funnel-tab-sales" onclick="switchActiveFunnel('sales')" class="view-btn" style="font-weight: 700; border-radius: 8px;">
+              <i data-lucide="trending-up" style="width:15px;height:15px;color:#10b981;"></i> 2. Воронка продажів
+            </button>
+          </div>
+
+          <button class="btn" onclick="openAddDealModal()" style="background-color: var(--propex-red, #b01c24); color: white; border: none; font-weight: 700; padding: 10px 18px; border-radius: 8px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(176, 28, 36, 0.3); font-size: 14px;">
+            <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i> Створити нову угоду
+          </button>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="deals-kpi-bar">
+          <div class="deals-kpi-card">
+            <div class="deals-kpi-title">Загальна сума угод</div>
+            <div class="deals-kpi-val" id="deals-kpi-total-amount">0 ₴</div>
+          </div>
+          <div class="deals-kpi-card">
+            <div class="deals-kpi-title">Активні угоди</div>
+            <div class="deals-kpi-val" id="deals-kpi-active-count">0</div>
+          </div>
+          <div class="deals-kpi-card">
+            <div class="deals-kpi-title">🚢 В імпорті (в дорозі)</div>
+            <div class="deals-kpi-val" id="deals-kpi-import-count" style="color: #d97706;">0</div>
+          </div>
+          <div class="deals-kpi-card">
+            <div class="deals-kpi-title">🎯 Конверсія у успішні</div>
+            <div class="deals-kpi-val" id="deals-kpi-conversion" style="color: #10b981;">0%</div>
+          </div>
+        </div>
+
+        <!-- Filters & Search Bar -->
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; background: var(--card-bg); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border-color);">
+          <div class="search-container" style="flex-grow: 1; min-width: 240px; position: relative;">
+            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 16px; height: 16px;"></i>
+            <input type="text" id="deals-search-input" placeholder="Пошук за телефоном, клієнтом, товаром..." oninput="renderDealsKanban()" style="width: 100%; padding: 8px 12px 8px 36px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color); font-size: 13px;">
+          </div>
+          
+          <select id="deals-filter-source" onchange="renderDealsKanban()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color); font-size: 13px;">
+            <option value="all">🌐 Всі джерела лідів</option>
+            <option value="bot">🤖 Омніканальний Чат-бот</option>
+            <option value="phone">📞 IP-Телефонія</option>
+            <option value="telegram">💬 Telegram Корпоративний</option>
+            <option value="website">🌐 Веб-сайт / Форма</option>
+            <option value="manual">👤 Ручний ввід</option>
+          </select>
+
+          <select id="deals-filter-manager" onchange="renderDealsKanban()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color); font-size: 13px;">
+            <option value="all">👤 Всі менеджери</option>
+            <option value="Олександр Іванов">Олександр Іванов</option>
+            <option value="Микола Петренко">Микола Петренко</option>
+            <option value="Василь Сидоренко">Василь Сидоренко</option>
+          </select>
+        </div>
+
+        <!-- Kanban Board Area -->
+        <div class="kanban-board" id="kanban-board-container">
+          <!-- 7 Kanban columns will be rendered dynamically by JavaScript -->
         </div>
       </div>
 
@@ -3556,6 +3672,9 @@ body.light-theme .login-error {
       if (document.getElementById('nav-kpi-payroll')) {
          document.getElementById('nav-kpi-payroll').style.display = isAdmin ? 'flex' : 'none';
       }
+      if (document.getElementById('nav-deals')) {
+         document.getElementById('nav-deals').style.display = isAdmin ? 'flex' : 'none';
+      }
       
       document.getElementById('nav-tracking').style.display = 'flex';
       document.getElementById('nav-clients').style.display = 'flex';
@@ -3581,7 +3700,7 @@ body.light-theme .login-error {
       
       // Also apply general admin-only class visibility
       document.querySelectorAll('.admin-only').forEach(el => {
-         if (el.id === 'nav-employees') return; // Handled explicitly above
+         if (el.id === 'nav-employees' || el.id === 'add-delivery-btn') return; // Handled explicitly above or in switchMainTab
          el.style.display = isAdmin ? 'flex' : 'none';
       });
       
@@ -5847,7 +5966,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
 
 window.switchMainTab = function(tabId) {
     // Hide all
-    ['tracking', 'dashboard', 'analytics-cargo', 'analytics-passenger', 'kpi-payroll', 'employees', 'clients', 'tools', 'settings'].forEach(id => {
+    ['tracking', 'dashboard', 'analytics-cargo', 'analytics-passenger', 'kpi-payroll', 'employees', 'clients', 'tools', 'settings', 'deals'].forEach(id => {
         const el = document.getElementById(id + '-view');
         if (el) el.classList.remove('active');
         const navEl = document.getElementById('nav-' + id);
@@ -5872,11 +5991,27 @@ window.switchMainTab = function(tabId) {
     const addBtn = document.getElementById('add-delivery-btn');
     const filterBtn = document.getElementById('header-filter-btn');
     if (tabId === 'tools') {
-        if (addBtn) addBtn.style.display = 'inline-flex';
+        if (addBtn) {
+            addBtn.style.display = 'inline-flex';
+            addBtn.style.backgroundColor = '#10b981';
+            addBtn.innerHTML = '<i data-lucide="plus" style="width:14px;height:14px;"></i> Додати';
+            addBtn.onclick = function() { window.openAddToolModal(); };
+        }
+        if (filterBtn) filterBtn.style.display = 'none';
+    } else if (tabId === 'deals') {
+        if (addBtn) {
+            addBtn.style.display = 'inline-flex';
+            addBtn.style.backgroundColor = 'var(--propex-red, #b01c24)';
+            addBtn.innerHTML = '<i data-lucide="plus-circle" style="width:14px;height:14px;"></i> Створити угоду';
+            addBtn.onclick = function() { window.openAddDealModal(); };
+        }
         if (filterBtn) filterBtn.style.display = 'none';
     } else {
         if (filterBtn) filterBtn.style.display = 'inline-flex';
         if (addBtn) {
+            addBtn.style.backgroundColor = '#10b981';
+            addBtn.innerHTML = '<i data-lucide="plus" style="width:14px;height:14px;"></i> Додати';
+            addBtn.onclick = function() { onGlobalAddClick(); };
             if (['dashboard', 'analytics-cargo', 'analytics-passenger', 'employees'].includes(tabId)) {
                 addBtn.style.display = 'none';
             } else {
@@ -5898,6 +6033,10 @@ window.switchMainTab = function(tabId) {
         if(typeof renderSettingsPasswordManager === 'function') renderSettingsPasswordManager();
     } else if (tabId === 'clients') {
         if(typeof renderClients === 'function') renderClients();
+    } else if (tabId === 'tools') {
+        if(typeof handleToolsTabClick === 'function') handleToolsTabClick();
+    } else if (tabId === 'deals') {
+        if(typeof renderDealsKanban === 'function') renderDealsKanban();
     }
 };
 
@@ -8790,39 +8929,24 @@ ${sysInfo}`;
       if (savedTools) savedTools = JSON.parse(savedTools);
     } catch(e) { savedTools = null; }
 
-    window.toolsData = (savedTools && Array.isArray(savedTools) && savedTools.length > 0) ? savedTools : defaultToolsList;
-    let toolsData = window.toolsData;
+    window.toolsData = (savedTools && Array.isArray(savedTools)) ? savedTools : defaultToolsList;
 
     function handleToolsTabClick() {
-      const user = state.currentUser || {};
-      const roleStr = String(user.role || '').toLowerCase();
-      const nameStr = String(user.name || user.username || user.login || '').toLowerCase();
-
-      // Check if user is Director/Manager vs Admin
-      const isDirector = ['director', 'керівник', 'керівник підприємства'].includes(roleStr) || nameStr.includes('директор');
-      const isSysAdmin = (roleStr === 'admin' || nameStr.includes('admin') || nameStr.includes('творець') || !state.currentUser);
-
       const directorNotice = document.getElementById('tools-director-notice');
       const adminContent = document.getElementById('tools-admin-content');
 
       if (!directorNotice || !adminContent) return;
 
-      if (isDirector && !isSysAdmin) {
-        directorNotice.style.display = 'block';
-        adminContent.style.display = 'none';
-      } else {
-        directorNotice.style.display = 'none';
-        adminContent.style.display = 'block';
-        renderToolsView();
-      }
+      directorNotice.style.display = 'none';
+      adminContent.style.display = 'block';
+      renderToolsView();
+
       if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
     }
 
     window.renderToolsView = function() {
-      if (!window.toolsData || window.toolsData.length === 0) {
-        window.toolsData = [
-          { id: 'T5', sn: 'S/N: 720203', name: 'прес-кліщі Tece', condition: 'Відмінний (Новий)', category: 'Прес-інструмент (Кліщі)', client: '—', issueDate: '—', freeDays: 0, status: 'stock', daysOverdue: 0, photo: '' }
-        ];
+      if (!window.toolsData) {
+        window.toolsData = [...defaultToolsList];
         try { localStorage.setItem('propex_tools_db', JSON.stringify(window.toolsData)); } catch(e){}
       }
       const search = (document.getElementById('tools-search-input')?.value || '').toLowerCase();
@@ -8899,12 +9023,13 @@ ${sysInfo}`;
     }
 
     function returnTool(toolId) {
-      const tool = toolsData.find(t => t.id === toolId);
+      const tool = window.toolsData.find(t => t.id === toolId);
       if (tool) {
         tool.status = 'stock';
         tool.client = '—';
         tool.issueDate = '—';
         tool.daysOverdue = 0;
+        window.saveToolsToStorage();
         alert(`✅ Інструмент "${tool.name}" успішно прийнято на склад!`);
         renderToolsView();
       }
@@ -9065,6 +9190,8 @@ ${sysInfo}`;
         </form>
       </div>
     </div>
+  </div>
+
   <!-- MODAL: EDIT TOOL & DETAILS WITH PHOTO -->
   <div class="modal" id="modal-edit-tool" onclick="if(event.target===this) closeEditToolModal()">
     <div class="modal-content" style="max-width: 540px;">
@@ -9143,10 +9270,418 @@ ${sysInfo}`;
   </div>
 
 
+  <!-- MODAL: ADD NEW DEAL -->
+  <div class="modal" id="modal-add-deal" onclick="if(event.target===this) closeAddDealModal()">
+    <div class="modal-content" style="max-width: 580px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(176, 28, 36, 0.15); color: var(--propex-red, #b01c24); display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="plus-circle" style="width: 20px; height: 20px;"></i>
+          </div>
+          <div>
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700;">Нова угода Propex</h2>
+            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Створення нової угоди у воронці продажів</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeAddDealModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="add-deal-form" onsubmit="event.preventDefault(); submitAddDealForm();">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Предмет / Назва угоди (Товар) *</label>
+            <input type="text" id="add-deal-title" class="form-control" required placeholder="напр., Промислові підшипники SKF" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px; font-weight: 600;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Назва Клієнта / Компанії *</label>
+              <input type="text" id="add-deal-client-name" class="form-control" required placeholder="ТОВ 'Агропром'" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+            </div>
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Телефон клієнта *</label>
+              <input type="text" id="add-deal-client-phone" class="form-control" required placeholder="+380671234567" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Сума угоди (₴) *</label>
+              <input type="number" id="add-deal-amount" class="form-control" required placeholder="150000" min="0" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 14px; font-weight: 700;">
+            </div>
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Джерело надходження (Омніканальність)</label>
+              <select id="add-deal-source" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+                <option value="bot">🤖 Омніканальний Чат-бот</option>
+                <option value="phone" selected>📞 IP-Телефонія</option>
+                <option value="telegram">💬 Telegram Корпоративний</option>
+                <option value="website">🌐 Веб-сайт / Форма</option>
+                <option value="manual">👤 Ручний ввід</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Початкова стадія</label>
+              <select id="add-deal-stage" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+                <option value="new_lead">📥 Новий лід</option>
+                <option value="negotiation">🤝 Перемовини</option>
+                <option value="proposal_invoice">📄 КП / Рахунок виставлено</option>
+                <option value="awaiting_import">🚢 Очікується поставка</option>
+                <option value="won_paid">🎉 Угода успішна</option>
+                <option value="transferred_logistics">🚚 Передано логісту</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Відповідальний менеджер</label>
+              <select id="add-deal-manager" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+                <option value="Олександр Іванов">Олександр Іванов</option>
+                <option value="Микола Петренко">Микола Петренко</option>
+                <option value="Василь Сидоренко">Василь Сидоренко</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Import Section Checkbox -->
+          <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); padding: 12px; border-radius: 10px; margin-bottom: 12px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #d97706; cursor: pointer; margin-bottom: 4px;">
+              <input type="checkbox" id="add-deal-is-import" onchange="document.getElementById('import-fields-container').style.display = this.checked ? 'grid' : 'none'">
+              🚢 Товар під замовлення (Імпорт з-за кордону)
+            </label>
+            
+            <div id="import-fields-container" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+              <div>
+                <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Країна виходу / Постачальник</label>
+                <input type="text" id="add-deal-import-country" placeholder="🇩🇪 Німеччина (Munich)" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 12px;">
+              </div>
+              <div>
+                <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Очікувана дата прибуття (ETA)</label>
+                <input type="date" id="add-deal-import-eta" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 12px;">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Нотатки / Деталі замовлення</label>
+            <textarea id="add-deal-notes" rows="3" placeholder="Додаткові деталі, артикули, особливості клієнта..." style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; resize: vertical;"></textarea>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-secondary" onclick="closeAddDealModal()" style="padding: 10px 18px; border-radius: 8px;">Скасувати</button>
+            <button type="submit" class="btn" style="background-color: var(--propex-red, #b01c24); color: white; border: none; font-weight: 700; padding: 10px 22px; border-radius: 8px;">Створити угоду</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LARGE FULL-SCREEN DEAL DETAILS & TIMELINE -->
+  <div class="modal" id="modal-deal-details" onclick="if(event.target===this) closeDealDetailModal()">
+    <div class="modal-content" style="width: 98vw; max-width: 1720px; height: 95vh; max-height: 95vh; display: flex; flex-direction: column; overflow: hidden; padding: 0; border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.8);">
+      
+      <!-- Top Modal Header -->
+      <div class="modal-header" style="padding: 16px 28px; background: var(--card-bg); border-bottom: 1px solid var(--border-color); flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(176, 28, 36, 0.15); color: var(--propex-red, #b01c24); display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="file-text" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <h2 id="detail-deal-id-title" style="margin: 0; font-size: 22px; font-weight: 800;">#DEAL-101</h2>
+              <span id="detail-deal-source-badge" class="deal-source-badge source-bot" style="font-size: 12px; padding: 4px 10px;">🤖 Чат-бот</span>
+            </div>
+            <p id="detail-deal-created-meta" style="margin: 2px 0 0 0; font-size: 13px; color: var(--text-muted);">
+              Створено: <span id="detail-deal-created-time">14.08.2026 10:30</span> | Автор: <span id="detail-deal-author" style="color: var(--text-color); font-weight: 600;">—</span>
+            </p>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <div id="detail-deal-header-amount" style="font-size: 26px; font-weight: 800; color: var(--propex-red, #b01c24); font-family: var(--font-title);">145 000 ₴</div>
+          <button class="modal-close-btn" onclick="closeDealDetailModal()"><i data-lucide="x" style="width: 24px; height: 24px;"></i></button>
+        </div>
+      </div>
+
+      <!-- Quick Action Toolbar -->
+      <div style="display: flex; gap: 12px; padding: 12px 28px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); flex-wrap: wrap; align-items: center; flex-shrink: 0;">
+        <button class="btn" onclick="promptAddTimelineEvent('email')" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 8px;">
+          <i data-lucide="mail" style="width:16px;height:16px;"></i> ✉️ Написати листа
+        </button>
+        <button class="btn" onclick="promptAddTimelineEvent('message')" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.3); font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 8px;">
+          <i data-lucide="message-square" style="width:16px;height:16px;"></i> 💬 Повідомлення
+        </button>
+        <button class="btn" onclick="promptAddTimelineEvent('task')" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3); font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 8px;">
+          <i data-lucide="check-square" style="width:16px;height:16px;"></i> 📋 Створити задачу
+        </button>
+        <button class="btn" onclick="promptAddTimelineEvent('file')" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 8px;">
+          <i data-lucide="paperclip" style="width:16px;height:16px;"></i> 📎 Додати файл
+        </button>
+        <button class="btn" onclick="promptAddTimelineEvent('note')" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 8px;">
+          <i data-lucide="file-text" style="width:16px;height:16px;"></i> 📝 Додати нотатку
+        </button>
+        <div style="flex-grow: 1;"></div>
+        <button id="btn-transfer-logistics" onclick="triggerTransferToLogistics()" class="btn" style="background-color: #ec4899; color: white; border: none; font-weight: 700; padding: 8px 20px; border-radius: 8px; font-size: 14px; display: none;">
+          <i data-lucide="truck" style="width:16px;height:16px;"></i> 🚚 Передати в Логістику
+        </button>
+      </div>
+
+      <!-- Main Two-Column Split Body -->
+      <div style="display: grid; grid-template-columns: 480px 1fr; flex-grow: 1; overflow: hidden;">
+        
+        <!-- LEFT COLUMN: DEAL DETAILS & COMPANY INFO -->
+        <div style="padding: 20px; overflow-y: auto; border-right: 1px solid var(--border-color); background: var(--bg-color); display: flex; flex-direction: column; gap: 16px;">
+          <input type="hidden" id="detail-deal-id">
+          
+          <!-- Deal Title -->
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Предмет угоди</label>
+            <div id="detail-deal-title" style="font-size: 15px; font-weight: 800; color: var(--text-color); margin-top: 4px;">—</div>
+          </div>
+
+          <!-- Stage Selection -->
+          <div style="background: var(--bg-secondary); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Етап воронки</label>
+            <div style="display: flex; gap: 8px;">
+              <select id="detail-deal-stage-select" onchange="handleDetailStageChange(this.value, true)" style="flex-grow: 1; padding: 8px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; font-weight: 700;">
+                <option value="new_lead">📥 1. Новий лід</option>
+                <option value="negotiation">🤝 2. Перемовини та кваліфікація</option>
+                <option value="proposal_invoice">📄 3. КП / Рахунок виставлено</option>
+                <option value="awaiting_import">🚢 4. Очікується поставка з-за кордону</option>
+                <option value="won_paid">🎉 5. Угода успішна / Оплачено</option>
+                <option value="transferred_logistics">🚚 6. Передано логісту</option>
+                <option value="lost">❌ 7. Відмова / Програно</option>
+              </select>
+              <button class="btn" onclick="saveDetailStageChange()" style="background-color: var(--primary); color: white; border: none; font-weight: 700; padding: 8px 14px; border-radius: 8px; font-size: 12px;">Зберегти</button>
+            </div>
+          </div>
+
+          <!-- Lost Reason Container -->
+          <div id="detail-lost-reason-container" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); padding: 12px; border-radius: 10px;">
+            <label style="display: block; font-size: 11px; font-weight: 700; color: #ef4444; margin-bottom: 4px;">Причина відмови *</label>
+            <input type="text" id="detail-deal-lost-reason" placeholder="напр., Завищена ціна / знайшли аналог..." style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+          </div>
+
+          <!-- Company & Client Contacts Block -->
+          <div style="background: var(--bg-secondary); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="building-2" style="width:14px;height:14px;color:var(--accent-blue);"></i> Інформація про Клієнта / Компанію
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted);">Компанія:</div>
+              <div id="detail-deal-client-name" style="font-size: 14px; font-weight: 700; color: var(--text-color);">—</div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">ЄДРПОУ:</div>
+                <div id="detail-deal-edrpou" style="font-size: 13px; font-weight: 600; color: var(--text-color);">38492019</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">Телефон:</div>
+                <div id="detail-deal-phone" style="font-size: 13px; font-weight: 600; color: var(--text-color);">—</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted);">Контактна особа:</div>
+              <div id="detail-deal-contact-person" style="font-size: 13px; font-weight: 600; color: var(--text-color);">Олексій Сергійович (Директор закупівель)</div>
+            </div>
+          </div>
+
+          <!-- Managers & Responsible Persons Block -->
+          <div style="background: var(--bg-secondary); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="users" style="width:14px;height:14px;color:#10b981;"></i> Відповідальні особи Propex
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">Хто створив (Автор):</div>
+                <div id="detail-deal-author-name" style="font-size: 13px; font-weight: 700; color: var(--text-color);">—</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">Відповідальний менеджер:</div>
+                <div id="detail-deal-manager" style="font-size: 13px; font-weight: 700; color: var(--text-color);">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Import Details Block -->
+          <div id="detail-import-info-block" style="display: none; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); padding: 12px; border-radius: 10px;">
+            <div style="font-size: 12px; font-weight: 700; color: #d97706; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="plane-landing" style="width:14px;height:14px;"></i> 🚢 Деталі закордонної поставки (Імпорт):
+            </div>
+            <div style="display: flex; gap: 16px; font-size: 13px;">
+              <div><strong>Країна:</strong> <span id="detail-import-country">—</span></div>
+              <div><strong>ETA (Прибуття):</strong> <span id="detail-import-eta">—</span></div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Опис та додаткові нотатки</label>
+            <div id="detail-deal-notes" style="background: var(--bg-secondary); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; min-height: 50px; margin-top: 4px; white-space: pre-wrap;">—</div>
+          </div>
+
+          <div style="margin-top: auto; padding-top: 10px; display: flex; justify-content: space-between;">
+            <button class="btn" onclick="deleteDealCurrent()" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600; padding: 6px 12px; border-radius: 8px; font-size: 12px;">Видалити угоду</button>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: CHRONOLOGY & TIMELINE STREAM -->
+        <div style="display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--card-bg);">
+          
+          <!-- Timeline Filters Header -->
+          <div style="padding: 14px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-secondary); flex-shrink: 0;">
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-color); display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="history" style="width:16px;height:16px;color:var(--propex-red, #b01c24);"></i> Хронологія та історія подій
+            </div>
+            
+            <div style="display: flex; gap: 6px;">
+              <button onclick="filterTimelineView('all')" id="tl-filter-all" class="btn btn-secondary active" style="font-size: 11px; padding: 4px 10px; border-radius: 6px;">Всі події</button>
+              <button onclick="filterTimelineView('note')" id="tl-filter-note" class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px; border-radius: 6px;">Нотатки</button>
+              <button onclick="filterTimelineView('task')" id="tl-filter-task" class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px; border-radius: 6px;">Задачі</button>
+              <button onclick="filterTimelineView('file')" id="tl-filter-file" class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px; border-radius: 6px;">Файли</button>
+            </div>
+          </div>
+
+          <!-- Add Quick Note/Event Bar -->
+          <div style="padding: 12px 20px; border-bottom: 1px solid var(--border-color); background: var(--bg-color); display: flex; gap: 8px; flex-shrink: 0;">
+            <input type="text" id="timeline-add-input" placeholder="Напишіть нотатку або коментар до угоди..." onkeyup="if(event.key==='Enter') submitQuickTimelineNote()" style="flex-grow: 1; padding: 8px 12px; border-radius: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+            <button class="btn" onclick="submitQuickTimelineNote()" style="background-color: var(--propex-red, #b01c24); color: white; border: none; font-weight: 700; padding: 8px 16px; border-radius: 8px; font-size: 13px;">Додати</button>
+          </div>
+
+          <!-- Scrollable Timeline Stream -->
+          <div id="deal-timeline-stream" style="padding: 20px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 14px;">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: ADD TASK FOR DEAL -->
+  <div class="modal" id="modal-add-deal-task" onclick="if(event.target===this) closeAddDealTaskModal()">
+    <div class="modal-content" style="max-width: 520px; padding: 0; border-radius: 16px; overflow: hidden; background: var(--card-bg);">
+      <div class="modal-header" style="padding: 16px 20px; background: var(--card-bg); border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="check-square" style="width: 20px; height: 20px;"></i>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 800;">📋 Нова задача за угодою</h3>
+            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Вкажіть термін виконання та відповідального</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeAddDealTaskModal()"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Зміст задачі / Дія *</label>
+          <textarea id="deal-task-text" placeholder="напр., Перетелефонувати клієнту щодо погодження специфікації та термінів..." style="width: 100%; height: 80px; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; outline: none; font-family: var(--font-body); resize: none;"></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">📅 День виконання *</label>
+            <input type="date" id="deal-task-date" style="width: 100%; padding: 8px 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">⏰ Час виконання</label>
+            <input type="time" id="deal-task-time" value="10:00" style="width: 100%; padding: 8px 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+          </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">👤 Відповідальний за задачу *</label>
+          <select id="deal-task-assignee" style="width: 100%; padding: 9px 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; font-weight: 600;">
+            <option value="Олександр Іванов">👨‍💼 Олександр Іванов (Старший менеджер)</option>
+            <option value="Микола Петренко">👨‍💼 Микола Петренко (Менеджер з продажів)</option>
+            <option value="Василь Сидоренко">👨‍💼 Василь Сидоренко (Менеджер з продажів)</option>
+            <option value="Марина Ковальчук">👩‍💼 Марина Ковальчук (Оператор CRM)</option>
+            <option value="Відділ Логістики">🚚 Відділ Логістики Propex</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 14px 20px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-secondary" onclick="closeAddDealTaskModal()" style="padding: 8px 16px; border-radius: 8px; font-size: 13px;">Скасувати</button>
+        <button class="btn" onclick="submitAddDealTask()" style="background-color: #8b5cf6; color: white; border: none; font-weight: 700; padding: 8px 20px; border-radius: 8px; font-size: 13px;">Створити задачу</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SCHEDULE MEETING -->
+  <div class="modal" id="modal-schedule-meeting" onclick="if(event.target===this) closeScheduleMeetingModal()">
+    <div class="modal-content" style="max-width: 540px; padding: 0; border-radius: 16px; overflow: hidden; background: var(--card-bg);">
+      <div class="modal-header" style="padding: 16px 20px; background: var(--card-bg); border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(236, 72, 153, 0.15); color: #ec4899; display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 800;">📅 Призначити зустріч з клієнтом</h3>
+            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Вкажіть дату, час, формат та відповідального</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeScheduleMeetingModal()"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">📅 День проведення зустрічі *</label>
+            <input type="date" id="meeting-date" style="width: 100%; padding: 8px 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">⏰ Час зустрічі *</label>
+            <input type="time" id="meeting-time" value="11:00" style="width: 100%; padding: 8px 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px;">
+          </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">📍 Формат / Місце проведення *</label>
+          <select id="meeting-location" style="width: 100%; padding: 9px 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; font-weight: 600;">
+            <option value="🏢 Офлайн в офісі Клієнта">🏢 Офлайн в офісі Клієнта</option>
+            <option value="🏢 Офлайн в офісі Propex">🏢 Офлайн в офісі Propex</option>
+            <option value="🌐 Онлайн (Google Meet / Zoom)">🌐 Онлайн (Google Meet / Zoom)</option>
+            <option value="📞 Телефонна презентація / Дзвінок">📞 Телефонна презентація / Дзвінок</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">👤 Відповідальний менеджер *</label>
+          <select id="meeting-assignee" style="width: 100%; padding: 9px 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; font-weight: 600;">
+            <option value="Олександр Іванов">👨‍💼 Олександр Іванов (Старший менеджер)</option>
+            <option value="Микола Петренко">👨‍💼 Микола Петренко (Менеджер з продажів)</option>
+            <option value="Василь Сидоренко">👨‍💼 Василь Сидоренко (Менеджер з продажів)</option>
+            <option value="Марина Ковальчук">👩‍💼 Марина Ковальчук (Оператор CRM)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">📝 Мета / Тема зустрічі</label>
+          <textarea id="meeting-notes" placeholder="напр., Презентація лінійки підшипників SKF, розгляд специфікації та первинних умов поставок..." style="width: 100%; height: 75px; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); font-size: 13px; outline: none; font-family: var(--font-body); resize: none;"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 14px 20px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-secondary" onclick="closeScheduleMeetingModal()" style="padding: 8px 16px; border-radius: 8px; font-size: 13px;">Скасувати</button>
+        <button class="btn" onclick="submitScheduleMeeting()" style="background-color: #ec4899; color: white; border: none; font-weight: 700; padding: 8px 20px; border-radius: 8px; font-size: 13px;">Призначити зустріч</button>
+      </div>
+    </div>
+  </div>
+
+
   <script>
     // --- COMPLETE TOOLS MODULE GLOBAL FUNCTIONS ---
     if (!window.toolsData) {
-      window.toolsData = [
+      let savedTools = null;
+      try {
+        savedTools = localStorage.getItem('propex_tools_db');
+        if (savedTools) savedTools = JSON.parse(savedTools);
+      } catch(e) { savedTools = null; }
+      window.toolsData = (savedTools && Array.isArray(savedTools)) ? savedTools : [
         { id: 'T5', sn: 'S/N: 720203', name: 'Прес-кліщі Tece', condition: 'Відмінний (Новий)', category: 'Прес-інструмент (Кліщі)', client: '—', issueDate: '—', freeDays: 0, status: 'stock', daysOverdue: 0, photo: '' }
       ];
     }
@@ -9368,7 +9903,17 @@ ${sysInfo}`;
       try {
         localStorage.setItem('propex_tools_db', JSON.stringify(window.toolsData));
       } catch(e) {
-        console.error("Error saving tools:", e);
+        console.error("Error saving tools to localStorage:", e);
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+          // If storage quota exceeded due to large photos, strip old photos and retry saving
+          try {
+            const strippedData = window.toolsData.map(item => ({...item, photo: item.photo.length > 50000 ? '' : item.photo}));
+            localStorage.setItem('propex_tools_db', JSON.stringify(strippedData));
+            alert("⚠️ Збережено без великих фотографій через обмеження пам'яті браузера.");
+          } catch(innerErr) {
+            console.error("Secondary save failed:", innerErr);
+          }
+        }
       }
     };
 
@@ -9526,6 +10071,863 @@ ${sysInfo}`;
         window.renderToolsView();
       }
     };
+
+    // ====================================================
+    // --- MULTI-FUNNEL & SALES KANBAN MODULE (PROPEX) ---
+    // ====================================================
+
+    window.DEAL_FUNNELS = {
+      telemarketing: {
+        id: "telemarketing",
+        title: "1. Проєктна воронка",
+        stages: [
+          { id: "cold_lead", label: "📥 1. Новий лід", color: "#3b82f6" },
+          { id: "qualification", label: "🤝 2. Проведено перемовини", color: "#8b5cf6" },
+          { id: "position_check", label: "📜 3. Отримано специфікацію / проєкт", color: "#06b6d4" },
+          { id: "pre_proposal", label: "📄 4. КП відправлено (очікування)", color: "#f59e0b" },
+          { id: "meeting_scheduled", label: "📅 5. Призначити зустріч", color: "#ec4899" },
+          { id: "transferred_to_sales", label: "🎯 6. Фінальна", color: "#10b981" },
+          { id: "unqualified_lost", label: "❌ 7. Відмова / Програно", color: "#ef4444" }
+        ]
+      },
+      sales: {
+        id: "sales",
+        title: "2. Воронка продажів",
+        stages: [
+          { id: "new_lead", label: "📥 1. Новий лід", color: "#3b82f6" },
+          { id: "negotiation", label: "🤝 2. Перемовини", color: "#8b5cf6" },
+          { id: "proposal_invoice", label: "📄 3. КП / Рахунок", color: "#f59e0b" },
+          { id: "awaiting_import", label: "🚢 4. Очікується поставка", color: "#06b6d4" },
+          { id: "won_paid", label: "🎉 5. Угода успішна", color: "#10b981" },
+          { id: "transferred_logistics", label: "🚚 6. Передано логісту", color: "#ec4899" },
+          { id: "lost", label: "❌ 7. Відмова / Програно", color: "#ef4444" }
+        ]
+      }
+    };
+
+    window.activeFunnelId = 'telemarketing'; // Default to Funnel 1
+
+    window.switchActiveFunnel = function(funnelId) {
+      window.activeFunnelId = funnelId;
+      ['telemarketing', 'sales'].forEach(f => {
+        const btn = document.getElementById(`funnel-tab-${f}`);
+        if (btn) {
+          if (f === funnelId) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+      window.renderDealsKanban();
+    };
+
+    window.initDealsData = function() {
+      let saved = null;
+      try {
+        saved = localStorage.getItem('propex_deals_db');
+        if (saved) saved = JSON.parse(saved);
+      } catch(e) { saved = null; }
+
+      if (saved && Array.isArray(saved) && saved.length > 0) {
+        window.dealsData = saved;
+      } else {
+        window.dealsData = [
+          // Funnel 1: Telemarketing & Qualification Deals
+          {
+            id: "LEAD-201",
+            funnelId: "telemarketing",
+            title: "Комплексні поставки промислової пневматики",
+            clientName: "ТОВ 'Дніпро Агро Сервіс'",
+            clientPhone: "+380675551122",
+            amount: 220000,
+            stage: "cold_lead",
+            source: "bot",
+            manager: "Марина Ковальчук",
+            createdAt: "2026-08-14 09:15",
+            notes: "Первинний холодний замовник із веб-бота. Потрібна первинна кваліфікація."
+          },
+          {
+            id: "LEAD-202",
+            funnelId: "telemarketing",
+            title: "Запит на редуктори Bonfiglioli",
+            clientName: "ПП 'Полісся Технолоджі'",
+            clientPhone: "+380503339988",
+            amount: 340000,
+            stage: "qualification",
+            source: "phone",
+            manager: "Олександр Іванов",
+            createdAt: "2026-08-13 11:40",
+            notes: "Домовлено про вторинний дзвінок після узгодження вимог головного інженера."
+          },
+          {
+            id: "LEAD-203",
+            funnelId: "telemarketing",
+            title: "Підшипники для агротехніки John Deere",
+            clientName: "ТОВ 'Захід Агро Груп'",
+            clientPhone: "+380637774411",
+            amount: 510000,
+            stage: "position_check",
+            source: "telegram",
+            manager: "Микола Петренко",
+            createdAt: "2026-08-12 15:20",
+            notes: "Отримано технічні опозиції від Закутчика. Очікується альтернативна розрахункова калькуляція."
+          },
+          {
+            id: "LEAD-204",
+            funnelId: "telemarketing",
+            title: "Поставка приводних ременів Continental",
+            clientName: "ПрАТ 'ВінницяПром'",
+            clientPhone: "+380971239876",
+            amount: 195000,
+            stage: "meeting_scheduled",
+            source: "phone",
+            manager: "Василь Сидоренко",
+            createdAt: "2026-08-11 10:00",
+            notes: "📅 Призначено офлайн зустріч в офісі клієнта на 18.08.2026 об 11:00."
+          },
+
+          // Funnel 2: Main Sales Deals
+          {
+            id: "DEAL-101",
+            funnelId: "sales",
+            title: "Промислові підшипники SKF 6205-2RSH",
+            clientName: "ТОВ 'Агропром Холдинг'",
+            clientPhone: "+380671234567",
+            amount: 145000,
+            stage: "new_lead",
+            source: "bot",
+            manager: "Олександр Іванов",
+            isImport: true,
+            importCountry: "🇩🇪 Німеччина",
+            importEta: "2026-08-25",
+            createdAt: "2026-08-14 10:30",
+            notes: "Передано із первинної воронки. Потрібна партія 100 шт. для транспортерної лінії."
+          },
+          {
+            id: "DEAL-102",
+            funnelId: "sales",
+            title: "Мотор-редуктори NMRV 063 + черв'ячні вали",
+            clientName: "ПП 'БудМашСервіс'",
+            clientPhone: "+380509876543",
+            amount: 280000,
+            stage: "negotiation",
+            source: "phone",
+            manager: "Микола Петренко",
+            isImport: false,
+            createdAt: "2026-08-12 14:15",
+            notes: "Уточнення технічних умов. Клієнт запитує знижку 5% при оплаті 100%."
+          },
+          {
+            id: "DEAL-103",
+            funnelId: "sales",
+            title: "Гідравлічні клапани та манометри Festo",
+            clientName: "ТОВ 'МеталСервіс-Груп'",
+            clientPhone: "+380631112233",
+            amount: 450000,
+            stage: "proposal_invoice",
+            source: "website",
+            manager: "Василь Сидоренко",
+            isImport: true,
+            importCountry: "🇮🇹 Італія",
+            importEta: "2026-08-28",
+            createdAt: "2026-08-10 11:00",
+            notes: "Виставлено рахунок #SF-112. Очікується передоплата 50% від покупця."
+          },
+          {
+            id: "DEAL-104",
+            funnelId: "sales",
+            title: "Клапани електромагнітні подвійного тиску",
+            clientName: "ТОВ 'АвтоТранс Логістик'",
+            clientPhone: "+380974445566",
+            amount: 390000,
+            stage: "awaiting_import",
+            source: "telegram",
+            manager: "Олександр Іванов",
+            isImport: true,
+            importCountry: "🇩🇪 Німеччина",
+            importEta: "2026-08-22",
+            createdAt: "2026-08-08 16:45",
+            notes: "Замовлено на заводі в Мюнхені. Вантаж задекларовано, очікується перетин кордону."
+          },
+          {
+            id: "DEAL-105",
+            funnelId: "sales",
+            title: "Мастила Shell Tellus S2 M 46 (бочки 208л)",
+            clientName: "ФОП Ковальчук В.П.",
+            clientPhone: "+380689998877",
+            amount: 180000,
+            stage: "won_paid",
+            source: "phone",
+            manager: "Микола Петренко",
+            isImport: false,
+            createdAt: "2026-08-05 09:20",
+            notes: "Угоду оплачено 100%. Очікує на передачу менеджеру з логістики."
+          }
+        ];
+        window.saveDealsToStorage();
+      }
+    };
+
+    window.saveDealsToStorage = function() {
+      try {
+        localStorage.setItem('propex_deals_db', JSON.stringify(window.dealsData));
+      } catch(e) { console.error("Error saving deals:", e); }
+    };
+
+    window.renderDealsKanban = function() {
+      if (!window.dealsData) window.initDealsData();
+
+      const currentFunnel = window.DEAL_FUNNELS[window.activeFunnelId] || window.DEAL_FUNNELS.telemarketing;
+
+      const search = (document.getElementById('deals-search-input')?.value || '').toLowerCase().trim();
+      const filterSource = document.getElementById('deals-filter-source')?.value || 'all';
+      const filterManager = document.getElementById('deals-filter-manager')?.value || 'all';
+
+      let filtered = window.dealsData.filter(deal => {
+        // Filter by active funnel
+        const dFunnel = deal.funnelId || (['cold_lead','qualification','position_check','pre_proposal','meeting_scheduled','transferred_to_sales','unqualified_lost'].includes(deal.stage) ? 'telemarketing' : 'sales');
+        if (dFunnel !== window.activeFunnelId) return false;
+
+        if (filterSource !== 'all' && deal.source !== filterSource) return false;
+        if (filterManager !== 'all' && deal.manager !== filterManager) return false;
+        if (search) {
+          const matchTitle = (deal.title || '').toLowerCase().includes(search);
+          const matchClient = (deal.clientName || '').toLowerCase().includes(search);
+          const matchPhone = (deal.clientPhone || '').toLowerCase().includes(search);
+          const matchId = (deal.id || '').toLowerCase().includes(search);
+          if (!matchTitle && !matchClient && !matchPhone && !matchId) return false;
+        }
+        return true;
+      });
+
+      // Update KPI Cards
+      let totalAmount = 0;
+      let activeCount = 0;
+      let importCount = 0;
+      let wonCount = 0;
+
+      filtered.forEach(d => {
+        if (d.stage !== 'lost' && d.stage !== 'unqualified_lost') {
+          totalAmount += Number(d.amount || 0);
+          activeCount++;
+        }
+        if (d.isImport && d.stage !== 'lost' && d.stage !== 'transferred_logistics') {
+          importCount++;
+        }
+        if (d.stage === 'won_paid' || d.stage === 'transferred_logistics' || d.stage === 'transferred_to_sales') {
+          wonCount++;
+        }
+      });
+
+      const conversion = filtered.length > 0 ? Math.round((wonCount / filtered.length) * 100) : 0;
+
+      const totalAmountEl = document.getElementById('deals-kpi-total-amount');
+      const activeCountEl = document.getElementById('deals-kpi-active-count');
+      const importCountEl = document.getElementById('deals-kpi-import-count');
+      const conversionEl = document.getElementById('deals-kpi-conversion');
+
+      if (totalAmountEl) totalAmountEl.textContent = totalAmount.toLocaleString('uk-UA') + ' ₴';
+      if (activeCountEl) activeCountEl.textContent = activeCount;
+      if (importCountEl) importCountEl.textContent = importCount;
+      if (conversionEl) conversionEl.textContent = conversion + '%';
+
+      // Render Kanban Columns for current funnel
+      const container = document.getElementById('kanban-board-container');
+      if (!container) return;
+
+      const getSourceBadgeHtml = (src) => {
+        switch(src) {
+          case 'bot': return `<span class="deal-source-badge source-bot">🤖 Чат-бот</span>`;
+          case 'phone': return `<span class="deal-source-badge source-phone">📞 Телефонія</span>`;
+          case 'telegram': return `<span class="deal-source-badge source-telegram">💬 Telegram</span>`;
+          case 'website': return `<span class="deal-source-badge source-website">🌐 Сайт</span>`;
+          default: return `<span class="deal-source-badge source-manual">👤 Ручний</span>`;
+        }
+      };
+
+      container.innerHTML = currentFunnel.stages.map(stage => {
+        const dealsInStage = filtered.filter(d => d.stage === stage.id);
+        const stageSum = dealsInStage.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+
+        const cardsHtml = dealsInStage.map(d => {
+          const importHtml = d.isImport ? `
+            <div class="deal-import-badge">
+              <span>🚢 ${d.importCountry || 'Імпорт'}</span>
+              <span>ETA: ${d.importEta || 'Н/Д'}</span>
+            </div>
+          ` : '';
+
+          const lostReasonHtml = ((d.stage === 'lost' || d.stage === 'unqualified_lost') && d.lostReason) ? `
+            <div style="font-size:11px; color:#ef4444; background:rgba(239,68,68,0.1); padding:4px 6px; border-radius:4px;">
+              ❌ ${d.lostReason}
+            </div>
+          ` : '';
+
+          const transferBtnHtml = (d.stage === 'won_paid') ? `
+            <button class="deal-action-btn" onclick="event.stopPropagation(); quickTransferToLogistics('${d.id}')" title="Передати в Логістику" style="background:#ec4899; color:white; border:none;">
+              🚚 Логістика
+            </button>
+          ` : '';
+
+          return `
+            <div class="deal-card" onclick="openDealDetailModal('${d.id}')">
+              <div class="deal-card-header">
+                <span class="deal-id">${d.id}</span>
+                ${getSourceBadgeHtml(d.source)}
+              </div>
+              <div class="deal-title">${d.title}</div>
+              <div class="deal-client">
+                <i data-lucide="user" style="width:13px;height:13px;"></i> ${d.clientName}
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="deal-amount">${Number(d.amount).toLocaleString('uk-UA')} ₴</div>
+              </div>
+              ${importHtml}
+              ${lostReasonHtml}
+              <div class="deal-footer">
+                <div class="deal-manager">
+                  <i data-lucide="user-check" style="width:13px;height:13px;"></i> ${(d.manager || 'Менеджер').split(' ')[0]}
+                </div>
+                <div class="deal-actions">
+                  ${transferBtnHtml}
+                  <button class="deal-action-btn" onclick="event.stopPropagation(); openDealDetailModal('${d.id}')" title="Деталі">
+                    <i data-lucide="eye" style="width:13px;height:13px;"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="kanban-column" id="col-stage-${stage.id}">
+            <div class="kanban-col-header" style="border-top: 3px solid ${stage.color};">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span>${stage.label}</span>
+                <span class="kanban-col-count">${dealsInStage.length}</span>
+              </div>
+            </div>
+            <div style="padding: 6px 14px 0 14px;">
+              <div class="kanban-col-total">Сума: ${stageSum.toLocaleString('uk-UA')} ₴</div>
+            </div>
+            <div class="kanban-cards-wrapper">
+              ${cardsHtml || '<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:20px 0;">Угод немає</div>'}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    };
+
+    // Modal Add Deal Handlers
+    window.openAddDealModal = function() {
+      const form = document.getElementById('add-deal-form');
+      if (form) form.reset();
+      document.getElementById('import-fields-container').style.display = 'none';
+      const modal = document.getElementById('modal-add-deal');
+      if (modal) modal.classList.add('show');
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    };
+
+    window.closeAddDealModal = function() {
+      const modal = document.getElementById('modal-add-deal');
+      if (modal) modal.classList.remove('show');
+    };
+
+    window.submitAddDealForm = function() {
+      if (!window.dealsData) window.initDealsData();
+
+      const title = document.getElementById('add-deal-title').value.trim();
+      const clientName = document.getElementById('add-deal-client-name').value.trim();
+      const clientPhone = document.getElementById('add-deal-client-phone').value.trim();
+      const amount = Number(document.getElementById('add-deal-amount').value || 0);
+      const source = document.getElementById('add-deal-source').value;
+      const stage = document.getElementById('add-deal-stage').value;
+      const manager = document.getElementById('add-deal-manager').value;
+
+      const isImport = document.getElementById('add-deal-is-import').checked;
+      const importCountry = document.getElementById('add-deal-import-country').value.trim();
+      const importEta = document.getElementById('add-deal-import-eta').value;
+      const notes = document.getElementById('add-deal-notes').value.trim();
+
+      const nextNum = window.dealsData.length + 101;
+      const newDeal = {
+        id: `DEAL-${nextNum}`,
+        title,
+        clientName,
+        clientPhone,
+        amount,
+        source,
+        stage,
+        manager,
+        isImport,
+        importCountry,
+        importEta,
+        createdAt: new Date().toISOString().slice(0, 10) + ' ' + new Date().toTimeString().slice(0, 5),
+        notes
+      };
+
+      window.dealsData.unshift(newDeal);
+      window.saveDealsToStorage();
+      window.closeAddDealModal();
+      window.renderDealsKanban();
+      alert(`✅ Угоду "${title}" успішно створено!`);
+    };
+
+    // Modal Deal Details & Timeline Handlers
+    window.openDealDetailModal = function(dealId) {
+      if (!window.dealsData) window.initDealsData();
+      const deal = window.dealsData.find(d => d.id === dealId);
+      if (!deal) return;
+
+      document.getElementById('detail-deal-id').value = deal.id;
+      document.getElementById('detail-deal-id-title').textContent = `#${deal.id}`;
+      document.getElementById('detail-deal-header-amount').textContent = Number(deal.amount).toLocaleString('uk-UA') + ' ₴';
+      document.getElementById('detail-deal-created-time').textContent = deal.createdAt || '14.08.2026 10:30';
+      document.getElementById('detail-deal-author').textContent = deal.author || 'Марина Ковальчук (Бот)';
+      document.getElementById('detail-deal-author-name').textContent = deal.author || 'Марина Ковальчук';
+
+      document.getElementById('detail-deal-title').textContent = deal.title;
+      document.getElementById('detail-deal-client-name').textContent = deal.clientName;
+      document.getElementById('detail-deal-edrpou').textContent = deal.edrpou || '38492019';
+      document.getElementById('detail-deal-phone').textContent = deal.clientPhone;
+      document.getElementById('detail-deal-contact-person').textContent = deal.contactPerson || 'Олексій Сергійович (Закупівлі)';
+      document.getElementById('detail-deal-manager').textContent = deal.manager;
+      document.getElementById('detail-deal-notes').textContent = deal.notes || '—Немає нотаток—';
+
+      const sourceBadgeEl = document.getElementById('detail-deal-source-badge');
+      if (sourceBadgeEl) {
+        switch(deal.source) {
+          case 'bot': sourceBadgeEl.textContent = '🤖 Чат-бот'; sourceBadgeEl.className = 'deal-source-badge source-bot'; break;
+          case 'phone': sourceBadgeEl.textContent = '📞 Телефонія'; sourceBadgeEl.className = 'deal-source-badge source-phone'; break;
+          case 'telegram': sourceBadgeEl.textContent = '💬 Telegram'; sourceBadgeEl.className = 'deal-source-badge source-telegram'; break;
+          case 'website': sourceBadgeEl.textContent = '🌐 Сайт'; sourceBadgeEl.className = 'deal-source-badge source-website'; break;
+          default: sourceBadgeEl.textContent = '👤 Ручний ввід'; sourceBadgeEl.className = 'deal-source-badge source-manual';
+        }
+      }
+
+      // Populate stage select options according to deal's funnel
+      const dFunnelId = deal.funnelId || (['cold_lead','qualification','position_check','pre_proposal','meeting_scheduled','transferred_to_sales','unqualified_lost'].includes(deal.stage) ? 'telemarketing' : 'sales');
+      const funnelObj = window.DEAL_FUNNELS[dFunnelId] || window.DEAL_FUNNELS.telemarketing;
+      const stageSelect = document.getElementById('detail-deal-stage-select');
+      if (stageSelect) {
+        stageSelect.innerHTML = funnelObj.stages.map(s => `<option value="${s.id}">${s.label}</option>`).join('');
+        stageSelect.value = deal.stage;
+      }
+
+      window.handleDetailStageChange(deal.stage, false);
+      
+      const lostInput = document.getElementById('detail-deal-lost-reason');
+      if (lostInput) lostInput.value = deal.lostReason || '';
+
+      const importBlock = document.getElementById('detail-import-info-block');
+      if (deal.isImport) {
+        if (importBlock) importBlock.style.display = 'block';
+        document.getElementById('detail-import-country').textContent = deal.importCountry || 'Не вказано';
+        document.getElementById('detail-import-eta').textContent = deal.importEta || 'Не вказано';
+      } else {
+        if (importBlock) importBlock.style.display = 'none';
+      }
+
+      // Initialize Timeline Stream for this deal if not present
+      if (!deal.timeline || !Array.isArray(deal.timeline) || deal.timeline.length === 0) {
+        deal.timeline = [
+          { time: deal.createdAt || "2026-08-14 10:30", type: "system", author: deal.author || "Марина Ковальчук", text: `Створено угоду #${deal.id} з джерела ${deal.source === 'bot' ? '🤖 Омніканальний Чат-бот' : '📞 IP-Телефонія'}` },
+          { time: deal.createdAt || "2026-08-14 10:32", type: "assign", author: "Система Propex", text: `Призначено відповідального менеджера: ${deal.manager}` },
+          { time: deal.createdAt || "2026-08-14 11:00", type: "note", author: deal.manager, text: `Вхідний аналіз замовлення "${deal.title}". Очікуваний обсяг: ${Number(deal.amount).toLocaleString('uk-UA')} ₴.` }
+        ];
+      }
+
+      window.currentTimelineFilter = 'all';
+      window.renderDealTimeline(deal.id, 'all');
+
+      const modal = document.getElementById('modal-deal-details');
+      if (modal) modal.classList.add('show');
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    };
+
+    window.renderDealTimeline = function(dealId, filterType = 'all') {
+      const deal = window.dealsData.find(d => d.id === dealId);
+      if (!deal || !deal.timeline) return;
+
+      const container = document.getElementById('deal-timeline-stream');
+      if (!container) return;
+
+      let list = deal.timeline;
+      if (filterType !== 'all') {
+        list = list.filter(item => item.type === filterType);
+      }
+
+      // Sort timeline events so newest are always at the top
+      list = [...list].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+
+      const getTypeIcon = (type) => {
+        switch(type) {
+          case 'email': return { icon: 'mail', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)', label: 'Лист' };
+          case 'message': return { icon: 'message-square', color: '#0ea5e9', bg: 'rgba(14,165,233,0.15)', label: 'Повідомлення' };
+          case 'task': return { icon: 'check-square', color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)', label: 'Задача' };
+          case 'file': return { icon: 'paperclip', color: '#10b981', bg: 'rgba(16,185,129,0.15)', label: 'Файл' };
+          case 'note': return { icon: 'file-text', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', label: 'Нотатка' };
+          case 'stage': return { icon: 'arrow-right-circle', color: '#ec4899', bg: 'rgba(236,72,153,0.15)', label: 'Зміна етапу' };
+          default: return { icon: 'clock', color: '#6b7280', bg: 'rgba(107,114,128,0.15)', label: 'Подія' };
+        }
+      };
+
+      if (list.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted); font-size:13px; text-align:center; padding:30px 0;">Подій за обраним фільтром не знайдено</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        const meta = getTypeIcon(item.type);
+        return `
+          <div style="display:flex; gap:12px; align-items:flex-start;">
+            <div style="width:32px; height:32px; border-radius:50%; background:${meta.bg}; color:${meta.color}; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">
+              <i data-lucide="${meta.icon}" style="width:16px;height:16px;"></i>
+            </div>
+            <div style="flex-grow:1; background:var(--bg-secondary); padding:12px 14px; border-radius:10px; border:1px solid var(--border-color);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span style="font-size:12px; font-weight:700; color:${meta.color}; uppercase;">${meta.label} • ${item.author || 'Користувач'}</span>
+                <span style="font-size:11px; color:var(--text-muted);">${item.time}</span>
+              </div>
+              <div style="font-size:13px; color:var(--text-color); line-height:1.4;">${item.text}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    };
+
+    window.filterTimelineView = function(type) {
+      window.currentTimelineFilter = type;
+      const dealId = document.getElementById('detail-deal-id').value;
+      ['all', 'note', 'task', 'file'].forEach(t => {
+        const btn = document.getElementById(`tl-filter-${t}`);
+        if (btn) {
+          if (t === type) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+      window.renderDealTimeline(dealId, type);
+    };
+
+    window.submitQuickTimelineNote = function() {
+      const dealId = document.getElementById('detail-deal-id').value;
+      const deal = window.dealsData.find(d => d.id === dealId);
+      if (!deal) return;
+
+      const input = document.getElementById('timeline-add-input');
+      const text = input ? input.value.trim() : '';
+      if (!text) return;
+
+      if (!deal.timeline) deal.timeline = [];
+      
+      const now = new Date();
+      const timeStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
+      const currentUser = (window.state && window.state.currentUser) ? window.state.currentUser.name : 'Олександр Іванов';
+
+      deal.timeline.unshift({
+        time: timeStr,
+        type: 'note',
+        author: currentUser,
+        text: text
+      });
+
+      window.saveDealsToStorage();
+      input.value = '';
+      window.renderDealTimeline(dealId, window.currentTimelineFilter || 'all');
+    };
+
+    window.openAddDealTaskModal = function() {
+      const dealId = document.getElementById('detail-deal-id').value;
+      const deal = window.dealsData.find(d => d.id === dealId);
+      if (!deal) return;
+
+      document.getElementById('deal-task-text').value = '';
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('deal-task-date').value = today;
+      document.getElementById('deal-task-time').value = '10:00';
+
+      if (deal.manager) {
+        const select = document.getElementById('deal-task-assignee');
+        if (select) {
+          for (let i = 0; i < select.options.length; i++) {
+            if (select.options[i].value.includes(deal.manager) || select.options[i].value === deal.manager) {
+              select.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      }
+
+      const modal = document.getElementById('modal-add-deal-task');
+      if (modal) modal.classList.add('show');
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    };
+
+    window.closeAddDealTaskModal = function() {
+      const modal = document.getElementById('modal-add-deal-task');
+      if (modal) modal.classList.remove('show');
+    };
+
+    window.submitAddDealTask = function() {
+      const dealId = document.getElementById('detail-deal-id').value;
+      const deal = window.dealsData.find(d => d.id === dealId);
+      if (!deal) return;
+
+      const text = document.getElementById('deal-task-text').value.trim();
+      const date = document.getElementById('deal-task-date').value;
+      const time = document.getElementById('deal-task-time').value || '10:00';
+      const assignee = document.getElementById('deal-task-assignee').value;
+
+      if (!text) {
+        alert("⚠️ Будь ласка, введіть зміст задачі!");
+        return;
+      }
+      if (!date) {
+        alert("⚠️ Будь ласка, оберіть день виконання задачі!");
+        return;
+      }
+
+      if (!deal.timeline) deal.timeline = [];
+      const now = new Date();
+      const nowStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
+      const currentUser = (window.state && window.state.currentUser) ? window.state.currentUser.name : 'Олександр Іванов';
+
+      deal.timeline.unshift({
+        time: nowStr,
+        type: 'task',
+        author: currentUser,
+        text: `📋 <strong>Задача до ${date} ${time}</strong><br>👤 Відповідальний: <strong>${assignee}</strong><br>📝 ${text}`
+      });
+
+      window.saveDealsToStorage();
+      window.closeAddDealTaskModal();
+      window.renderDealTimeline(dealId, window.currentTimelineFilter || 'all');
+      alert(`✅ Задачу для "${assignee}" успішно створено на ${date} ${time}!`);
+    };
+
+    window.promptAddTimelineEvent = function(eventType) {
+      if (eventType === 'task') {
+        window.openAddDealTaskModal();
+        return;
+      }
+
+      const dealId = document.getElementById('detail-deal-id').value;
+      const deal = window.dealsData.find(d => d.id === dealId);
+      if (!deal) return;
+
+      let promptText = "";
+      let eventTitle = "";
+
+      switch(eventType) {
+        case 'email': promptText = "Введіть тему або текст електронного листа для клієнта:"; eventTitle = "✉️ Надіслано email"; break;
+        case 'message': promptText = "Введіть текст повідомлення (Telegram / Чат):"; eventTitle = "💬 Надіслано повідомлення"; break;
+        case 'file': promptText = "Введіть назву файла (напр., КП_Propex_SKF_2026.pdf):"; eventTitle = "📎 Додано файл"; break;
+        case 'note': promptText = "Введіть нотатку або коментар до угоди:"; eventTitle = "📝 Нотатка"; break;
+      }
+
+      const input = prompt(promptText);
+      if (input && input.trim()) {
+        if (!deal.timeline) deal.timeline = [];
+        const now = new Date();
+        const timeStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
+        const currentUser = (window.state && window.state.currentUser) ? window.state.currentUser.name : 'Олександр Іванов';
+
+        deal.timeline.unshift({
+          time: timeStr,
+          type: eventType,
+          author: currentUser,
+          text: `${eventTitle}: ${input.trim()}`
+        });
+
+        window.saveDealsToStorage();
+        window.renderDealTimeline(dealId, window.currentTimelineFilter || 'all');
+        alert("✅ Запис успішно додано в хронологію угоди!");
+      }
+    };
+
+    window.closeDealDetailModal = function() {
+      const modal = document.getElementById('modal-deal-details');
+      if (modal) modal.classList.remove('show');
+    };
+
+    window.openScheduleMeetingModal = function(dealId) {
+      const deal = window.dealsData.find(d => d.id === dealId);
+      if (!deal) return;
+
+      document.getElementById('meeting-date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('meeting-time').value = '11:00';
+      document.getElementById('meeting-notes').value = '';
+
+      if (deal.manager) {
+        const select = document.getElementById('meeting-assignee');
+        if (select) {
+          for (let i = 0; i < select.options.length; i++) {
+            if (select.options[i].value.includes(deal.manager) || select.options[i].value === deal.manager) {
+              select.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      }
+
+      const modal = document.getElementById('modal-schedule-meeting');
+      if (modal) modal.classList.add('show');
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    };
+
+    window.closeScheduleMeetingModal = function() {
+      const modal = document.getElementById('modal-schedule-meeting');
+      if (modal) modal.classList.remove('show');
+    };
+
+    window.submitScheduleMeeting = function() {
+      const dealId = document.getElementById('detail-deal-id').value;
+      const deal = window.dealsData.find(d => d.id === dealId);
+      if (!deal) return;
+
+      const date = document.getElementById('meeting-date').value;
+      const time = document.getElementById('meeting-time').value || '11:00';
+      const location = document.getElementById('meeting-location').value;
+      const assignee = document.getElementById('meeting-assignee').value;
+      const notes = document.getElementById('meeting-notes').value.trim();
+
+      if (!date) {
+        alert("⚠️ Введіть день проведення зустрічі!");
+        return;
+      }
+
+      if (!deal.timeline) deal.timeline = [];
+      const now = new Date();
+      const nowStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
+      const currentUser = (window.state && window.state.currentUser) ? window.state.currentUser.name : 'Олександр Іванов';
+
+      deal.timeline.unshift({
+        time: nowStr,
+        type: 'task',
+        author: currentUser,
+        text: `📅 <strong>Призначено зустріч на ${date} ${time}</strong><br>📍 Місце: <strong>${location}</strong><br>👤 Відповідальний: <strong>${assignee}</strong>${notes ? '<br>📝 ' + notes : ''}`
+      });
+
+      deal.meeting = { date, time, location, assignee, notes };
+      window.saveDealsToStorage();
+      window.closeScheduleMeetingModal();
+      window.renderDealTimeline(dealId, window.currentTimelineFilter || 'all');
+      alert(`✅ Зустріч успішно призначено на ${date} ${time} (${location})!`);
+    };
+
+    window.handleDetailStageChange = function(stageId, isUserChange = false) {
+      const lostContainer = document.getElementById('detail-lost-reason-container');
+      if (lostContainer) {
+        lostContainer.style.display = (stageId === 'lost' || stageId === 'unqualified_lost') ? 'block' : 'none';
+      }
+      const btnTransfer = document.getElementById('btn-transfer-logistics');
+      if (btnTransfer) {
+        btnTransfer.style.display = (stageId === 'won_paid' || stageId === 'transferred_logistics') ? 'flex' : 'none';
+      }
+
+      // If user manually changes stage to 'meeting_scheduled', prompt meeting scheduling!
+      if (stageId === 'meeting_scheduled' && isUserChange) {
+        const dealId = document.getElementById('detail-deal-id').value;
+        window.openScheduleMeetingModal(dealId);
+      }
+    };
+
+    window.saveDetailStageChange = function() {
+      const dealId = document.getElementById('detail-deal-id').value;
+      const deal = window.dealsData.find(d => d.id === dealId);
+      if (!deal) return;
+
+      const newStage = document.getElementById('detail-deal-stage-select').value;
+      if (newStage === 'lost' || newStage === 'unqualified_lost') {
+        const reason = document.getElementById('detail-deal-lost-reason').value.trim();
+        if (!reason) {
+          alert("⚠️ Будь ласка, вкажіть причину відмови!");
+          return;
+        }
+        deal.lostReason = reason;
+      }
+
+      const oldStage = deal.stage;
+      deal.stage = newStage;
+
+      if (!deal.timeline) deal.timeline = [];
+      const now = new Date();
+      const timeStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
+      const currentUser = (window.state && window.state.currentUser) ? window.state.currentUser.name : 'Олександр Іванов';
+      
+      const dFunnelId = deal.funnelId || (['cold_lead','qualification','position_check','pre_proposal','meeting_scheduled','transferred_to_sales','unqualified_lost'].includes(oldStage) ? 'telemarketing' : 'sales');
+      const funnelObj = window.DEAL_FUNNELS[dFunnelId] || window.DEAL_FUNNELS.telemarketing;
+      const stageLabel = (funnelObj.stages.find(s => s.id === newStage)?.label) || newStage;
+
+      deal.timeline.unshift({
+        time: timeStr,
+        type: 'stage',
+        author: currentUser,
+        text: `Змінено етап угоди на: ${stageLabel}`
+      });
+
+      // Automatic transition: If transferred_to_sales in telemarketing funnel, auto-create deal in sales funnel!
+      if (newStage === 'transferred_to_sales' && oldStage !== 'transferred_to_sales') {
+        const salesNextNum = window.dealsData.length + 101;
+        const salesDeal = {
+          id: `DEAL-${salesNextNum}`,
+          funnelId: "sales",
+          title: deal.title,
+          clientName: deal.clientName,
+          clientPhone: deal.clientPhone,
+          amount: deal.amount,
+          stage: "new_lead",
+          source: deal.source,
+          manager: deal.manager,
+          isImport: false,
+          createdAt: timeStr,
+          notes: `🎯 Передано з Первинної Воронки (#${deal.id}). Нотатки: ${deal.notes || ''}`
+        };
+        window.dealsData.unshift(salesDeal);
+        alert(`🎯 Угоду #${deal.id} успішно передано у Відділ Збуту!\nАвтоматично створено нову угоду #${salesDeal.id} у 2-й Воронці Продажів (Збут).`);
+      } else {
+        alert(`✅ Етап угоди #${deal.id} успішно змінено на "${stageLabel}"!`);
+      }
+
+      window.saveDealsToStorage();
+      window.closeDealDetailModal();
+      window.renderDealsKanban();
+    };
+
+    window.quickTransferToLogistics = function(dealId) {
+      const deal = window.dealsData.find(d => d.id === dealId);
+      if (!deal) return;
+
+      if (confirm(`🚚 Змінити етап угоди #${deal.id} на "Передано логісту"?`)) {
+        deal.stage = 'transferred_logistics';
+        window.saveDealsToStorage();
+        window.renderDealsKanban();
+        alert(`✅ Етап угоди #${deal.id} змінено на "Передано логісту" (виключно у воронці угод).`);
+      }
+    };
+
+    window.triggerTransferToLogistics = function() {
+      const dealId = document.getElementById('detail-deal-id').value;
+      window.quickTransferToLogistics(dealId);
+      window.closeDealDetailModal();
+    };
+
+    window.deleteDealCurrent = function() {
+      const dealId = document.getElementById('detail-deal-id').value;
+      if (confirm(`Ви впевнені, що хочете видалити угоду #${dealId}?`)) {
+        window.dealsData = window.dealsData.filter(d => d.id !== dealId);
+        window.saveDealsToStorage();
+        window.closeDealDetailModal();
+        window.renderDealsKanban();
+      }
+    };
+
+    // Auto-init Deals on DOM Load
+    document.addEventListener('DOMContentLoaded', function() {
+      window.initDealsData();
+    });
   </script>
 
 </body>
