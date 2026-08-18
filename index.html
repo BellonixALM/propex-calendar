@@ -3367,35 +3367,31 @@ body.light-theme .login-error {
         isRequestInProgress = false;
       }, 15000);
 
-      const label = document.getElementById('date-label');
-      
-        label.textContent = "⏱️ Завантаження водіїв...";
-        propexApi
-          .withSuccessHandler(function(response) {
-            state.dailyCrews = (response && response.status === 'success') ? response.data : (response || []);
-          })
-          .withFailureHandler(function(err) {
-            console.error("Failed to load daily shifts:", err);
-            state.dailyCrews = [];
-          })
-          .getDailyCrews();
-          
-        propexApi
-          .withFailureHandler(function(err) {
-            dataLoadedSuccessfully = true;
-            isRequestInProgress = false;
-            console.error("Failed to load drivers from Sheets:", err);
-            label.textContent = "⏱️ Водіїв не знайдено, вантажимо доставки...";
-            state.drivers = [];
-            renderDriversHeader();
-            loadDeliveriesSafely();
-          })
-          .withSuccessHandler(function(response) {
-            state.drivers = (response && response.status === 'success') ? response.data : (response || []);
-            renderDriversHeader();
-            loadDeliveriesSafely();
-          })
-          .getDrivers();
+      propexApi
+        .withSuccessHandler(function(response) {
+          state.dailyCrews = (response && response.status === 'success') ? response.data : (response || []);
+        })
+        .withFailureHandler(function(err) {
+          console.error("Failed to load daily shifts:", err);
+          state.dailyCrews = [];
+        })
+        .getDailyCrews();
+        
+      propexApi
+        .withFailureHandler(function(err) {
+          dataLoadedSuccessfully = true;
+          isRequestInProgress = false;
+          console.error("Failed to load drivers from Sheets:", err);
+          state.drivers = [];
+          renderDriversHeader();
+          loadDeliveriesSafely();
+        })
+        .withSuccessHandler(function(response) {
+          state.drivers = (response && response.status === 'success') ? response.data : (response || []);
+          renderDriversHeader();
+          loadDeliveriesSafely();
+        })
+        .getDrivers();
 
         loadClientsData();
 
