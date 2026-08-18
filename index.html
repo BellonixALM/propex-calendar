@@ -3996,7 +3996,8 @@ body.light-theme .login-error {
     }
 
     function getFilteredDeliveries(dateObj, specificCar = null) {
-      const dateStr = formatDateStr(dateObj);
+      const targetDate = typeof dateObj === 'string' ? parseDateStr(dateObj) : dateObj;
+      const targetDateStr = targetDate ? formatDateStr(targetDate) : formatDateStr(dateObj);
       return state.deliveries.filter(del => {
         let delDateStr = del['Дата'];
         if (delDateStr) {
@@ -4005,13 +4006,21 @@ body.light-theme .login-error {
             const parts = delDateStr.split('-');
             if (parts.length >= 3) {
               const y = parts[0];
-              const m = parts[1];
-              const d = parts[2].substring(0, 2);
+              const m = parts[1].padStart(2, '0');
+              const d = parts[2].substring(0, 2).padStart(2, '0');
+              delDateStr = `${d}.${m}.${y}`;
+            }
+          } else if (delDateStr.includes('.')) {
+            const parts = delDateStr.split('.');
+            if (parts.length === 3) {
+              const d = parts[0].padStart(2, '0');
+              const m = parts[1].padStart(2, '0');
+              const y = parts[2];
               delDateStr = `${d}.${m}.${y}`;
             }
           }
         }
-        const matchesDate = delDateStr === dateStr;
+        const matchesDate = delDateStr === targetDateStr;
         return matchesDate && passesFilters(del, specificCar);
       });
     }
