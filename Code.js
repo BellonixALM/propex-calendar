@@ -747,6 +747,43 @@ function updateWarehouseStatus(deliveryId, statusStr) {
           sendTelegramMessage(managerId, alertText);
         }
       }
+      
+      // If order is completed/assembled by warehouse, notify assigned driver immediately if not pickup
+      if ((statusStr === 'Зібрано' || statusStr === 'Скомплектовано') && carId && carId.toLowerCase().indexOf('самовивіз') === -1) {
+        var driverCol = headers.indexOf('ID_Водія');
+        var driverTgId = driverCol !== -1 ? String(data[i][driverCol]).trim() : '';
+        if (!driverTgId && carId) driverTgId = carId; // fallback
+        
+        var addressCol = headers.indexOf('Адреса');
+        var timeCol = headers.indexOf('Час');
+        var recNameCol = headers.indexOf("Ім'я_одержувача");
+        var recPhoneCol = headers.indexOf('Телефон_одержувача');
+        var commentCol = headers.indexOf('Коментар');
+
+        var delAddress = addressCol !== -1 ? data[i][addressCol] : '';
+        var delTime = timeCol !== -1 ? data[i][timeCol] : '';
+        var delRecName = recNameCol !== -1 ? data[i][recNameCol] : '';
+        var delRecPhone = recPhoneCol !== -1 ? data[i][recPhoneCol] : '';
+        var delComment = commentCol !== -1 ? data[i][commentCol] : '';
+
+        if (driverTgId && driverTgId.length > 5) {
+          var driverMsg = "📦 <b>Нова зібрана доставка!</b>\n\n" +
+                          "⏰ <b>Час:</b> " + (delTime || 'Не вказано') + "\n" +
+                          "📍 <b>Адреса:</b> " + delAddress + "\n" +
+                          "№ <b>Замовлення:</b> №" + orderNum + "\n" +
+                          "👤 <b>Отримувач:</b> " + delRecName + " (" + delRecPhone + ")\n";
+          if (delComment) driverMsg += "💬 <b>Примітка:</b> " + delComment + "\n";
+
+          var driverKb = {
+            inline_keyboard: [
+              [{ text: "📍 Я на місці", callback_data: "onsite_" + deliveryId }],
+              [{ text: "✅ Підтвердити доставку", callback_data: "confirm_" + deliveryId }, { text: "❌ Проблема", callback_data: "problem_" + deliveryId }]
+            ]
+          };
+          sendTelegramMessage(driverTgId, driverMsg, driverKb);
+        }
+      }
+
       return { status: 'success', order_num: orderNum, car_id: carId };
     }
   }

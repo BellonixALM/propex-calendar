@@ -3019,6 +3019,13 @@ body.light-theme .login-error {
         return this;
       };
       ScriptRunBridge.prototype.addDelivery = function(deliveryData) {
+        if (!deliveryData.id && !deliveryData.ID) {
+          deliveryData.ID = 'LOCAL_' + Date.now();
+          deliveryData.id = deliveryData.ID;
+        }
+        if (!deliveryData['Час_Створення']) deliveryData['Час_Створення'] = deliveryData.created_time || '';
+        if (!deliveryData['Дата_Створення']) deliveryData['Дата_Створення'] = deliveryData.created_date || '';
+        if (!deliveryData['Історія_Операцій']) deliveryData['Історія_Операцій'] = deliveryData.history || '';
         this._callAPI('addDelivery', deliveryData);
         return this;
       };
@@ -3241,11 +3248,31 @@ body.light-theme .login-error {
       }
     }
 
+    function getStoredHistoryMap() {
+      try {
+        const raw = localStorage.getItem('propex_delivery_histories_v1');
+        return raw ? JSON.parse(raw) : {};
+      } catch(e) { return {}; }
+    }
+    function saveStoredHistory(id, historyStr, createdTimeStr, createdDateStr) {
+      if (!id) return;
+      try {
+        const map = getStoredHistoryMap();
+        if (!map[id]) map[id] = {};
+        if (historyStr) map[id].history = historyStr;
+        if (createdTimeStr) map[id].created_time = createdTimeStr;
+        if (createdDateStr) map[id].created_date = createdDateStr;
+        localStorage.setItem('propex_delivery_histories_v1', JSON.stringify(map));
+      } catch(e) {}
+    }
+
     let isRequestInProgress = false;
     let dataLoadedSuccessfully = false;
     function loadDeliveriesSafely() {
       const label = document.getElementById('date-label');
       label.textContent = "⏱️ Завантаження доставок...";
+      const localHistoryMap = getStoredHistoryMap();
+
       propexApi
         .withFailureHandler(function(err) {
           dataLoadedSuccessfully = true;
@@ -3260,7 +3287,35 @@ body.light-theme .login-error {
         .withSuccessHandler(function(response) {
           dataLoadedSuccessfully = true;
           isRequestInProgress = false;
-          state.deliveries = (response && response.status === 'success') ? response.data : (response || []);
+          const fetchedDeliveries = (response && response.status === 'success') ? response.data : (response || []);
+          // Merge fetched deliveries with local memory AND localStorage to preserve history across page reloads
+          const existingMap = new Map((state.deliveries || []).map(d => [String(d['ID'] || d['ID_Замовлення'] || d.id), d]));
+          state.deliveries = fetchedDeliveries.map(fetched => {
+            const fetchedId = String(fetched['ID'] || fetched['ID_Замовлення'] || fetched.id);
+            const existing = existingMap.get(fetchedId);
+            const stored = localHistoryMap[fetchedId] || {};
+
+            const historyVal = (fetched['Історія_Операцій'] || (existing ? existing['Історія_Операцій'] : '') || stored.history || '').trim();
+            const createdTimeVal = (fetched['Час_Створення'] || (existing ? existing['Час_Створення'] : '') || stored.created_time || '').trim();
+            const createdDateVal = (fetched['Дата_Створення'] || (existing ? existing['Дата_Створення'] : '') || stored.created_date || '').trim();
+
+            if (historyVal) fetched['Історія_Операцій'] = historyVal;
+            if (createdTimeVal) fetched['Час_Створення'] = createdTimeVal;
+            if (createdDateVal) fetched['Дата_Створення'] = createdDateVal;
+
+            if (fetchedId && (historyVal || createdTimeVal)) {
+              saveStoredHistory(fetchedId, historyVal, createdTimeVal, createdDateVal);
+            }
+            return fetched;
+          });
+          // Also keep local-only new deliveries not yet returned by backend
+          const fetchedIds = new Set(fetchedDeliveries.map(d => String(d['ID'] || d['ID_Замовлення'] || d.id)));
+          (existingMap).forEach((existing, id) => {
+            if (id.startsWith('LOCAL_') && !fetchedIds.has(id)) {
+              state.deliveries.unshift(existing);
+            }
+          });
+
           state.deliveries.forEach(d => {
             if (!d['ID_Водія'] && d['Водій']) {
               d['ID_Водія'] = d['Водій'];
@@ -4193,7 +4248,7 @@ body.light-theme .login-error {
         samoCell.addEventListener('dragover', handleDragOver);
         samoCell.addEventListener('dragleave', handleDragLeave);
         samoCell.addEventListener('drop', handleDrop);
-        const samoHourDeliveries = samoDeliveries.filter(del => del['Час'] === hour);
+        const samoHourDeliveries = samoDeliveries.filter(del => String(del['Час'] || '').trim() === hour);
         samoHourDeliveries.forEach(del => {
           const card = createDeliveryCard(del);
           samoCell.appendChild(card);
@@ -4210,7 +4265,7 @@ body.light-theme .login-error {
         npCell.addEventListener('dragover', handleDragOver);
         npCell.addEventListener('dragleave', handleDragLeave);
         npCell.addEventListener('drop', handleDrop);
-        const npHourDeliveries = npDeliveries.filter(del => del['Час'] === hour);
+        const npHourDeliveries = npDeliveries.filter(del => String(del['Час'] || '').trim() === hour);
         npHourDeliveries.forEach(del => {
           const card = createDeliveryCard(del);
           npCell.appendChild(card);
@@ -4316,7 +4371,7 @@ body.light-theme .login-error {
           cell.addEventListener('dragleave', handleDragLeave);
           cell.addEventListener('drop', handleDrop);
           const dayDels = weekDeliveries[dIndex].deliveries;
-          const matchingDeliveries = dayDels.filter(del => del['Час'] === hour);
+          const matchingDeliveries = dayDels.filter(del => String(del['Час'] || '').trim() === hour);
           matchingDeliveries.forEach(delivery => {
             const card = createDeliveryCard(delivery, true);
             cell.appendChild(card);
@@ -4526,28 +4581,35 @@ body.light-theme .login-error {
         ? `<img src="${driver['Фото']}" class="card-driver-avatar" title="${driverName}">`
         : `<div class="card-driver-avatar-initial" title="${driverName}">${driverInitial}</div>`;
       let payClass = '';
-      if (del['Статус_оплати'] === 'Оплачено') payClass = 'pay-full';
+      if (delStatus === 'Виконано' || statusClass === 'completed') payClass = 'pay-full';
+      else if (del['Статус_оплати'] === 'Оплачено') payClass = 'pay-full';
       else if (del['Статус_оплати'] === 'Оплачено частково') payClass = 'pay-part';
       else if (del['Статус_оплати'] === 'Не оплачено') payClass = 'pay-none';
       
       let whIcon = '';
-      const whStatus = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
       const isWhProblem = whStatus.startsWith('Проблема') || whStatus.startsWith('Відмова');
-      if (whStatus === 'Очікує') {
-        whIcon = '<span class="wh-icon" title="Очікує збірки" style="color:#9ca3af; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="clock" style="width:20px;height:20px;"></i></span>';
+      const isDeliveryProblem = delStatus.startsWith('Проблема') || delStatus.startsWith('Відмова');
+
+      const truckSvg = (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px;"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`;
+      const clockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+      const packageSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+      const alertSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+
+      if (delStatus === 'Виконано' || statusClass === 'completed') {
+        whIcon = `<span class="wh-icon" title="Доставку успішно виконано водієм!">${truckSvg('#10b981')}</span>`;
+      } else if (isDeliveryProblem || isProblem) {
+        whIcon = `<span class="wh-icon" title="Проблема з доставкою!">${truckSvg('#ef4444')}</span>`;
+      } else if (whStatus === 'Очікує') {
+        whIcon = `<span class="wh-icon" title="Очікує збірки">${clockSvg}</span>`;
       } else if (whStatus === 'В процесі збору' || whStatus === 'Збирається') {
-        whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
+        whIcon = `<span class="wh-icon" title="В процесі збирання">${packageSvg}</span>`;
       } else if (whStatus === 'Зібрано') {
-        if (smartOnRoute) {
-          whIcon = '<span class="wh-icon" title="Передано водію (в дорозі)" style="color:var(--accent-blue); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
-        } else {
-          whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
-        }
+        whIcon = `<span class="wh-icon" title="Зібрано / В дорозі">${truckSvg('#3b82f6')}</span>`;
       } else if (isWhProblem) {
-        whIcon = '<span class="wh-icon" title="Проблема зі збіркою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
+        whIcon = `<span class="wh-icon" title="Проблема зі збіркою">${alertSvg}</span>`;
       }
 
-      if (isWhProblem) {
+      if (isWhProblem || isDeliveryProblem) {
         statusClass += ' warehouse-problem';
       }
 
@@ -4816,6 +4878,11 @@ body.light-theme .login-error {
           else managerFullName = `Менеджер (ID: ${managerId})`;
         }
         
+        const now = new Date();
+        const curDate = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
+        const curTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        const defaultFullTimestamp = `${curDate} ${curTime}`;
+
         if (rawHistory) {
           const rawEntries = rawHistory.split(';').filter(e => e.trim());
           timelineItems = rawEntries.map(entry => {
@@ -4824,8 +4891,20 @@ body.light-theme .login-error {
             let textPart = str;
             if (str.includes(" — ")) {
               const parts = str.split(" — ");
-              timePart = parts[0];
+              timePart = parts[0].trim();
               textPart = parts.slice(1).join(" — ");
+            } else {
+              timePart = "";
+              textPart = str;
+            }
+
+            // Always display the exact timestamp recorded in history (e.g. "17.08.2026 20:13").
+            // If entry only has date (e.g. "17.08.2026"), append del['Час_Створення'] if available.
+            if (timePart && !timePart.includes(':')) {
+              const actualCreatedTime = (del['Час_Створення'] || '').trim();
+              if (actualCreatedTime && actualCreatedTime.includes(':')) {
+                timePart = `${timePart} ${actualCreatedTime.substring(0,5)}`;
+              }
             }
 
             let iconClass = 'timeline-icon-blue';
@@ -4850,6 +4929,14 @@ body.light-theme .login-error {
               badgeText = '1С Документ';
               badgeClass = 'rgba(234, 179, 8, 0.15)';
               badgeColor = '#eab308';
+            } else if (textPart.includes('Призначено водія') || textPart.includes('Призначено авто')) {
+              iconClass = 'timeline-icon-purple';
+              iconText = '🚚';
+              title = textPart;
+              subtitle = `Логіст: Юрій Бортовщук / Авто: ${window.getCarName(del['ID_Авто'])}`;
+              badgeText = 'Призначено';
+              badgeClass = 'rgba(139, 92, 246, 0.15)';
+              badgeColor = '#8b5cf6';
             } else if (textPart.includes('Призначено комірника')) {
               iconClass = 'timeline-icon-purple';
               iconText = '👷';
@@ -4892,12 +4979,28 @@ body.light-theme .login-error {
               badgeColor = '#10b981';
             } else if (textPart.includes('Виконано') || textPart.includes('виконано')) {
               iconClass = 'timeline-icon-green';
-              iconText = '🟢';
-              title = `Замовлення виконано та доставлено`;
+              iconText = '🚚';
+              title = `Замовлення виконано та доставлено водієм`;
               subtitle = `Водій: ${driverText}`;
               badgeText = 'Виконано';
               badgeClass = 'rgba(16, 185, 129, 0.15)';
               badgeColor = '#10b981';
+            } else if (textPart.includes('Зміна планового часу') || textPart.includes('Перенесено')) {
+              iconClass = 'timeline-icon-yellow';
+              iconText = '⏰';
+              title = textPart;
+              subtitle = managerFullName;
+              badgeText = 'Перенесено';
+              badgeClass = 'rgba(234, 179, 8, 0.15)';
+              badgeColor = '#eab308';
+            } else if (textPart.includes('Скасовано') || textPart.includes('Анульовано') || textPart.includes('скасовано')) {
+              iconClass = 'timeline-icon-red';
+              iconText = '🚫';
+              title = textPart;
+              subtitle = managerFullName;
+              badgeText = 'Анульовано';
+              badgeClass = 'rgba(239, 68, 68, 0.2)';
+              badgeColor = '#ef4444';
             } else if (textPart.includes('Проблема') || textPart.includes('Відмова')) {
               iconClass = 'timeline-icon-red';
               iconText = '🚨';
@@ -4914,22 +5017,32 @@ body.light-theme .login-error {
                 <div class="timeline-title">${title}</div>
                 <div class="timeline-sub">${subtitle}</div>
                 <div class="timeline-badge" style="background: ${badgeClass}; color: ${badgeColor};">${badgeText}</div>
-                <div class="timeline-time">${timePart || 'Нещодавно'}</div>
+                <div class="timeline-time">${timePart || 'Точний час фіксується'}</div>
               </div>
             `;
           });
 
           historyContent.innerHTML = timelineItems.join('');
         } else {
-          // Default initial fallback timeline items
-          const initialTime = del['Дата'] ? `${del['Дата']} ${del['Час'] || ''}` : 'Нещодавно';
+          // Fallback timeline for cards without recorded history:
+          // Display ONLY the creation date if exact creation hours are missing. NEVER substitute curTime!
+          const createdDateStr = del['Дата_Створення'] || del['Дата'] || '';
+          let createdTimeStr = (del['Час_Створення'] || del['created_time'] || del['_created_time_persisted'] || '').trim();
+          
+          let creationTimestamp = createdDateStr || 'Дата фіксується';
+          if (createdTimeStr && createdTimeStr.includes(':')) {
+            creationTimestamp = `${createdDateStr} ${createdTimeStr.substring(0,5)}`;
+          }
+
+          const actionTimestamp = `${curDate} ${curTime}`;
+
           let defaultItemsHtml = `
             <div class="timeline-item">
               <div class="timeline-icon-node timeline-icon-blue">✈️</div>
               <div class="timeline-title">Замовлення створено — №${del['Номер_замовлення'] || ''}</div>
               <div class="timeline-sub">${managerFullName}</div>
               <div class="timeline-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">Створено</div>
-              <div class="timeline-time">${initialTime}</div>
+              <div class="timeline-time">${creationTimestamp}</div>
             </div>
           `;
           
@@ -4937,10 +5050,10 @@ body.light-theme .login-error {
             defaultItemsHtml += `
               <div class="timeline-item">
                 <div class="timeline-icon-node timeline-icon-yellow">📄</div>
-                <div class="timeline-title">Додано 1С прибуткову накладну</div>
+                <div class="timeline-title">Додано PDF / Скріншот 1С</div>
                 <div class="timeline-sub">${managerFullName}</div>
                 <div class="timeline-badge" style="background: rgba(234, 179, 8, 0.15); color: #eab308;">1С Документ</div>
-                <div class="timeline-time">${initialTime}</div>
+                <div class="timeline-time">${creationTimestamp}</div>
               </div>
             `;
           }
@@ -4952,7 +5065,7 @@ body.light-theme .login-error {
                 <div class="timeline-title">Призначено водія — ${driverText}</div>
                 <div class="timeline-sub">Логіст: Юрій Бортовщук / Авто: ${window.getCarName(del['ID_Авто'])}</div>
                 <div class="timeline-badge" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">Призначено</div>
-                <div class="timeline-time">${initialTime}</div>
+                <div class="timeline-time">${creationTimestamp}</div>
               </div>
             `;
           }
@@ -4977,7 +5090,7 @@ body.light-theme .login-error {
               <div class="timeline-title">Передано на склад</div>
               <div class="timeline-sub">Головний комірник: Сергій</div>
               <div class="timeline-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">Склад</div>
-              <div class="timeline-time">${initialTime}</div>
+              <div class="timeline-time">${creationTimestamp}</div>
             </div>
           `;
 
@@ -4988,7 +5101,7 @@ body.light-theme .login-error {
                 <div class="timeline-title">Призначено збірку комірнику</div>
                 <div class="timeline-sub">Призначив: Сергій ➔ Комірник: ${warehouseWorkerText}</div>
                 <div class="timeline-badge" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">Склад</div>
-                <div class="timeline-time">${initialTime}</div>
+                <div class="timeline-time">${creationTimestamp}</div>
               </div>
             `;
           }
@@ -5001,7 +5114,7 @@ body.light-theme .login-error {
                 <div class="timeline-title">Складський статус: ${warehouseStatus}</div>
                 <div class="timeline-sub">${warehouseWorkerText ? 'Комірник: ' + warehouseWorkerText : 'Складська операція'}</div>
                 <div class="timeline-badge" style="background: rgba(249, 115, 22, 0.15); color: #f97316;">${warehouseStatus}</div>
-                <div class="timeline-time">${initialTime}</div>
+                <div class="timeline-time">${creationTimestamp}</div>
               </div>
             `;
             if ((warehouseStatus === 'Зібрано' || warehouseStatus === 'Скомплектовано') && driverText && driverText !== 'Не призначено' && !driverText.toLowerCase().includes('самовивіз')) {
@@ -5011,20 +5124,28 @@ body.light-theme .login-error {
                   <div class="timeline-title">Надіслано сповіщення водію — ${driverText}</div>
                   <div class="timeline-sub">Маршрутний лист надіслано в Telegram</div>
                   <div class="timeline-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Сповіщено</div>
-                  <div class="timeline-time">${initialTime}</div>
+                  <div class="timeline-time">${creationTimestamp}</div>
                 </div>
               `;
             }
           }
 
           if (del['Статус'] && del['Статус'] !== 'Заплановано') {
+            const isCanceled = del['Статус'] === 'Скасовано' || del['Статус'] === 'Анульовано';
+            const isCompleted = del['Статус'] === 'Виконано';
+            const statusIconNode = isCanceled ? 'timeline-icon-red' : 'timeline-icon-green';
+            const statusIcon = isCanceled ? '❌' : (isCompleted ? '🚚' : '🟢');
+            const statusBadgeBg = isCanceled ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.15)';
+            const statusBadgeColor = isCanceled ? '#ef4444' : '#10b981';
+            const statusTimestamp = (del['Статус_Час'] || del['_status_time_persisted'] || createdDateStr).trim();
+
             defaultItemsHtml += `
               <div class="timeline-item">
-                <div class="timeline-icon-node timeline-icon-green">🟢</div>
+                <div class="timeline-icon-node ${statusIconNode}">${statusIcon}</div>
                 <div class="timeline-title">Поточний статус: ${del['Статус']}</div>
-                <div class="timeline-sub">Системна відмітка</div>
-                <div class="timeline-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">${del['Статус']}</div>
-                <div class="timeline-time">${initialTime}</div>
+                <div class="timeline-sub">${isCanceled ? 'Замовлення анульовано менеджментом' : 'Системна відмітка'}</div>
+                <div class="timeline-badge" style="background: ${statusBadgeBg} !important; color: ${statusBadgeColor} !important;">${del['Статус']}</div>
+                <div class="timeline-time">${statusTimestamp}</div>
               </div>
             `;
           }
@@ -5077,9 +5198,28 @@ body.light-theme .login-error {
         return;
       }
       
+      const now = new Date();
+      const curDate = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
+      const curTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const timestampStr = `${curDate} ${curTime}`;
+
       const currentComment = currentDetailDelivery['Коментар'] || '';
       const newComment = `[Скасовано: ${reason.trim()}] ` + currentComment;
       
+      const currentHistory = currentDetailDelivery['Історія_Операцій'] || currentDetailDelivery['Історія'] || currentDetailDelivery['History'] || '';
+      const annulmentHistoryEntry = `${timestampStr} — Замовлення анульовано (${reason.trim()})`;
+      const updatedHistory = currentHistory ? `${currentHistory}; ${annulmentHistoryEntry}` : annulmentHistoryEntry;
+
+      // Update local state delivery history instantly for immediate UI rendering
+      currentDetailDelivery['Історія_Операцій'] = updatedHistory;
+      currentDetailDelivery['Статус'] = "Скасовано";
+      currentDetailDelivery['Статус_Час'] = timestampStr;
+      currentDetailDelivery['_status_time_persisted'] = timestampStr;
+      saveStoredHistory(deliveryId, updatedHistory, currentDetailDelivery['Час_Створення'], currentDetailDelivery['Дата_Створення']);
+
+      // Re-render modal timeline immediately to show updated history entries
+      showDetails(currentDetailDelivery);
+
       document.getElementById('cancel-delivery-btn').disabled = true;
       document.getElementById('cancel-delivery-btn').textContent = "Анулювання...";
       
@@ -5100,7 +5240,7 @@ body.light-theme .login-error {
             document.getElementById('cancel-delivery-btn').textContent = "🚫 Анулювати";
             alert("Помилка з'єднання: " + error);
           })
-          .updateDeliveryStatus(deliveryId, "Скасовано", newComment);
+          .updateDeliveryStatus(deliveryId, "Скасовано", newComment, updatedHistory);
       }
     }
     function submitStatusUpdate() {
@@ -5119,6 +5259,24 @@ body.light-theme .login-error {
         comment = prompt("Ви можете додати додатковий коментар / причину зміни (необов'язково):", "");
         if (comment === null) comment = '';
       }
+      const now = new Date();
+      const curDate = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
+      const curTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const timestampStr = `${curDate} ${curTime}`;
+
+      const currentHistory = currentDetailDelivery['Історія_Операцій'] || currentDetailDelivery['Історія'] || currentDetailDelivery['History'] || '';
+      const statusHistoryEntry = `${timestampStr} — Зміна статусу: ${newStatus}${comment ? ' (' + comment + ')' : ''}`;
+      const updatedHistory = currentHistory ? `${currentHistory}; ${statusHistoryEntry}` : statusHistoryEntry;
+
+      // Update local state delivery history instantly for immediate UI rendering
+      currentDetailDelivery['Історія_Операцій'] = updatedHistory;
+      currentDetailDelivery['Статус'] = newStatus;
+      currentDetailDelivery['Статус_Час'] = timestampStr;
+      currentDetailDelivery['_status_time_persisted'] = timestampStr;
+
+      // Re-render modal timeline immediately to show updated history entries
+      showDetails(currentDetailDelivery);
+
       document.getElementById('update-status-btn').disabled = true;
       document.getElementById('update-status-btn').textContent = "Оновлення...";
       
@@ -5135,7 +5293,7 @@ body.light-theme .login-error {
             document.getElementById('update-status-btn').textContent = "Оновити";
             alert("Помилка оновлення статусу: " + (err.message || err));
           })
-          .updateDeliveryStatus(deliveryId, newStatus, comment);
+          .updateDeliveryStatus(deliveryId, newStatus, comment, updatedHistory);
     }
     function saveDelivery() {
       const car = document.getElementById('form-car').value;
@@ -5172,21 +5330,51 @@ body.light-theme .login-error {
       if (cleanReceiverPhone.startsWith('=') || cleanReceiverPhone.startsWith('+')) {
         cleanReceiverPhone = "'" + cleanReceiverPhone;
       }
+      const now = new Date();
+      const createdDateStr = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
+      const createdTimeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+      const timeHHMM = createdTimeStr.substring(0,5);
+      const creationHistoryEntry = `${createdDateStr} ${timeHHMM} — Замовлення створено; ${createdDateStr} ${timeHHMM} — Передано на склад (Головний комірник: Сергій)`;
+
       const deliveryData = {
         driver_id: car,
         driver_user_id: driverUserId,
         manager_chat_id: document.getElementById('form-manager-id').value.trim(),
         date: formattedDate,
         time: time,
+        created_date: createdDateStr,
+        created_time: createdTimeStr,
+        history: creationHistoryEntry,
         address: address,
         order_num: order_num,
         payment: payment,
         receiver_name: receiver_name,
         receiver_phone: cleanReceiverPhone,
         comment: comment,
-        invoice_url: invoice_url
+        invoice_url: invoice_url,
+        // Map Ukrainian keys for immediate local state consistency
+        'Дата_Створення': createdDateStr,
+        'Час_Створення': createdTimeStr,
+        'Історія_Операцій': creationHistoryEntry,
+        'Номер_замовлення': order_num,
+        'ID_Менеджера': document.getElementById('form-manager-id').value.trim()
       };
       
+      let historyEntryToAdd = "";
+      if (isEditMode && editDeliveryId) {
+        const existingDelivery = (state.deliveries || []).find(d => String(d['ID']) === String(editDeliveryId));
+        if (existingDelivery) {
+          const oldTime = (existingDelivery['Час'] || '').trim();
+          const oldDate = (existingDelivery['Дата'] || '').trim();
+          if ((oldTime && oldTime !== time) || (oldDate && oldDate !== formattedDate)) {
+            historyEntryToAdd = `${createdDateStr} ${createdTimeStr.substring(0,5)} — Зміна планового часу: з ${oldDate} ${oldTime} ➔ на ${formattedDate} ${time}`;
+            const existingHistory = existingDelivery['Історія_Операцій'] || existingDelivery['Історія'] || '';
+            deliveryData.history = existingHistory ? `${existingHistory}; ${historyEntryToAdd}` : historyEntryToAdd;
+            existingDelivery['Історія_Операцій'] = deliveryData.history;
+          }
+        }
+      }
+
       if (car !== "Не призначено") {
         const isOccupied = state.deliveries.some(d => 
           String(d['ID']) !== String(editDeliveryId) && 
@@ -5224,7 +5412,24 @@ body.light-theme .login-error {
         propexApi.withSuccessHandler(function(response) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
+          
+          // Ensure new delivery has complete keys in state.deliveries for immediate time rendering
+          const newDeliveryObj = Object.assign({}, deliveryData, {
+            'ID': (response && response.id) ? response.id : 'LOCAL_' + Date.now(),
+            'Номер_замовлення': order_num,
+            'Дата': formattedDate,
+            'Час': time,
+            'Адреса': address,
+            'ID_Авто': car,
+            'Статус': 'Заплановано',
+            'Дата_Створення': createdDateStr,
+            'Час_Створення': createdTimeStr.substring(0,5),
+            'Історія_Операцій': creationHistoryEntry
+          });
+          state.deliveries.unshift(newDeliveryObj);
+
           closeModal('delivery-modal');
+          renderCalendar();
           loadData();
         }).withFailureHandler(function(err) {
           document.getElementById('save-btn').disabled = false;
