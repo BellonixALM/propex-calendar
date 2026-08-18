@@ -3270,7 +3270,6 @@ body.light-theme .login-error {
     let dataLoadedSuccessfully = false;
     function loadDeliveriesSafely() {
       const label = document.getElementById('date-label');
-      label.textContent = "⏱️ Завантаження доставок...";
       const localHistoryMap = getStoredHistoryMap();
 
       propexApi
@@ -3278,11 +3277,11 @@ body.light-theme .login-error {
           dataLoadedSuccessfully = true;
           isRequestInProgress = false;
           console.error("Failed to load deliveries from Sheets:", err);
-          label.textContent = "❌ Помилка доставок: " + (err.message || err).substring(0, 50);
           state.deliveries = [];
           buildKnowledgeBase();
           updateAnalyticsDateLabel();
           renderCalendar();
+          updateDateLabel();
         })
         .withSuccessHandler(function(response) {
           dataLoadedSuccessfully = true;
