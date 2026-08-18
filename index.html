@@ -3945,7 +3945,7 @@ body.light-theme .login-error {
         matchesCar = delCar === String(specificCar);
       } else if (state.filters && state.filters.cars && state.filters.cars.length > 0) {
         matchesCar = state.filters.cars.includes(delCar);
-      } else if (state.selectedCar && state.selectedCar !== 'all') {
+      } else if (state.selectedCar && state.selectedCar !== 'all' && state.currentView !== 'day') {
         matchesCar = delCar === String(state.selectedCar);
       }
 
