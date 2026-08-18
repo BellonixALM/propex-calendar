@@ -4221,9 +4221,12 @@ body.light-theme .login-error {
           cell.addEventListener('dragover', handleDragOver);
           cell.addEventListener('dragleave', handleDragLeave);
           cell.addEventListener('drop', handleDrop);
-          const hourDeliveries = activeDeliveries.filter(del =>
-            (del['ID_Automobile'] === String(carId) || del['ID_Авто'] === String(carId)) && String(del['Час'] || '').trim() === hour
-          );
+          const hourDeliveries = activeDeliveries.filter(del => {
+            const delCar = String(del['ID_Automobile'] || del['ID_Авто'] || '').trim();
+            let delTime = String(del['Час'] || '').trim();
+            if (delTime && delTime.length === 4 && delTime.includes(':')) delTime = '0' + delTime;
+            return delCar === String(carId) && delTime === hour;
+          });
           hourDeliveries.forEach(del => {
             const card = createDeliveryCard(del);
             cell.appendChild(card);
@@ -4242,8 +4245,11 @@ body.light-theme .login-error {
         unassignedCell.addEventListener('dragleave', handleDragLeave);
         unassignedCell.addEventListener('drop', handleDrop);
         const unassignedDeliveries = activeDeliveries.filter(del => {
-          const carVal = String(del['ID_Авто'] || '').trim();
-          return (carVal === 'Не призначено' || carVal === '' || carVal === '-' || carVal === 'all' || !carVal) && String(del['Час'] || '').trim() === hour;
+          const carVal = String(del['ID_Automobile'] || del['ID_Авто'] || '').trim();
+          let delTime = String(del['Час'] || '').trim();
+          if (delTime && delTime.length === 4 && delTime.includes(':')) delTime = '0' + delTime;
+          const isUnassigned = (carVal === 'Не призначено' || carVal === '' || carVal === '-' || carVal === 'all' || !carVal);
+          return isUnassigned && delTime === hour;
         });
         unassignedDeliveries.forEach(del => {
           const card = createDeliveryCard(del);
