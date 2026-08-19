@@ -3891,12 +3891,12 @@ body.light-theme .login-error {
     }
     function passesFilters(del, specificCar = null) {
       let matchesCar = true;
-      const delCar = String(del['ID_Авто'] || '').trim();
+      const delCar = String(del['ID_Automobile'] || del['ID_Авто'] || '').trim();
       if (specificCar && specificCar !== 'all') {
         matchesCar = delCar === String(specificCar);
       } else if (state.filters && state.filters.cars && state.filters.cars.length > 0) {
         matchesCar = state.filters.cars.includes(delCar);
-      } else if (state.selectedCar && state.selectedCar !== 'all') {
+      } else if (state.selectedCar && state.selectedCar !== 'all' && state.currentView !== 'day') {
         matchesCar = delCar === String(state.selectedCar);
       }
 
@@ -3923,31 +3923,32 @@ body.light-theme .login-error {
     
     function getSamoVyvizDeliveries(dateStr) {
       const ds = typeof dateStr === 'string' ? dateStr : formatDateStr(dateStr);
-      return (state.deliveries || []).filter(d => 
-        String(d['Дата']).trim() === ds && 
-        String(d['ID_Авто']).trim() === 'Самовивіз'
-      );
+      return (state.deliveries || []).filter(d => {
+        const carVal = String(d['ID_Automobile'] || d['ID_Авто'] || '').trim();
+        return String(d['Дата']).trim() === ds && carVal === 'Самовивіз';
+      });
     }
 
     function getNovaPoshtaDeliveries(dateStr) {
       const ds = typeof dateStr === 'string' ? dateStr : formatDateStr(dateStr);
-      return (state.deliveries || []).filter(d => 
-        String(d['Дата']).trim() === ds && 
-        String(d['ID_Авто']).trim() === 'Самовивіз Нова Пошта'
-      );
+      return (state.deliveries || []).filter(d => {
+        const carVal = String(d['ID_Automobile'] || d['ID_Авто'] || '').trim();
+        return String(d['Дата']).trim() === ds && carVal === 'Самовивіз Нова Пошта';
+      });
     }
 
     function isDriverOnRoute(carId, dateStr) {
       if (!carId || !dateStr || !state.deliveries) return false;
       return state.deliveries.some(d => {
-        if (String(d['ID_Авто']) !== String(carId) || d['Дата'] !== dateStr) return false;
+        const delCar = String(d['ID_Automobile'] || d['ID_Авто'] || '').trim();
+        if (delCar !== String(carId) || d['Дата'] !== dateStr) return false;
         const lowerStatus = String(d['Статус'] || '').trim().toLowerCase();
         return ['в процесі', 'завантажено', 'в дорозі', 'на маршруті', 'виконано', 'виконана', 'завершено'].includes(lowerStatus);
       });
     }
 
     function getFilteredDeliveries(dateObj, specificCar = null) {
-      const dateStr = formatDateStr(dateObj);
+      const targetDateStr = formatDateStr(dateObj);
       return state.deliveries.filter(del => {
         let delDateStr = del['Дата'];
         if (delDateStr) {
@@ -3956,13 +3957,21 @@ body.light-theme .login-error {
             const parts = delDateStr.split('-');
             if (parts.length >= 3) {
               const y = parts[0];
-              const m = parts[1];
-              const d = parts[2].substring(0, 2);
+              const m = parts[1].padStart(2, '0');
+              const d = parts[2].substring(0, 2).padStart(2, '0');
+              delDateStr = `${d}.${m}.${y}`;
+            }
+          } else if (delDateStr.includes('.')) {
+            const parts = delDateStr.split('.');
+            if (parts.length === 3) {
+              const d = parts[0].padStart(2, '0');
+              const m = parts[1].padStart(2, '0');
+              const y = parts[2];
               delDateStr = `${d}.${m}.${y}`;
             }
           }
         }
-        const matchesDate = delDateStr === dateStr;
+        const matchesDate = delDateStr === targetDateStr;
         return matchesDate && passesFilters(del, specificCar);
       });
     }
@@ -4153,9 +4162,12 @@ body.light-theme .login-error {
           cell.addEventListener('dragover', handleDragOver);
           cell.addEventListener('dragleave', handleDragLeave);
           cell.addEventListener('drop', handleDrop);
-          const hourDeliveries = activeDeliveries.filter(del =>
-            (del['ID_Automobile'] === String(carId) || del['ID_Авто'] === String(carId)) && String(del['Час'] || '').trim() === hour
-          );
+          const hourDeliveries = activeDeliveries.filter(del => {
+            const delCar = String(del['ID_Automobile'] || del['ID_Авто'] || '').trim();
+            let delTime = String(del['Час'] || '').trim();
+            if (delTime && delTime.length === 4 && delTime.includes(':')) delTime = '0' + delTime;
+            return delCar === String(carId) && delTime === hour;
+          });
           hourDeliveries.forEach(del => {
             const card = createDeliveryCard(del);
             cell.appendChild(card);
@@ -4174,8 +4186,11 @@ body.light-theme .login-error {
         unassignedCell.addEventListener('dragleave', handleDragLeave);
         unassignedCell.addEventListener('drop', handleDrop);
         const unassignedDeliveries = activeDeliveries.filter(del => {
-          const carVal = String(del['ID_Авто'] || '').trim();
-          return (carVal === 'Не призначено' || carVal === '' || carVal === '-' || carVal === 'all' || !carVal) && String(del['Час'] || '').trim() === hour;
+          const carVal = String(del['ID_Automobile'] || del['ID_Авто'] || '').trim();
+          let delTime = String(del['Час'] || '').trim();
+          if (delTime && delTime.length === 4 && delTime.includes(':')) delTime = '0' + delTime;
+          const isUnassigned = (carVal === 'Не призначено' || carVal === '' || carVal === '-' || carVal === 'all' || !carVal);
+          return isUnassigned && delTime === hour;
         });
         unassignedDeliveries.forEach(del => {
           const card = createDeliveryCard(del);
