@@ -4595,7 +4595,9 @@ body.light-theme .login-error {
       let whIcon = '';
       const whStatus = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
       const isWhProblem = whStatus.startsWith('Проблема') || whStatus.startsWith('Відмова');
-      if (smartOnRoute && statusClass !== 'completed' && statusClass !== 'problem') {
+      if (statusClass === 'completed') {
+        whIcon = '<span class="wh-icon" title="Доставку успішно підтверджено водієм" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
+      } else if (smartOnRoute && statusClass !== 'problem') {
         whIcon = '<span class="wh-icon" title="Передано водію (в дорозі)" style="color:#3b82f6; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
       } else if (whStatus === 'Очікує') {
         whIcon = '<span class="wh-icon" title="Очікує збірки" style="color:#9ca3af; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="clock" style="width:20px;height:20px;"></i></span>';

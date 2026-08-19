@@ -175,7 +175,8 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getDailyCrews() }))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'delete_deliveries_bulk') {
-      var ids = data.ids || [];
+      var payload = data.data || data;
+      var ids = payload.ids || [];
       var ss = getSpreadsheet();
       var sheet = ss.getSheetByName('Доставки');
       var deleted = 0;
