@@ -4514,7 +4514,8 @@ body.light-theme .login-error {
       
       const whStatusForSmart = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
       let smartOnRoute = false;
-      if (statusClass === 'planned' && whStatusForSmart === 'Зібрано' && isDriverOnRoute(del['ID_Авто'], del['Дата'])) {
+      const driverAssigned = String(del['ID_Водія'] || del['Водій'] || '').trim();
+      if (statusClass === 'planned' && (whStatusForSmart === 'Зібрано' || driverAssigned)) {
         statusClass = 'in-progress';
         smartOnRoute = true;
       }
@@ -4553,16 +4554,14 @@ body.light-theme .login-error {
       let whIcon = '';
       const whStatus = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
       const isWhProblem = whStatus.startsWith('Проблема') || whStatus.startsWith('Відмова');
-      if (whStatus === 'Очікує') {
+      if (smartOnRoute && statusClass !== 'completed' && statusClass !== 'problem') {
+        whIcon = '<span class="wh-icon" title="Передано водію (в дорозі)" style="color:#3b82f6; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
+      } else if (whStatus === 'Очікує') {
         whIcon = '<span class="wh-icon" title="Очікує збірки" style="color:#9ca3af; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="clock" style="width:20px;height:20px;"></i></span>';
       } else if (whStatus === 'В процесі збору' || whStatus === 'Збирається') {
         whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
       } else if (whStatus === 'Зібрано') {
-        if (smartOnRoute) {
-          whIcon = '<span class="wh-icon" title="Передано водію (в дорозі)" style="color:var(--accent-blue); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
-        } else {
-          whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
-        }
+        whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
       } else if (isWhProblem) {
         whIcon = '<span class="wh-icon" title="Проблема зі збіркою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
       }
