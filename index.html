@@ -4047,9 +4047,9 @@ body.light-theme .login-error {
       const grid = document.getElementById('day-grid-container');
       grid.innerHTML = '';
 
-      let visibleCars = [1, 3, 4, 5];
+      let visibleCars = [1, 2, 3, 4, 5];
       if (state.filters && state.filters.cars && state.filters.cars.length > 0) {
-        visibleCars = [1, 3, 4, 5].filter(c => state.filters.cars.includes(String(c)));
+        visibleCars = [1, 2, 3, 4, 5].filter(c => state.filters.cars.includes(String(c)));
       }
 
       // +3 для колонок Не призначено, Самовивіз та Самовивіз Нова Пошта
