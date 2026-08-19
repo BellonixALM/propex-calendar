@@ -2927,14 +2927,15 @@ body.light-theme .login-error {
         this._failureHandler = callback;
         return this;
       };
-      ScriptRunBridge.prototype._callAPI = function(action, data) {
+      ScriptRunBridge.prototype._callAPI = function(action, data, retryCount) {
         const self = this;
         const successCb = this._successHandler;
         const failureCb = this._failureHandler;
         this._successHandler = null;
         this._failureHandler = null;
 
-        // Modern, robust POST fetch for ALL API actions (eliminates JSONP limitations and script errors)
+        retryCount = retryCount || 0;
+
         fetch(WEBAPP_URL, {
           method: 'POST',
           mode: 'cors',
@@ -2960,8 +2961,17 @@ body.light-theme .login-error {
           }
         })
         .catch(err => {
-          console.warn("POST API fetch failed, trying JSONP fallback:", err);
-          // Fallback to JSONP if fetch fails
+          console.warn("POST API fetch attempt " + (retryCount + 1) + " failed:", err);
+          if (retryCount < 2) {
+            setTimeout(function() {
+              const retryBridge = new ScriptRunBridge();
+              retryBridge._successHandler = successCb;
+              retryBridge._failureHandler = failureCb;
+              retryBridge._callAPI(action, data, retryCount + 1);
+            }, 1000);
+            return;
+          }
+          // Fallback to JSONP if fetch fails 3 times
           const callbackName = 'propex_cb_' + Math.round(1000000000 * Math.random());
           window[callbackName] = function(result) {
             delete window[callbackName];
