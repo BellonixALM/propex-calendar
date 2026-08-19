@@ -3138,6 +3138,37 @@ body.light-theme .login-error {
       const y = date.getFullYear();
       return `${y}-${m}-${d}`;
     }
+    function getEmployeeFullName(rawId, defaultLabel = '—') {
+      if (!rawId) return defaultLabel;
+      const targetStr = String(rawId).trim();
+      if (!targetStr) return defaultLabel;
+
+      const emp = (state.employees || []).find(e => {
+        const tgId = String(e['Telegram_ID'] || e['Telegram'] || e['telegramId'] || '').trim();
+        const pib = String(e['ПІБ'] || e["Ім'я"] || e['Логін'] || '').trim();
+        const login = String(e['Логін'] || e['ID'] || '').trim();
+        return (tgId && tgId === targetStr) || (pib && pib === targetStr) || (login && login === targetStr);
+      });
+      if (emp) {
+        return emp['ПІБ'] || emp["Ім'я"] || emp['Логін'] || targetStr;
+      }
+
+      const driver = (state.drivers || []).find(d => {
+        const tgId = String(d['Telegram_ID'] || d['Telegram'] || d['ID_Водія'] || d['ID'] || '').trim();
+        const name = String(d["Ім'я"] || d['ПІБ'] || '').trim();
+        return (tgId && tgId === targetStr) || (name && name === targetStr);
+      });
+      if (driver) {
+        return driver["Ім'я"] || driver['ПІБ'] || targetStr;
+      }
+
+      // If it looks like a pure numeric Telegram ID, format cleanly
+      if (/^\d{6,}$/.test(targetStr)) {
+        return `Співробітник (${targetStr})`;
+      }
+      return targetStr;
+    }
+
     function getMonday(d) {
       d = new Date(d);
       const day = d.getDay();
@@ -4582,39 +4613,20 @@ body.light-theme .login-error {
       let managerName = '';
       let managerShort = '';
       if (managerId) {
-        const emp = (state.employees || []).find(e => {
-          const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
-          const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
-          const targetStr = String(managerId).trim();
-          return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
-        });
-        if (emp) {
-          managerName = emp['ПІБ'] || emp["Ім'я"] || '';
-          const parts = managerName.split(' ');
-          if (parts.length >= 2) {
-            managerShort = `${parts[0]} ${parts[1].charAt(0)}.`; // наприклад, "Петренко М."
-          } else if (parts.length === 1) {
-            managerShort = parts[0];
-          } else {
-            managerShort = managerName;
-          }
+        managerName = getEmployeeFullName(managerId, 'Менеджер');
+        const parts = managerName.split(' ');
+        if (parts.length >= 2) {
+          managerShort = `${parts[0]} ${parts[1].charAt(0)}.`;
         } else {
-          managerName = managerId;
-          managerShort = managerId;
+          managerShort = managerName;
         }
       }
 
       // Знаходимо водія
       let assignedDriverBadgeHTML = '';
-      const driverId = del['ID_Водія'];
+      const driverId = del['ID_Водія'] || del['Водій'];
       if (driverId) {
-        const empDriver = (state.employees || []).find(e => {
-          const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
-          const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
-          const targetStr = String(driverId).trim();
-          return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
-        });
-        const driverName = empDriver ? (empDriver['ПІБ'] || empDriver["Ім'я"] || driverId) : driverId;
+        const driverName = getEmployeeFullName(driverId, 'Водій');
         const dParts = driverName.split(' ');
         const driverShort = dParts.length >= 2 ? `${dParts[0]} ${dParts[1].charAt(0)}.` : driverName;
         assignedDriverBadgeHTML = `<span class="card-driver-badge" title="Призначений водій: ${driverName}" style="font-size: 10px; opacity: 0.9; color: #10b981; background: rgba(16,185,129,0.12); padding: 1px 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(16,185,129,0.2); white-space: nowrap;">🚚 ${driverShort}</span>`;
@@ -4766,17 +4778,8 @@ body.light-theme .login-error {
     let currentDetailDelivery = null;
     function showDetails(del) {
       currentDetailDelivery = del;
-      const driverId = del['ID_Водія'];
-      let driverText = 'Не призначено';
-      if (driverId) {
-        const empDriver = (state.employees || []).find(e => {
-          const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
-          const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
-          const targetStr = String(driverId).trim();
-          return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
-        });
-        driverText = empDriver ? (empDriver['ПІБ'] || empDriver["Ім'я"] || driverId) : driverId;
-      }
+      const driverId = del['ID_Водія'] || del['Водій'];
+      const driverText = getEmployeeFullName(driverId, 'Не призначено');
       document.getElementById('det-car').textContent = `🚗 Авто: ${window.getCarName(del['ID_Авто'])} | 🚚 Водій: ${driverText}`;
       document.getElementById('det-time-date').textContent = `${del['Час']} — ${del['Дата']}`;
       document.getElementById('det-order').textContent = `№ ${del['Номер_замовлення']}`;
@@ -4825,15 +4828,7 @@ body.light-theme .login-error {
         
         // 1. Initial creation entry if history is empty or to ensure first step exists
         const managerId = del['ID_Менеджера'];
-        let managerFullName = 'Менеджер';
-        if (managerId) {
-          const emp = (state.employees || []).find(e => {
-            const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
-            return tgId && String(tgId).trim() === String(managerId).trim();
-          });
-          if (emp) managerFullName = emp['ПІБ'] || emp["Ім'я"] || managerId;
-          else managerFullName = `Менеджер (ID: ${managerId})`;
-        }
+        const managerFullName = getEmployeeFullName(managerId, 'Менеджер');
         
         if (rawHistory) {
           const rawEntries = rawHistory.split(';').filter(e => e.trim());
