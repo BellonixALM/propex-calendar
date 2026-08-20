@@ -5139,27 +5139,7 @@ body.light-theme .login-error {
 
       const deleteBtn = document.getElementById('delete-delivery-btn');
       if (deleteBtn) {
-        const uName = (state.currentUser ? (state.currentUser.name || state.currentUser.login || '') : '').toLowerCase();
-        const uRole = (state.currentUser ? (state.currentUser.role || '') : '').toLowerCase();
-        
-        // Show for admin, manager, logist, director, or Ira / Yurii
-        const isAllowedToDelete = !state.currentUser || 
-                                  uRole === 'admin' || 
-                                  uRole === 'director' || 
-                                  uRole === 'директор' || 
-                                  uRole === 'логіст' || 
-                                  uRole === 'менеджер' || 
-                                  uName.includes('ira') || 
-                                  uName.includes('іра') || 
-                                  uName.includes('бортов') || 
-                                  uName.includes('юрій') || 
-                                  uName.includes('yuri');
-        
-        if (isAllowedToDelete) {
-          deleteBtn.style.display = 'inline-flex';
-        } else {
-          deleteBtn.style.display = 'none';
-        }
+        deleteBtn.style.display = 'inline-flex';
       }
       
       openModal('details-modal');
