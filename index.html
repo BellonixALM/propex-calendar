@@ -4571,7 +4571,15 @@ body.light-theme .login-error {
       const isAssembled = ['Зібрано', 'Скомплектовано'].includes(whStatusForSmart);
       const isDriverSet = driverAssigned !== '' && driverAssigned !== 'Не призначено';
 
-      if (statusClass === 'planned' && isAssembled && isDriverSet && delDateStr === todayStr) {
+      // Check manager Ira Order (Pickup to Propex)
+      const mgrName = String(del['Менеджер'] || del['ID_Менеджера'] || '').toLowerCase();
+      const isIraOrder = mgrName.includes('ira') || mgrName.includes('іра');
+
+      // Standard delivery: Today + Assembled + Driver assigned
+      // Ira Order pickup: Today + Driver assigned (sent at 08:00 AM)
+      const isRouteSent = delDateStr === todayStr && isDriverSet && (isAssembled || isIraOrder);
+
+      if (statusClass === 'planned' && isRouteSent) {
         statusClass = 'in-progress';
         smartOnRoute = true;
       }
@@ -4981,8 +4989,18 @@ body.light-theme .login-error {
 
           historyContent.innerHTML = timelineItems.join('');
         } else {
-          // Default initial fallback timeline items
-          const initialTime = del['Дата'] ? `${del['Дата']} ${del['Час'] || ''}` : 'Нещодавно';
+          // Use exact creation timestamp if recorded, otherwise format current live creation timestamp (now)
+          const createdTimeStr = del['Дата_Створення'] || del['Дата_створення'] || del['Created_At'] || '';
+          let initialTime = createdTimeStr;
+          if (!initialTime) {
+            const now = new Date();
+            const d = String(now.getDate()).padStart(2, '0');
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const y = now.getFullYear();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            initialTime = `${d}.${m}.${y} ${hh}:${mm}`;
+          }
           let defaultItemsHtml = `
             <div class="timeline-item">
               <div class="timeline-icon-node timeline-icon-blue">✈️</div>
