@@ -5368,12 +5368,15 @@ body.light-theme .login-error {
         if (targetDel) {
           targetDel['Накладна_URL'] = invoice_url;
           targetDel['Накладна'] = invoice_url;
+          targetDel['Номер_замовлення'] = order_num;
+          targetDel['Адреса'] = address;
+          targetDel['Коментар'] = comment;
         }
         propexApi.withSuccessHandler(function(response) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
           closeModal('delivery-modal');
-          loadData();
+          renderCalendar();
         }).withFailureHandler(function(err) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
@@ -5381,58 +5384,40 @@ body.light-theme .login-error {
           renderCalendar();
         }).updateDeliveryDetails(editDeliveryId, deliveryData, userRole);
       } else {
+        const tempId = 'del_' + Date.now();
+        const newDelObj = {
+          'ID': tempId,
+          'ID_Замовлення': tempId,
+          'Номер_замовлення': order_num,
+          'Дата': formattedDate,
+          'Час': time,
+          'Адреса': address,
+          'Ім\'я_одержувача': receiver_name,
+          'Телефон_одержувача': cleanReceiverPhone,
+          'Статус_оплати': payment,
+          'Статус': 'Заплановано',
+          'Коментар': comment,
+          'ID_Авто': car,
+          'ID_Водія': driverUserId,
+          'ID_Менеджера': document.getElementById('form-manager-id').value.trim(),
+          'Накладна_URL': invoice_url,
+          'Накладна': invoice_url
+        };
+        state.deliveries.push(newDelObj);
+        closeModal('delivery-modal');
+        renderCalendar();
+
         propexApi.withSuccessHandler(function(response) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
-          
-          const newId = (response && response.id) ? String(response.id) : ('del_' + Date.now());
-          const newDelObj = {
-            'ID': newId,
-            'Номер_замовлення': order_num,
-            'Дата': formattedDate,
-            'Час': time,
-            'Адреса': address,
-            'Ім\'я_одержувача': receiver_name,
-            'Телефон_одержувача': cleanReceiverPhone,
-            'Статус_оплати': payment,
-            'Статус': 'Заплановано',
-            'Коментар': comment,
-            'ID_Авто': car,
-            'ID_Водія': driverUserId,
-            'ID_Менеджера': document.getElementById('form-manager-id').value.trim(),
-            'Накладна_URL': invoice_url,
-            'Накладна': invoice_url
-          };
-          if (!state.deliveries.some(d => String(d['ID']) === newId)) {
-            state.deliveries.push(newDelObj);
+          if (response && response.id) {
+            newDelObj['ID'] = String(response.id);
+            newDelObj['ID_Замовлення'] = String(response.id);
           }
-          
-          closeModal('delivery-modal');
           renderCalendar();
         }).withFailureHandler(function(err) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
-          // Local fallback creation
-          const newId = 'del_' + Date.now();
-          const newDelObj = {
-            'ID': newId,
-            'Номер_замовлення': order_num,
-            'Дата': formattedDate,
-            'Час': time,
-            'Адреса': address,
-            'Ім\'я_одержувача': receiver_name,
-            'Телефон_одержувача': cleanReceiverPhone,
-            'Статус_оплати': payment,
-            'Статус': 'Заплановано',
-            'Коментар': comment,
-            'ID_Авто': car,
-            'ID_Водія': driverUserId,
-            'ID_Менеджера': document.getElementById('form-manager-id').value.trim(),
-            'Накладна_URL': invoice_url,
-            'Накладна': invoice_url
-          };
-          state.deliveries.push(newDelObj);
-          closeModal('delivery-modal');
           renderCalendar();
         }).addDelivery(deliveryData);
       }
