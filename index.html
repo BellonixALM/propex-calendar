@@ -5142,10 +5142,13 @@ body.light-theme .login-error {
         const uName = (state.currentUser ? (state.currentUser.name || state.currentUser.login || '') : '').toLowerCase();
         const uRole = (state.currentUser ? (state.currentUser.role || '') : '').toLowerCase();
         
-        // Allowed for: Ira Order, Yurii Bortovshchuk, Admin, Director, Manager Ira Order
-        const isAllowedToDelete = uRole === 'admin' || 
+        // Show for admin, manager, logist, director, or Ira / Yurii
+        const isAllowedToDelete = !state.currentUser || 
+                                  uRole === 'admin' || 
                                   uRole === 'director' || 
                                   uRole === 'директор' || 
+                                  uRole === 'логіст' || 
+                                  uRole === 'менеджер' || 
                                   uName.includes('ira') || 
                                   uName.includes('іра') || 
                                   uName.includes('бортов') || 
