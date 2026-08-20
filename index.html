@@ -5384,8 +5384,31 @@ body.light-theme .login-error {
         propexApi.withSuccessHandler(function(response) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
+          
+          const newId = (response && response.id) ? String(response.id) : ('del_' + Date.now());
+          const newDelObj = {
+            'ID': newId,
+            'Номер_замовлення': order_num,
+            'Дата': formattedDate,
+            'Час': time,
+            'Адреса': address,
+            'Ім\'я_одержувача': receiver_name,
+            'Телефон_одержувача': cleanReceiverPhone,
+            'Статус_оплати': payment,
+            'Статус': 'Заплановано',
+            'Коментар': comment,
+            'ID_Авто': car,
+            'ID_Водія': driverUserId,
+            'ID_Менеджера': document.getElementById('form-manager-id').value.trim(),
+            'Накладна_URL': invoice_url,
+            'Накладна': invoice_url
+          };
+          if (!state.deliveries.some(d => String(d['ID']) === newId)) {
+            state.deliveries.push(newDelObj);
+          }
+          
           closeModal('delivery-modal');
-          loadData();
+          renderCalendar();
         }).withFailureHandler(function(err) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
