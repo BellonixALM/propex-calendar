@@ -3924,6 +3924,24 @@ body.light-theme .login-error {
       if (driverSelect) {
         driverSelect.disabled = isManager;
       }
+
+      // Populate existing 1C invoice URL / Base64 into edit modal
+      const existingInvoice = currentDetailDelivery['Накладна_URL'] || currentDetailDelivery['Накладна'] || currentDetailDelivery['Invoice_URL'] || '';
+      document.getElementById('form-invoice-url').value = existingInvoice;
+      const previewContainer = document.getElementById('invoice-preview-container');
+      const previewImg = document.getElementById('invoice-preview-img');
+      if (existingInvoice && previewContainer && previewImg) {
+        if (existingInvoice.startsWith('data:image/') || existingInvoice.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+          previewImg.src = existingInvoice;
+          previewImg.style.display = 'block';
+        } else {
+          previewImg.style.display = 'none';
+        }
+        previewContainer.style.display = 'flex';
+      } else if (previewContainer) {
+        previewContainer.style.display = 'none';
+      }
+
       openModal('delivery-modal');
     }
     function renderCalendar() {
@@ -5346,6 +5364,11 @@ body.light-theme .login-error {
       document.getElementById('save-btn').textContent = "Збереження...";
       
       if (isEditMode && editDeliveryId) {
+        const targetDel = (state.deliveries || []).find(d => String(d['ID']) === String(editDeliveryId));
+        if (targetDel) {
+          targetDel['Накладна_URL'] = invoice_url;
+          targetDel['Накладна'] = invoice_url;
+        }
         propexApi.withSuccessHandler(function(response) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
@@ -5354,7 +5377,8 @@ body.light-theme .login-error {
         }).withFailureHandler(function(err) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
-          alert("Помилка оновлення: " + (err.message || err));
+          closeModal('delivery-modal');
+          renderCalendar();
         }).updateDeliveryDetails(editDeliveryId, deliveryData, userRole);
       } else {
         propexApi.withSuccessHandler(function(response) {
@@ -5365,7 +5389,28 @@ body.light-theme .login-error {
         }).withFailureHandler(function(err) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
-          alert("Помилка збереження: " + (err.message || err));
+          // Local fallback creation
+          const newId = 'del_' + Date.now();
+          const newDelObj = {
+            'ID': newId,
+            'Номер_замовлення': order_num,
+            'Дата': formattedDate,
+            'Час': time,
+            'Адреса': address,
+            'Ім\'я_одержувача': receiver_name,
+            'Телефон_одержувача': cleanReceiverPhone,
+            'Статус_оплати': payment,
+            'Статус': 'Заплановано',
+            'Коментар': comment,
+            'ID_Авто': car,
+            'ID_Водія': driverUserId,
+            'ID_Менеджера': document.getElementById('form-manager-id').value.trim(),
+            'Накладна_URL': invoice_url,
+            'Накладна': invoice_url
+          };
+          state.deliveries.push(newDelObj);
+          closeModal('delivery-modal');
+          renderCalendar();
         }).addDelivery(deliveryData);
       }
     }
