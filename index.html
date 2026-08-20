@@ -2779,13 +2779,10 @@ body.light-theme .login-error {
               <textarea id="form-comment" class="form-control" rows="3" placeholder="Особливості заїзду, ліфт, час зустрічі тощо..."></textarea>
             </div>
             <div class="form-group full-width" id="form-group-invoice" style="border: 1px dashed var(--accent-blue); padding: 12px; border-radius: 8px; background: rgba(59, 130, 246, 0.05);">
-              <label for="form-invoice-file" style="color: var(--accent-blue); font-weight: 700;">📄 Прибуткова накладна з 1С (Скріншот / Документ)</label>
-              <input type="file" id="form-invoice-file" class="form-control" accept="image/*,.pdf" onchange="handleInvoiceFileSelect(event)" style="padding: 6px;">
+              <label for="form-invoice-file" style="color: var(--accent-blue); font-weight: 700;">📄 Прибуткові накладні з 1С (Можна обрати декілька фото / PDF)</label>
+              <input type="file" id="form-invoice-file" class="form-control" accept="image/*,.pdf" multiple onchange="handleInvoiceFileSelect(event)" style="padding: 6px;">
               <input type="hidden" id="form-invoice-url" value="">
-              <div id="invoice-preview-container" style="margin-top: 10px; display: none; align-items: center; gap: 10px;">
-                <img id="invoice-preview-img" src="" alt="Накладна" style="max-height: 120px; max-width: 100%; border-radius: 6px; border: 1px solid var(--border-color); cursor: pointer;" onclick="window.open(this.src, '_blank')">
-                <button type="button" class="btn btn-secondary" onclick="removeInvoiceFile()" style="padding: 4px 8px; font-size: 11px; color: var(--danger);">🗑️ Видалити</button>
-              </div>
+              <div id="invoice-preview-container" style="margin-top: 10px; display: none; flex-wrap: wrap; gap: 10px; align-items: center;"></div>
             </div>
           </div>
         </form>
@@ -3987,22 +3984,21 @@ body.light-theme .login-error {
         driverSelect.disabled = isManager;
       }
 
-      // Populate existing 1C invoice URL / Base64 into edit modal
+      // Populate existing 1C invoice URLs / Base64 into edit modal
       const existingInvoice = currentDetailDelivery['Накладна_URL'] || currentDetailDelivery['Накладна'] || currentDetailDelivery['Invoice_URL'] || '';
-      document.getElementById('form-invoice-url').value = existingInvoice;
-      const previewContainer = document.getElementById('invoice-preview-container');
-      const previewImg = document.getElementById('invoice-preview-img');
-      if (existingInvoice && previewContainer && previewImg) {
-        if (existingInvoice.startsWith('data:image/') || existingInvoice.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-          previewImg.src = existingInvoice;
-          previewImg.style.display = 'block';
-        } else {
-          previewImg.style.display = 'none';
+      selectedInvoiceFiles = [];
+      if (existingInvoice) {
+        try {
+          if (existingInvoice.startsWith('[')) {
+            selectedInvoiceFiles = JSON.parse(existingInvoice);
+          } else {
+            selectedInvoiceFiles = [existingInvoice];
+          }
+        } catch(e) {
+          selectedInvoiceFiles = [existingInvoice];
         }
-        previewContainer.style.display = 'flex';
-      } else if (previewContainer) {
-        previewContainer.style.display = 'none';
       }
+      updateInvoicePreviewUI();
 
       openModal('delivery-modal');
     }
@@ -4784,35 +4780,65 @@ body.light-theme .login-error {
     function closeModal(id) {
       document.getElementById(id).classList.remove('show');
     }
+    let selectedInvoiceFiles = []; // Store multiple base64/URL items
+
     function handleInvoiceFileSelect(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+      const files = Array.from(event.target.files);
+      if (!files.length) return;
       
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const base64Url = e.target.result;
-        document.getElementById('form-invoice-url').value = base64Url;
-        const previewContainer = document.getElementById('invoice-preview-container');
-        const previewImg = document.getElementById('invoice-preview-img');
-        
-        if (file.type.startsWith('image/')) {
-          previewImg.src = base64Url;
-          previewImg.style.display = 'block';
-        } else {
-          previewImg.style.display = 'none';
+      let readCount = 0;
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          selectedInvoiceFiles.push(e.target.result);
+          readCount++;
+          if (readCount === files.length) {
+            updateInvoicePreviewUI();
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function updateInvoicePreviewUI() {
+      const urlInput = document.getElementById('form-invoice-url');
+      const previewContainer = document.getElementById('invoice-preview-container');
+      
+      if (!selectedInvoiceFiles.length) {
+        if (urlInput) urlInput.value = '';
+        if (previewContainer) {
+          previewContainer.style.display = 'none';
+          previewContainer.innerHTML = '';
         }
+        return;
+      }
+
+      if (urlInput) urlInput.value = JSON.stringify(selectedInvoiceFiles);
+      if (previewContainer) {
         previewContainer.style.display = 'flex';
-      };
-      reader.readAsDataURL(file);
+        previewContainer.innerHTML = selectedInvoiceFiles.map((url, idx) => {
+          const isImg = url.startsWith('data:image/') || url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+          return `
+            <div style="position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 4px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-card);">
+              ${isImg ? `<img src="${url}" style="max-height: 90px; max-width: 120px; border-radius: 4px; cursor: pointer;" onclick="window.open('${url}', '_blank')">` 
+                      : `<a href="${url}" target="_blank" style="font-size: 12px; color: var(--accent-blue);">📄 Документ #${idx + 1}</a>`}
+              <button type="button" onclick="removeSingleInvoiceFile(${idx})" style="background: rgba(239,68,68,0.15); color: #ef4444; border: none; border-radius: 4px; cursor: pointer; padding: 2px 6px; font-weight: bold;">✕</button>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function removeSingleInvoiceFile(index) {
+      selectedInvoiceFiles.splice(index, 1);
+      updateInvoicePreviewUI();
     }
 
     function removeInvoiceFile() {
+      selectedInvoiceFiles = [];
       const fileInput = document.getElementById('form-invoice-file');
       if (fileInput) fileInput.value = '';
-      const urlInput = document.getElementById('form-invoice-url');
-      if (urlInput) urlInput.value = '';
-      const previewContainer = document.getElementById('invoice-preview-container');
-      if (previewContainer) previewContainer.style.display = 'none';
+      updateInvoicePreviewUI();
     }
 
     function openNewDeliveryModal() {
@@ -4917,18 +4943,31 @@ body.light-theme .login-error {
       document.getElementById('det-comment').textContent = del['Коментар'] || 'Немає коментарів';
       document.getElementById('det-status-select').value = del['Статус'] || 'Заплановано';
 
-      // Invoice file details
+      // Invoice file details (support multiple files array)
       const invoiceUrl = del['Накладна_URL'] || del['Накладна'] || del['Invoice_URL'] || '';
       const invoiceContainer = document.getElementById('det-invoice-container');
       const invoiceContent = document.getElementById('det-invoice-content');
       if (invoiceContainer && invoiceContent) {
         if (invoiceUrl) {
           invoiceContainer.style.display = 'block';
-          if (invoiceUrl.startsWith('data:image/') || invoiceUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-            invoiceContent.innerHTML = `<a href="${invoiceUrl}" target="_blank"><img src="${invoiceUrl}" style="max-height: 160px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" title="Клікніть для збільшення"></a>`;
-          } else {
-            invoiceContent.innerHTML = `<a href="${invoiceUrl}" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;">📄 Відкрити прибуткову накладну (1С)</a>`;
+          let filesList = [];
+          try {
+            if (invoiceUrl.startsWith('[')) {
+              filesList = JSON.parse(invoiceUrl);
+            } else {
+              filesList = [invoiceUrl];
+            }
+          } catch(e) {
+            filesList = [invoiceUrl];
           }
+
+          invoiceContent.innerHTML = `<div style="display: flex; flex-wrap: wrap; gap: 10px;">` + filesList.map((url, idx) => {
+            if (url.startsWith('data:image/') || url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+              return `<a href="${url}" target="_blank"><img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" title="Клікніть для збільшення (Файл #${idx+1})"></a>`;
+            } else {
+              return `<a href="${url}" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;">📄 Документ 1С #${idx + 1}</a>`;
+            }
+          }).join('') + `</div>`;
         } else {
           invoiceContainer.style.display = 'none';
         }
