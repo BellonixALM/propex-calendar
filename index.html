@@ -4559,7 +4559,19 @@ body.light-theme .login-error {
       const whStatusForSmart = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
       let smartOnRoute = false;
       const driverAssigned = String(del['ID_Водія'] || del['Водій'] || '').trim();
-      if (statusClass === 'planned' && (whStatusForSmart === 'Зібрано' || driverAssigned)) {
+      
+      // Strict rule: Blue card in-progress highlight ONLY activates when route is sent to driver (Today + Assembled + Driver assigned)
+      const delDateStr = String(del['Дата'] || '').trim();
+      const todayObj = new Date();
+      const dd = String(todayObj.getDate()).padStart(2, '0');
+      const mm = String(todayObj.getMonth() + 1).padStart(2, '0');
+      const yyyy = todayObj.getFullYear();
+      const todayStr = `${dd}.${mm}.${yyyy}`;
+
+      const isAssembled = ['Зібрано', 'Скомплектовано'].includes(whStatusForSmart);
+      const isDriverSet = driverAssigned !== '' && driverAssigned !== 'Не призначено';
+
+      if (statusClass === 'planned' && isAssembled && isDriverSet && delDateStr === todayStr) {
         statusClass = 'in-progress';
         smartOnRoute = true;
       }
