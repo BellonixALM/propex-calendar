@@ -1680,3 +1680,67 @@ function parseOdometerDateString(str) {
   return new Date(str);
 }
 
+function deleteDelivery(deliveryId, userFullName, userRole) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return { status: 'error', message: 'Відсутній зв’язок із таблицею' };
+    
+    var sheet = ss.getSheetByName('Замовлення') || ss.getSheets()[0];
+    if (!sheet) return { status: 'error', message: 'Лист Замовлення не знайдено' };
+    
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) return { status: 'error', message: 'Таблиця порожня' };
+    
+    var headers = data[0];
+    var idColIdx = -1;
+    headers.forEach(function(h, idx) {
+      var headerStr = h.toString().trim().toLowerCase();
+      if (headerStr === 'id' || headerStr === 'id_замовлення' || headerStr === 'номер_замовлення') {
+        idColIdx = idx;
+      }
+    });
+    
+    if (idColIdx === -1) idColIdx = 0;
+    
+    var targetRowIdx = -1;
+    var deletedOrderNum = '';
+    
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idColIdx]).trim() === String(deliveryId).trim()) {
+        targetRowIdx = i + 1; // 1-based index
+        deletedOrderNum = data[i][1] || data[i][0] || deliveryId;
+        break;
+      }
+    }
+    
+    // Log to audit log sheet "Журнал_Видалень"
+    var logSheet = ss.getSheetByName('Журнал_Видалень');
+    if (!logSheet) {
+      logSheet = ss.insertSheet('Журнал_Видалень');
+      logSheet.appendRow(['Дата та час', 'ID_Замовлення', 'Номер_замовлення', 'Відповідальний', 'Роль', 'Деталі']);
+    }
+    
+    var nowStr = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy HH:mm");
+    var operatorName = userFullName || 'Невідомий користувач';
+    var operatorRole = userRole || 'Менеджер/Логіст';
+    
+    logSheet.appendRow([
+      nowStr,
+      deliveryId,
+      deletedOrderNum,
+      operatorName,
+      operatorRole,
+      'Картку замовлення було остаточно вилучено з системи CRM'
+    ]);
+    
+    if (targetRowIdx !== -1) {
+      sheet.deleteRow(targetRowIdx);
+      return { status: 'success', message: 'Замовлення видалено та залоговано', id: deliveryId };
+    } else {
+      return { status: 'success', message: 'Запис вилучено з журналу', id: deliveryId };
+    }
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+

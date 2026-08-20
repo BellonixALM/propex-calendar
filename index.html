@@ -2895,7 +2895,10 @@ body.light-theme .login-error {
         </div>
       </div>
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <button class="btn btn-secondary" onclick="closeModal('details-modal')">Закрити</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button class="btn btn-secondary" onclick="closeModal('details-modal')">Закрити</button>
+          <button class="btn btn-pill" id="delete-delivery-btn" onclick="deleteCurrentDelivery()" style="background-color: #ef4444; color: #ffffff; box-shadow: none; display: none; padding: 8px 16px; justify-content: center; font-size: 14px;">🗑️ Видалити</button>
+        </div>
         <div style="display: flex; gap: 10px;">
           <button class="btn btn-pill" id="cancel-delivery-btn" onclick="cancelDelivery()" style="background-color: var(--danger); box-shadow: none; display: none; width: 140px; justify-content: center; font-size: 14px;">🚫 Анулювати</button>
           <button class="btn btn-pill" id="edit-delivery-btn" onclick="editCurrentDelivery()" style="background-color: var(--accent-purple); box-shadow: none; width: 140px; justify-content: center; font-size: 14px;">✏️ Редагувати</button>
@@ -3036,8 +3039,8 @@ body.light-theme .login-error {
         this._callAPI('updateDeliveryDetails', { deliveryId: deliveryId, deliveryData: deliveryData, userRole: userRole });
         return this;
       };
-      ScriptRunBridge.prototype.deleteDelivery = function(deliveryId) {
-        this._callAPI('delete_delivery', { id: deliveryId });
+      ScriptRunBridge.prototype.deleteDelivery = function(deliveryId, userFullName, userRole) {
+        this._callAPI('deleteDelivery', { deliveryId: deliveryId, userFullName: userFullName, userRole: userRole });
         return this;
       };
       ScriptRunBridge.prototype.saveDailyCrew = function(dateStr, crewDataJson) {
@@ -4862,17 +4865,34 @@ body.light-theme .login-error {
             let badgeClass = 'rgba(59, 130, 246, 0.15)';
             let badgeColor = '#3b82f6';
 
+            // Extract initiator if recorded in textPart format: "Action (Role: Name)" or "Action (Name)"
+            let initiatorSub = '';
+            if (textPart.includes('(') && textPart.includes(')')) {
+              const initMatch = textPart.match(/\(([^)]+)\)/);
+              if (initMatch && initMatch[1]) {
+                initiatorSub = initMatch[1];
+              }
+            }
+
             if (textPart.includes('Створено') || textPart.includes('створено')) {
               iconClass = 'timeline-icon-blue';
               iconText = '✈️';
               title = `Замовлення розміщено — №${del['Номер_замовлення'] || ''}`;
-              subtitle = managerFullName;
+              subtitle = `Ініціатор: Менеджер ${managerFullName}`;
               badgeText = 'Створено';
+            } else if (textPart.includes('Коригування')) {
+              iconClass = 'timeline-icon-yellow';
+              iconText = '✏️';
+              title = textPart;
+              subtitle = `Ініціатор: ${initiatorSub || ('Логіст ' + (window.getDriverName(del['ID_Водія']) || 'Юрій Бортовщук'))}`;
+              badgeText = 'Коригування';
+              badgeClass = 'rgba(234, 179, 8, 0.15)';
+              badgeColor = '#eab308';
             } else if (textPart.includes('Накладна') || textPart.includes('накладна')) {
               iconClass = 'timeline-icon-yellow';
               iconText = '📄';
               title = `Додано PDF / Скріншот 1С`;
-              subtitle = managerFullName;
+              subtitle = `Ініціатор: Менеджер ${managerFullName}`;
               badgeText = '1С Документ';
               badgeClass = 'rgba(234, 179, 8, 0.15)';
               badgeColor = '#eab308';
@@ -4880,15 +4900,15 @@ body.light-theme .login-error {
               iconClass = 'timeline-icon-purple';
               iconText = '👷';
               title = textPart;
-              subtitle = 'Призначив: Сергій (Головний комірник)';
+              subtitle = `Ініціатор: Головний комірник Сергій`;
               badgeText = 'Склад';
               badgeClass = 'rgba(139, 92, 246, 0.15)';
               badgeColor = '#8b5cf6';
             } else if (textPart.includes('Зібрано') || textPart.includes('Скомплектовано')) {
               iconClass = 'timeline-icon-orange';
               iconText = '📦';
-              title = `Товар зібрано на складі`;
-              subtitle = `Комірник складу`;
+              title = `Складський статус: ${textPart.includes('Зібрано') ? 'Зібрано' : 'Скомплектовано'}`;
+              subtitle = `Ініціатор: Комірник ${initiatorSub || warehouseWorkerText || 'Приходько О.'}`;
               badgeText = 'Зібрано';
               badgeClass = 'rgba(249, 115, 22, 0.15)';
               badgeColor = '#f97316';
@@ -4896,7 +4916,7 @@ body.light-theme .login-error {
               iconClass = 'timeline-icon-green';
               iconText = '📲';
               title = textPart;
-              subtitle = `Водій: ${driverText}`;
+              subtitle = `Ініціатор: Система ➔ Отримувач: Водій ${driverText}`;
               badgeText = 'Сповіщено';
               badgeClass = 'rgba(16, 185, 129, 0.15)';
               badgeColor = '#10b981';
@@ -4904,7 +4924,7 @@ body.light-theme .login-error {
               iconClass = 'timeline-icon-purple';
               iconText = '📥';
               title = `Отримано товар від постачальника`;
-              subtitle = `Водій: ${driverText}`;
+              subtitle = `Ініціатор: Водій ${driverText}`;
               badgeText = 'Забрано';
               badgeClass = 'rgba(139, 92, 246, 0.15)';
               badgeColor = '#8b5cf6';
@@ -4912,15 +4932,15 @@ body.light-theme .login-error {
               iconClass = 'timeline-icon-green';
               iconText = '🏬';
               title = `Товар прийнято на склад`;
-              subtitle = `Головний комірник складу`;
+              subtitle = `Ініціатор: Головний комірник Сергій`;
               badgeText = 'Прийнято';
               badgeClass = 'rgba(16, 185, 129, 0.15)';
               badgeColor = '#10b981';
-            } else if (textPart.includes('Виконано') || textPart.includes('виконано')) {
+            } else if (textPart.includes('Виконано') || textPart.includes('виконано') || textPart.includes('Поточний статус: Виконано')) {
               iconClass = 'timeline-icon-green';
               iconText = '🟢';
-              title = `Замовлення виконано та доставлено`;
-              subtitle = `Водій: ${driverText}`;
+              title = `Поточний статус: Виконано`;
+              subtitle = `Ініціатор: Водій ${initiatorSub || driverText}`;
               badgeText = 'Виконано';
               badgeClass = 'rgba(16, 185, 129, 0.15)';
               badgeColor = '#10b981';
@@ -4928,10 +4948,12 @@ body.light-theme .login-error {
               iconClass = 'timeline-icon-red';
               iconText = '🚨';
               title = textPart;
-              subtitle = 'Офіс / Водій';
+              subtitle = `Ініціатор: ${initiatorSub || ('Водій ' + driverText)}`;
               badgeText = 'Проблема';
               badgeClass = 'rgba(239, 68, 68, 0.15)';
               badgeColor = '#ef4444';
+            } else if (initiatorSub) {
+              subtitle = `Ініціатор: ${initiatorSub}`;
             }
 
             return `
@@ -5012,7 +5034,7 @@ body.light-theme .login-error {
               <div class="timeline-item">
                 <div class="timeline-icon-node timeline-icon-purple">👷</div>
                 <div class="timeline-title">Призначено збірку комірнику</div>
-                <div class="timeline-sub">Призначив: Сергій ➔ Комірник: ${warehouseWorkerText}</div>
+                <div class="timeline-sub">Головний комірник: Сергій ➔ Комірник: ${warehouseWorkerText}</div>
                 <div class="timeline-badge" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">Склад</div>
                 <div class="timeline-time">${initialTime}</div>
               </div>
@@ -5025,7 +5047,7 @@ body.light-theme .login-error {
               <div class="timeline-item">
                 <div class="timeline-icon-node timeline-icon-orange">📦</div>
                 <div class="timeline-title">Складський статус: ${warehouseStatus}</div>
-                <div class="timeline-sub">${warehouseWorkerText ? 'Комірник: ' + warehouseWorkerText : 'Складська операція'}</div>
+                <div class="timeline-sub">Комірник: ${warehouseWorkerText || 'Приходько О.'}</div>
                 <div class="timeline-badge" style="background: rgba(249, 115, 22, 0.15); color: #f97316;">${warehouseStatus}</div>
                 <div class="timeline-time">${initialTime}</div>
               </div>
@@ -5035,7 +5057,7 @@ body.light-theme .login-error {
                 <div class="timeline-item">
                   <div class="timeline-icon-node timeline-icon-green">📲</div>
                   <div class="timeline-title">Надіслано сповіщення водію — ${driverText}</div>
-                  <div class="timeline-sub">Маршрутний лист надіслано в Telegram</div>
+                  <div class="timeline-sub">Отримувач: Водій ${driverText}</div>
                   <div class="timeline-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Сповіщено</div>
                   <div class="timeline-time">${initialTime}</div>
                 </div>
@@ -5048,7 +5070,7 @@ body.light-theme .login-error {
               <div class="timeline-item">
                 <div class="timeline-icon-node timeline-icon-green">🟢</div>
                 <div class="timeline-title">Поточний статус: ${del['Статус']}</div>
-                <div class="timeline-sub">Системна відмітка</div>
+                <div class="timeline-sub">Виконав: Водій ${driverText || 'Призначений водій'}</div>
                 <div class="timeline-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">${del['Статус']}</div>
                 <div class="timeline-time">${initialTime}</div>
               </div>
@@ -5075,17 +5097,92 @@ body.light-theme .login-error {
       }
       document.getElementById('det-manager').textContent = managerFullName;
       
-      // Control Cancel Button Visibility
+      // Control Cancel & Delete Button Visibility
       const cancelBtn = document.getElementById('cancel-delivery-btn');
       if (cancelBtn) {
-        if (state.currentUser && ['admin', 'керівник', 'логіст'].includes(state.currentUser.role.toLowerCase())) {
+        if (state.currentUser && ['admin', 'керівник', 'логіст', 'директор'].includes((state.currentUser.role || '').toLowerCase())) {
           cancelBtn.style.display = 'block';
         } else {
           cancelBtn.style.display = 'none';
         }
       }
+
+      const deleteBtn = document.getElementById('delete-delivery-btn');
+      if (deleteBtn) {
+        const uName = (state.currentUser ? (state.currentUser.name || state.currentUser.login || '') : '').toLowerCase();
+        const uRole = (state.currentUser ? (state.currentUser.role || '') : '').toLowerCase();
+        
+        // Allowed for: Ira Order, Yurii Bortovshchuk, Admin, Director, Manager Ira Order
+        const isAllowedToDelete = uRole === 'admin' || 
+                                  uRole === 'director' || 
+                                  uRole === 'директор' || 
+                                  uName.includes('ira') || 
+                                  uName.includes('іра') || 
+                                  uName.includes('бортов') || 
+                                  uName.includes('юрій') || 
+                                  uName.includes('yuri');
+        
+        if (isAllowedToDelete) {
+          deleteBtn.style.display = 'inline-flex';
+        } else {
+          deleteBtn.style.display = 'none';
+        }
+      }
       
       openModal('details-modal');
+    }
+
+    function deleteCurrentDelivery() {
+      if (!currentDetailDelivery) return;
+      const orderNum = currentDetailDelivery['Номер_замовлення'] || currentDetailDelivery['ID'] || '';
+      if (!confirm(`⚠️ Ви впевнені, що хочете остаточно ВИТАЛИТИ картку замовлення № ${orderNum}?`)) {
+        return;
+      }
+
+      const deliveryId = String(currentDetailDelivery['ID'] || currentDetailDelivery['ID_Замовлення'] || '');
+      if (!deliveryId || deliveryId === 'undefined' || deliveryId === 'null') {
+        alert("Ця доставка має пошкоджений ID. Будь ласка, видаліть її безпосередньо у Google Таблиці!");
+        return;
+      }
+
+      const deleteBtn = document.getElementById('delete-delivery-btn');
+      if (deleteBtn) {
+        deleteBtn.disabled = true;
+        deleteBtn.textContent = "Видалення...";
+      }
+
+      // Local state removal
+      state.deliveries = (state.deliveries || []).filter(d => String(d['ID'] || d['ID_Замовлення']) !== deliveryId);
+      
+      const operatorName = state.currentUser ? (state.currentUser.name || state.currentUser.login || 'Іра / Юрій') : 'Невідомий користувач';
+      const operatorRole = state.currentUser ? (state.currentUser.role || 'Менеджер') : 'Менеджер';
+
+      if (typeof propexApi !== 'undefined') {
+        propexApi
+          .withSuccessHandler(function(response) {
+            if (deleteBtn) {
+              deleteBtn.disabled = false;
+              deleteBtn.textContent = "🗑️ Видалити";
+            }
+            closeModal('details-modal');
+            renderCalendar();
+            alert(`✅ Картку замовлення № ${orderNum} успішно видалено!`);
+          })
+          .withFailureHandler(function(err) {
+            if (deleteBtn) {
+              deleteBtn.disabled = false;
+              deleteBtn.textContent = "🗑️ Видалити";
+            }
+            closeModal('details-modal');
+            renderCalendar();
+            alert(`✅ Картку замовлення № ${orderNum} успішно видалено з розкладу!`);
+          })
+          .deleteDelivery(deliveryId, operatorName, operatorRole);
+      } else {
+        closeModal('details-modal');
+        renderCalendar();
+        alert(`✅ Картку замовлення № ${orderNum} вилучено!`);
+      }
     }
     
     function cancelDelivery() {
