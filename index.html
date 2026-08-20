@@ -3297,6 +3297,18 @@ body.light-theme .login-error {
 
     let isRequestInProgress = false;
     let dataLoadedSuccessfully = false;
+    function getDeletedDeliveryIds() {
+      try {
+        return JSON.parse(localStorage.getItem('propex_deleted_delivery_ids') || '[]');
+      } catch(e) { return []; }
+    }
+
+    function getLocalInvoiceOverrides() {
+      try {
+        return JSON.parse(localStorage.getItem('propex_invoice_overrides') || '{}');
+      } catch(e) { return {}; }
+    }
+
     function saveDeliveriesToLocalStorage() {
       try {
         localStorage.setItem('propex_deliveries_db', JSON.stringify(state.deliveries || []));
@@ -3309,12 +3321,16 @@ body.light-theme .login-error {
       const label = document.getElementById('date-label');
       label.textContent = "⏱️ Завантаження доставок...";
 
+      const deletedIds = getDeletedDeliveryIds();
+      const invoiceOverrides = getLocalInvoiceOverrides();
+
       // Instant local storage load for immediate rendering
       try {
         const cached = localStorage.getItem('propex_deliveries_db');
         if (cached) {
-          const parsed = JSON.parse(cached);
+          let parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
+            parsed = parsed.filter(d => !deletedIds.includes(String(d['ID'] || d['ID_Замовлення'])));
             state.deliveries = parsed;
             renderCalendar();
           }
@@ -3334,8 +3350,30 @@ body.light-theme .login-error {
         .withSuccessHandler(function(response) {
           dataLoadedSuccessfully = true;
           isRequestInProgress = false;
-          const freshDeliveries = (response && response.status === 'success') ? response.data : (response || []);
-          if (Array.isArray(freshDeliveries) && freshDeliveries.length > 0) {
+          let freshDeliveries = (response && response.status === 'success') ? response.data : (response || []);
+          if (Array.isArray(freshDeliveries)) {
+            // Exclude locally deleted deliveries
+            const currentDeletedIds = getDeletedDeliveryIds();
+            freshDeliveries = freshDeliveries.filter(d => !currentDeletedIds.includes(String(d['ID'] || d['ID_Замовлення'])));
+            
+            // Merge any local invoice attachments
+            const currentInvoiceOverrides = getLocalInvoiceOverrides();
+            freshDeliveries.forEach(d => {
+              const dId = String(d['ID'] || d['ID_Замовлення']);
+              if (currentInvoiceOverrides[dId]) {
+                d['Накладна_URL'] = currentInvoiceOverrides[dId];
+                d['Накладна'] = currentInvoiceOverrides[dId];
+              }
+            });
+
+            // Keep locally created deliveries that haven't synced yet
+            state.deliveries.forEach(localDel => {
+              const localId = String(localDel['ID'] || '');
+              if (localId.startsWith('del_') && !freshDeliveries.some(f => String(f['ID']) === localId)) {
+                freshDeliveries.push(localDel);
+              }
+            });
+
             state.deliveries = freshDeliveries;
             saveDeliveriesToLocalStorage();
           }
@@ -5208,6 +5246,13 @@ body.light-theme .login-error {
 
       // Local state removal
       state.deliveries = (state.deliveries || []).filter(d => String(d['ID'] || d['ID_Замовлення']) !== deliveryId);
+      try {
+        const delList = JSON.parse(localStorage.getItem('propex_deleted_delivery_ids') || '[]');
+        if (!delList.includes(deliveryId)) {
+          delList.push(deliveryId);
+          localStorage.setItem('propex_deleted_delivery_ids', JSON.stringify(delList));
+        }
+      } catch(e) {}
       saveDeliveriesToLocalStorage();
       
       const operatorName = state.currentUser ? (state.currentUser.name || state.currentUser.login || 'Іра / Юрій') : 'Невідомий користувач';
@@ -5398,6 +5443,13 @@ body.light-theme .login-error {
           targetDel['Адреса'] = address;
           targetDel['Коментар'] = comment;
         }
+        if (invoice_url) {
+          try {
+            const overrides = JSON.parse(localStorage.getItem('propex_invoice_overrides') || '{}');
+            overrides[String(editDeliveryId)] = invoice_url;
+            localStorage.setItem('propex_invoice_overrides', JSON.stringify(overrides));
+          } catch(e) {}
+        }
         saveDeliveriesToLocalStorage();
         propexApi.withSuccessHandler(function(response) {
           document.getElementById('save-btn').disabled = false;
@@ -5432,6 +5484,13 @@ body.light-theme .login-error {
           'Накладна_URL': invoice_url,
           'Накладна': invoice_url
         };
+        if (invoice_url) {
+          try {
+            const overrides = JSON.parse(localStorage.getItem('propex_invoice_overrides') || '{}');
+            overrides[tempId] = invoice_url;
+            localStorage.setItem('propex_invoice_overrides', JSON.stringify(overrides));
+          } catch(e) {}
+        }
         state.deliveries.push(newDelObj);
         saveDeliveriesToLocalStorage();
         closeModal('delivery-modal');
@@ -5443,11 +5502,20 @@ body.light-theme .login-error {
           if (response && response.id) {
             newDelObj['ID'] = String(response.id);
             newDelObj['ID_Замовлення'] = String(response.id);
+            if (invoice_url) {
+              try {
+                const overrides = JSON.parse(localStorage.getItem('propex_invoice_overrides') || '{}');
+                overrides[String(response.id)] = invoice_url;
+                localStorage.setItem('propex_invoice_overrides', JSON.stringify(overrides));
+              } catch(e) {}
+            }
           }
+          saveDeliveriesToLocalStorage();
           renderCalendar();
         }).withFailureHandler(function(err) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
+          saveDeliveriesToLocalStorage();
           renderCalendar();
         }).addDelivery(deliveryData);
       }
