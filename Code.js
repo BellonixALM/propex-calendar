@@ -93,6 +93,8 @@ function doGet(e) {
         result = saveEmployee(payload);
       } else if (action === 'deleteEmployee') {
         result = deleteEmployee(payload.id);
+      } else if (action === 'deleteDelivery' || action === 'delete_delivery') {
+        result = deleteDelivery(payload.deliveryId || payload.id, payload.userFullName, payload.userRole);
       } else {
         result = { status: 'error', message: 'Unknown action: ' + action };
       }
@@ -457,6 +459,16 @@ function addDelivery(deliveryData) {
     sheet.getRange(1, headers.length + 1).setValue('Статус_збору');
     headers.push('Статус_збору');
     newRow.push('Очікує');
+  }
+
+  var hasInvoiceCol = headers.indexOf('Накладна_URL') !== -1 || headers.indexOf('Накладна') !== -1;
+  if (!hasInvoiceCol) {
+    sheet.getRange(1, headers.length + 1).setValue('Накладна_URL');
+    headers.push('Накладна_URL');
+    newRow.push(deliveryData.invoice_url || '');
+  } else {
+    setVal('Накладна_URL', deliveryData.invoice_url || '');
+    setVal('Накладна', deliveryData.invoice_url || '');
   }
 
   sheet.appendRow(newRow);
