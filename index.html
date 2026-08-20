@@ -3297,16 +3297,36 @@ body.light-theme .login-error {
 
     let isRequestInProgress = false;
     let dataLoadedSuccessfully = false;
+    function saveDeliveriesToLocalStorage() {
+      try {
+        localStorage.setItem('propex_deliveries_db', JSON.stringify(state.deliveries || []));
+      } catch(e) {
+        console.error("Error saving deliveries to localStorage:", e);
+      }
+    }
+
     function loadDeliveriesSafely() {
       const label = document.getElementById('date-label');
       label.textContent = "⏱️ Завантаження доставок...";
+
+      // Instant local storage load for immediate rendering
+      try {
+        const cached = localStorage.getItem('propex_deliveries_db');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            state.deliveries = parsed;
+            renderCalendar();
+          }
+        }
+      } catch(e) {}
+
       propexApi
         .withFailureHandler(function(err) {
           dataLoadedSuccessfully = true;
           isRequestInProgress = false;
           console.error("Failed to load deliveries from Sheets:", err);
-          label.textContent = "❌ Помилка доставок: " + (err.message || err).substring(0, 50);
-          state.deliveries = [];
+          label.textContent = "⚙️ Оновлення сітки (локально)...";
           buildKnowledgeBase();
           updateAnalyticsDateLabel();
           renderCalendar();
@@ -3314,7 +3334,11 @@ body.light-theme .login-error {
         .withSuccessHandler(function(response) {
           dataLoadedSuccessfully = true;
           isRequestInProgress = false;
-          state.deliveries = (response && response.status === 'success') ? response.data : (response || []);
+          const freshDeliveries = (response && response.status === 'success') ? response.data : (response || []);
+          if (Array.isArray(freshDeliveries) && freshDeliveries.length > 0) {
+            state.deliveries = freshDeliveries;
+            saveDeliveriesToLocalStorage();
+          }
           state.deliveries.forEach(d => {
             if (!d['ID_Водія'] && d['Водій']) {
               d['ID_Водія'] = d['Водій'];
@@ -3325,7 +3349,7 @@ body.light-theme .login-error {
           buildKnowledgeBase();
           updateAnalyticsDateLabel();
           renderCalendar();
-          if (document.getElementById('dashboard-view').classList.contains('active')) renderDashboard();
+          if (document.getElementById('dashboard-view') && document.getElementById('dashboard-view').classList.contains('active')) renderDashboard();
           if (document.getElementById('analytics-cargo-view') && document.getElementById('analytics-cargo-view').classList.contains('active')) renderAnalytics('cargo');
           if (document.getElementById('analytics-passenger-view') && document.getElementById('analytics-passenger-view').classList.contains('active')) renderAnalytics('passenger');
           updateDateLabel();
@@ -5184,6 +5208,7 @@ body.light-theme .login-error {
 
       // Local state removal
       state.deliveries = (state.deliveries || []).filter(d => String(d['ID'] || d['ID_Замовлення']) !== deliveryId);
+      saveDeliveriesToLocalStorage();
       
       const operatorName = state.currentUser ? (state.currentUser.name || state.currentUser.login || 'Іра / Юрій') : 'Невідомий користувач';
       const operatorRole = state.currentUser ? (state.currentUser.role || 'Менеджер') : 'Менеджер';
@@ -5195,6 +5220,7 @@ body.light-theme .login-error {
               deleteBtn.disabled = false;
               deleteBtn.textContent = "🗑️ Видалити";
             }
+            saveDeliveriesToLocalStorage();
             closeModal('details-modal');
             renderCalendar();
             alert(`✅ Картку замовлення № ${orderNum} успішно видалено!`);
@@ -5372,14 +5398,17 @@ body.light-theme .login-error {
           targetDel['Адреса'] = address;
           targetDel['Коментар'] = comment;
         }
+        saveDeliveriesToLocalStorage();
         propexApi.withSuccessHandler(function(response) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
+          saveDeliveriesToLocalStorage();
           closeModal('delivery-modal');
           renderCalendar();
         }).withFailureHandler(function(err) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
+          saveDeliveriesToLocalStorage();
           closeModal('delivery-modal');
           renderCalendar();
         }).updateDeliveryDetails(editDeliveryId, deliveryData, userRole);
@@ -5404,6 +5433,7 @@ body.light-theme .login-error {
           'Накладна': invoice_url
         };
         state.deliveries.push(newDelObj);
+        saveDeliveriesToLocalStorage();
         closeModal('delivery-modal');
         renderCalendar();
 
