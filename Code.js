@@ -895,7 +895,9 @@ function authenticateUser(login, password) {
   for (var i = 1; i < data.length; i++) {
     var rowLogin = String(data[i][loginCol]).trim();
     var rowPass = String(data[i][passCol]).trim();
-    if (rowLogin === login && rowPass === password) {
+    
+    // Case-insensitive login match and clean comparison
+    if (rowLogin.toLowerCase() === String(login).trim().toLowerCase() && rowPass === String(password).trim()) {
       return {
         status: 'success',
         user: {
