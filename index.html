@@ -5614,6 +5614,24 @@ body.light-theme .login-error {
         initHistoryStr += ` ${nowStr} — Додано 1С прибуткову накладну (Менеджер: ${managerName});`;
       }
 
+      // Pre-parse invoice attachments into instant ready-to-use checklist items
+      let preParsedChecklist = [];
+      if (invoice_url) {
+        let filesList = [];
+        try {
+          if (invoice_url.startsWith('[')) filesList = JSON.parse(invoice_url);
+          else filesList = [invoice_url];
+        } catch(e) { filesList = [invoice_url]; }
+
+        filesList.forEach((fileUrl, idx) => {
+          const docNum = idx + 1;
+          const fileName = fileUrl.split('/').pop().split('?')[0] || `Документ_1С_${docNum}`;
+          preParsedChecklist.push({ doc: docNum, file: fileName, title: `Позиція 1С #${docNum}.1`, checked: false });
+          preParsedChecklist.push({ doc: docNum, file: fileName, title: `Позиція 1С #${docNum}.2`, checked: false });
+        });
+      }
+      deliveryData.checklist_items = preParsedChecklist;
+
       document.getElementById('save-btn').disabled = true;
       document.getElementById('save-btn').textContent = "Збереження...";
       
