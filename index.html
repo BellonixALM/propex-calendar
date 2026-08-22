@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <script src="https://unpkg.com/lucide@latest" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.min.js"></script>
 <script>
 
     function toggleTheme() {
@@ -5623,7 +5624,7 @@ body.light-theme .login-error {
         initHistoryStr += ` ${nowStr} — Додано 1С прибуткову накладну (Менеджер: ${managerName});`;
       }
 
-      // Pre-parse invoice attachments into instant ready-to-use checklist items
+      // Pre-parse invoice attachments into instant ready-to-use checklist items via client-side OCR
       let preParsedChecklist = [];
       if (invoice_url) {
         let filesList = [];
@@ -5634,9 +5635,34 @@ body.light-theme .login-error {
 
         filesList.forEach((fileUrl, idx) => {
           const docNum = idx + 1;
-          const fileName = fileUrl.split('/').pop().split('?')[0] || `Документ_1С_${docNum}`;
-          preParsedChecklist.push({ doc: docNum, file: fileName, title: `Позиція 1С #${docNum}.1`, checked: false });
-          preParsedChecklist.push({ doc: docNum, file: fileName, title: `Позиція 1С #${docNum}.2`, checked: false });
+          let fileName = `Документ_1С_${docNum}`;
+          if (fileUrl.startsWith('data:image/png')) fileName = `Накладна_1С_фото_${docNum}.png`;
+          else if (fileUrl.startsWith('data:image/jpeg')) fileName = `Накладна_1С_скан_${docNum}.jpg`;
+          else if (fileUrl.startsWith('data:application/pdf')) fileName = `Накладна_1С_документ_${docNum}.pdf`;
+          else fileName = fileUrl.split('/').pop().split('?')[0] || `Документ_1С_${docNum}`;
+
+          // Perform live browser OCR text recognition if Tesseract is available and file is image/base64
+          if (typeof Tesseract !== 'undefined' && fileUrl.startsWith('data:image/')) {
+            try {
+              Tesseract.recognize(fileUrl, 'ukr+rus+eng').then(result => {
+                if (result && result.data && result.data.text) {
+                  const lines = result.data.text.split('\n').map(l => l.trim()).filter(l => l.length > 3 && !l.includes('Накладна') && !l.includes('Всього'));
+                  if (lines.length > 0) {
+                    const extractedItems = lines.slice(0, 8).map((lineText, lIdx) => ({
+                      doc: docNum,
+                      file: fileName,
+                      title: `${docNum}.${lIdx+1}. ${lineText}`,
+                      checked: false
+                    }));
+                    if (targetDel) targetDel['checklist_items'] = extractedItems;
+                  }
+                }
+              }).catch(err => console.warn('Tesseract OCR background parse error:', err));
+            } catch(e) {}
+          }
+
+          preParsedChecklist.push({ doc: docNum, file: fileName, title: `Товарна позиція 1С #${docNum}.1 (${fileName})`, checked: false });
+          preParsedChecklist.push({ doc: docNum, file: fileName, title: `Товарна позиція 1С #${docNum}.2 (${fileName})`, checked: false });
         });
       }
       deliveryData.checklist_items = preParsedChecklist;
