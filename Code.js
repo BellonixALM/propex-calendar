@@ -120,8 +120,7 @@ function doPost(e) {
     var action = data.action;
     
     if (action === 'add_delivery' || action === 'addDelivery') {
-      var payload = data.data || data;
-      return ContentService.createTextOutput(JSON.stringify(addDelivery(payload)))
+      return ContentService.createTextOutput(JSON.stringify(addDelivery(data.data)))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'register_driver') {
       return ContentService.createTextOutput(JSON.stringify(register_driver(data.data)))
@@ -1018,26 +1017,15 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
           changed = true;
         }
         
-      // Preserve and update History log upon moving or editing
-      var historyCol = headers.indexOf('Історія_Операцій');
-      if (historyCol === -1) historyCol = headers.indexOf('Історія');
-      if (historyCol !== -1) {
-        var existingHistory = data[i][historyCol] || '';
-        var formattedNow = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy HH:mm");
-        var userRoleLabel = (userRole === 'logist' || userRole === 'логіст') ? 'Логіст: Юрій Бортовщук' : (userRole || 'Менеджер');
-        
-        var changeDesc = "Коригування замовлення (" + userRoleLabel + ")";
-        if (oldTime !== deliveryData.time || oldDate !== deliveryData.date) {
-          changeDesc = "Перенесено час/дату (" + userRoleLabel + ")";
+        if (changed) {
+          var notificationText = "🔄 <b>Коригування доставки логістом!</b>\n\n" +
+                                 "📦 <b>Замовлення №:</b> " + (deliveryData.order_num || oldOrderNum) + "\n\n" +
+                                 "Логіст оновив параметри вашої доставки:\n" + diffText + "\n" +
+                                 "ℹ️ Будь ласка, врахуйте ці зміни у вашій роботі.";
+          sendTelegramMessage(managerId, notificationText);
         }
-        
-        var updatedHistory = existingHistory 
-          ? (existingHistory + " " + formattedNow + " — " + changeDesc + ";")
-          : (formattedNow + " — " + changeDesc + ";");
-          
-        sheet.getRange(rowNum, historyCol + 1).setValue(updatedHistory);
       }
-
+      
       return { status: 'success', id: deliveryId };
     }
   }
@@ -1780,17 +1768,13 @@ function deleteDelivery(deliveryId, userFullName, userRole) {
       sheet.deleteRow(targetRowIdx);
       return { status: 'success', message: 'Замовлення видалено та залоговано', id: deliveryId };
     } else {
-      return { status: 'success', message: 'Замовлення ' + deletedOrderNum + ' успішно видалено', deliveryId: deliveryId };
+      return { status: 'success', message: 'Запис вилучено з журналу', id: deliveryId };
     }
   } catch (err) {
     return { status: 'error', message: err.toString() };
   }
 }
 
-/**
- * УНІВЕРСАЛЬНИЙ ЛОГЕР ПОДІЙ (Universal Event Logger)
- * Безпечно дописує нову подію в Історія_Операцій без втрати попередніх даних.
- */
 function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
   try {
     var ss = getSpreadsheet();
@@ -1810,7 +1794,6 @@ function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
 
     if (idCol === -1) return false;
 
-    // Створити колонки якщо відсутні
     if (historyCol === -1) {
       sheet.getRange(1, headers.length + 1).setValue('Історія_Операцій');
       historyCol = headers.length;
@@ -1834,7 +1817,6 @@ function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
         var nowFormatted = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy HH:mm");
         var existingHistory = data[i][historyCol] || '';
 
-        // Фіксувати Дата_Створення якщо вона порожня
         var existingCreated = data[i][createdCol];
         if (!existingCreated) {
           sheet.getRange(rowNum, createdCol + 1).setValue(nowFormatted);
@@ -1856,3 +1838,4 @@ function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
   }
   return false;
 }
+
