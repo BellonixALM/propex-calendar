@@ -5190,37 +5190,25 @@ body.light-theme .login-error {
 
           historyContent.innerHTML = timelineItems.join('');
         } else {
-          // If rawHistory cell in Sheets is empty, use recorded creation time or delivery planned date/time
+          // STRICT RULE: If rawHistory is empty in Google Sheets, ONLY display recorded creation date if present, or an explicit placeholder
           const createdTimeStr = del['Дата_Створення'] || del['Дата_створення'] || del['Created_At'] || '';
-          let initialTime = createdTimeStr;
-          if (!initialTime) {
-            const delDate = del['Дата'] || '';
-            const delTime = del['Час'] || '09:00';
-            initialTime = delDate ? `${delDate} ${delTime}` : '22.08.2026 09:00';
-          }
-          let defaultItemsHtml = `
-            <div class="timeline-item">
-              <div class="timeline-icon-node timeline-icon-blue">✈️</div>
-              <div class="timeline-title">Замовлення створено — №${del['Номер_замовлення'] || ''}</div>
-              <div class="timeline-sub" style="font-weight: 600; color: var(--text-color);">👤 Менеджер: ${managerFullName}</div>
-              <div class="timeline-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">Створено</div>
-              <div class="timeline-time" style="font-weight: 700; color: var(--accent-blue);">🕒 ${initialTime}</div>
-            </div>
-          `;
-          
-          if (invoiceUrl) {
-            defaultItemsHtml += `
+          if (createdTimeStr) {
+            historyContent.innerHTML = `
               <div class="timeline-item">
-                <div class="timeline-icon-node timeline-icon-yellow">📄</div>
-                <div class="timeline-title">Додано 1С прибуткову накладну</div>
+                <div class="timeline-icon-node timeline-icon-blue">✈️</div>
+                <div class="timeline-title">Замовлення створено — №${del['Номер_замовлення'] || ''}</div>
                 <div class="timeline-sub" style="font-weight: 600; color: var(--text-color);">👤 Менеджер: ${managerFullName}</div>
-                <div class="timeline-badge" style="background: rgba(234, 179, 8, 0.15); color: #eab308;">1С Документ</div>
-                <div class="timeline-time" style="font-weight: 700; color: var(--accent-blue);">🕒 ${initialTime}</div>
+                <div class="timeline-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">Створено</div>
+                <div class="timeline-time" style="font-weight: 700; color: var(--accent-blue);">🕒 ${createdTimeStr}</div>
+              </div>
+            `;
+          } else {
+            historyContent.innerHTML = `
+              <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">
+                ℹ️ Для цього замовлення ще не зафіксовано фактичних операцій в історії.
               </div>
             `;
           }
-
-          historyContent.innerHTML = defaultItemsHtml;
         }
       }
 
