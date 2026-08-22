@@ -5389,15 +5389,41 @@ body.light-theme .login-error {
         comment = prompt("Ви можете додати додатковий коментар / причину зміни (необов'язково):", "");
         if (comment === null) comment = '';
       }
-      document.getElementById('update-status-btn').disabled = true;
-      document.getElementById('update-status-btn').textContent = "Оновлення...";
-      
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const nowStr = `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+
+        const user = state.currentUser;
+        const userName = user ? (user.name || user.login) : 'Ira Order';
+        const userRole = user ? user.role : 'менеджер';
+        const userRoleLabel = (userRole === 'logist' || userRole === 'логіст') ? 'Логіст: Юрій Бортовщук' : `Менеджер: ${userName}`;
+
+        const statusEventTitle = `Змінено статус на ${newStatus}`;
+
+        if (currentDetailDelivery) {
+          currentDetailDelivery['Статус'] = newStatus;
+          if (!currentDetailDelivery['Історія_Операцій']) {
+            currentDetailDelivery['Історія_Операцій'] = `${nowStr} — Замовлення створено; ${nowStr} — ${statusEventTitle} (${userRoleLabel});`;
+          } else {
+            currentDetailDelivery['Історія_Операцій'] += ` ${nowStr} — ${statusEventTitle} (${userRoleLabel});`;
+          }
+        }
+
+        if (typeof propexApi !== 'undefined' && propexApi.logEvent) {
+          propexApi.logEvent(deliveryId, statusEventTitle, userRoleLabel);
+        }
+
         propexApi
           .withSuccessHandler(function(response) {
             document.getElementById('update-status-btn').disabled = false;
             document.getElementById('update-status-btn').textContent = "Оновити";
             closeModal('details-modal');
-            loadData();
+            saveDeliveriesToLocalStorage();
+            renderCalendar();
             alert("Статус доставки успішно оновлено!");
           })
           .withFailureHandler(function(err) {
