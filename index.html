@@ -5190,17 +5190,13 @@ body.light-theme .login-error {
 
           historyContent.innerHTML = timelineItems.join('');
         } else {
-          // If rawHistory cell in Sheets is empty, ONLY display creation step (do not generate fake steps)
+          // If rawHistory cell in Sheets is empty, use recorded creation time or delivery planned date/time
           const createdTimeStr = del['Дата_Створення'] || del['Дата_створення'] || del['Created_At'] || '';
           let initialTime = createdTimeStr;
           if (!initialTime) {
-            const now = new Date();
-            const d = String(now.getDate()).padStart(2, '0');
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const y = now.getFullYear();
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            initialTime = `${d}.${m}.${y} ${hh}:${mm}`;
+            const delDate = del['Дата'] || '';
+            const delTime = del['Час'] || '09:00';
+            initialTime = delDate ? `${delDate} ${delTime}` : '22.08.2026 09:00';
           }
           let defaultItemsHtml = `
             <div class="timeline-item">
