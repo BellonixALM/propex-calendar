@@ -2655,6 +2655,7 @@ body.light-theme .login-error {
               <label for="form-emp-role">Роль *</label>
               <select id="form-emp-role" class="form-control" required>
                 <option value="manager">Менеджер</option>
+                <option value="постачання">Постачання</option>
                 <option value="driver">Водій</option>
                 <option value="logist">Логіст</option>
                 <option value="admin">Адміністратор</option>
@@ -3115,7 +3116,8 @@ body.light-theme .login-error {
       deliveries: [],
       drivers: [],
       dailyCrews: [],
-      filters: { cars: [], statuses: [], payments: [] }
+      filters: { cars: [], statuses: [], payments: [] },
+      collapsedCars: ['4'] // '4' = Renault Dokker згорнутий за замовчуванням
     };
     let isEditMode = false;
     let editDeliveryId = null;
@@ -4136,13 +4138,16 @@ body.light-theme .login-error {
       const grid = document.getElementById('day-grid-container');
       grid.innerHTML = '';
 
-      let visibleCars = [1, 3, 4, 5];
+      let visibleCars = [1, 3, 5, 4];
       if (state.filters && state.filters.cars && state.filters.cars.length > 0) {
-        visibleCars = [1, 3, 4, 5].filter(c => state.filters.cars.includes(String(c)));
+        visibleCars = [1, 3, 5, 4].filter(c => state.filters.cars.includes(String(c)));
       }
 
-      // +3 для колонок Не призначено, Самовивіз та Самовивіз Нова Пошта
-      grid.style.gridTemplateColumns = `80px repeat(${visibleCars.length + 3}, minmax(0, 1fr))`;
+      // Розрахунок ширини колонок з урахуванням згорнутих (collapsed) колонок
+      const colTracks = visibleCars.map(carId => {
+        return (state.collapsedCars && state.collapsedCars.includes(String(carId))) ? '44px' : 'minmax(0, 1fr)';
+      });
+      grid.style.gridTemplateColumns = `80px ${colTracks.join(' ')} repeat(3, minmax(0, 1fr))`;
 
       // Заголовок "Час"
       const timeHeader = document.createElement('div');
@@ -4158,78 +4163,112 @@ body.light-theme .login-error {
           : null;
         const name = (driver && driver["Ім'я"]) ? driver["Ім'я"] : 'Немає водія';
         const initial = name ? name.charAt(0) : '?';
+        const isCollapsed = state.collapsedCars && state.collapsedCars.includes(String(carId));
+
         const carHeader = document.createElement('div');
-        carHeader.className = 'grid-header';
+        carHeader.className = 'grid-header' + (isCollapsed ? ' column-collapsed' : '');
         carHeader.setAttribute('data-car', carId);
-        carHeader.innerHTML = `
-          <div class="driver-photo-container">
-            ${driver && driver['Фото'] ? `<img src="${driver['Фото']}" style="width:100%;height:100%;object-fit:cover;">` : initial}
-          </div>
-          <div style="font-weight: 700;">${window.getCarName(carId)}</div>
-          <div class="driver-name">${name}</div>
-        `;
-        if (state.currentUser && state.currentUser.role === 'admin') {
-          const photoContainer = carHeader.querySelector('.driver-photo-container');
-          photoContainer.classList.add('admin-editable');
-          photoContainer.title = "Натисніть для зміни фото водія";
-          const overlay = document.createElement('div');
-          overlay.className = 'avatar-edit-overlay';
-          overlay.innerHTML = '<i data-lucide="camera" style="width:14px;height:14px;color:var(--text-color);"></i>';
-          photoContainer.appendChild(overlay);
-          photoContainer.addEventListener('click', () => {
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.onchange = (event) => {
-              const file = event.target.files[0];
-              if (!file) return;
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                const img = new Image();
-                img.onload = function() {
-                  const canvas = document.createElement('canvas');
-                  const MAX_WIDTH = 200;
-                  const MAX_HEIGHT = 200;
-                  let width = img.width;
-                  let height = img.height;
-                  
-                  if (width > height) {
-                    if (width > MAX_WIDTH) {
-                      height *= MAX_WIDTH / width;
-                      width = MAX_WIDTH;
-                    }
-                  } else {
-                    if (height > MAX_HEIGHT) {
-                      width *= MAX_HEIGHT / height;
-                      height = MAX_HEIGHT;
-                    }
-                  }
-                  
-                  canvas.width = width;
-                  canvas.height = height;
-                  
-                  const ctx = canvas.getContext('2d');
-                  ctx.drawImage(img, 0, 0, width, height);
-                  
-                  const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
-                  
-                  const driverObj = (state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => d['ID_Авто'] == carId) : null;
-                  if (driverObj) {
-                    driverObj['Фото'] = compressedBase64;
-                  } else {
-                    if (!state.drivers) state.drivers = [];
-                    state.drivers.push({ 'ID_Авто': carId, "Ім'я": name, 'Фото': compressedBase64 });
-                  }
-                  renderCalendar();
-                  propexApi.updateDriverPhoto(carId, compressedBase64);
-                };
-                img.src = e.target.result;
-              };
-              reader.readAsDataURL(file);
-            };
-            fileInput.click();
+        carHeader.title = isCollapsed ? "Натисніть або двічі клацніть, щоб розгорнути стовпчик" : "Клацніть на ↔ щоб згорнути стовпчик";
+
+        if (isCollapsed) {
+          carHeader.style.padding = '8px 2px';
+          carHeader.style.cursor = 'pointer';
+          carHeader.innerHTML = `
+            <div style="font-size:11px;font-weight:800;writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin:4px 0;letter-spacing:1px;color:var(--text-muted);">
+              ${window.getCarName(carId)}
+            </div>
+            <div style="font-size:10px;margin-top:auto;color:var(--accent-blue);font-weight:bold;" title="Розгорнути стовпчик">▶</div>
+          `;
+          carHeader.addEventListener('click', () => {
+            state.collapsedCars = state.collapsedCars.filter(id => id !== String(carId));
+            renderDayView();
           });
+        } else {
+          carHeader.innerHTML = `
+            <div style="position:absolute;top:4px;right:4px;cursor:pointer;opacity:0.6;font-size:11px;padding:2px 4px;border-radius:4px;background:rgba(255,255,255,0.08);" class="collapse-btn" title="Згорнути стовпчик">◀▶</div>
+            <div class="driver-photo-container">
+              ${driver && driver['Фото'] ? `<img src="${driver['Фото']}" style="width:100%;height:100%;object-fit:cover;">` : initial}
+            </div>
+            <div style="font-weight: 700;">${window.getCarName(carId)}</div>
+            ${driver && driver["Ім'я"] ? `<div class="driver-name">${driver["Ім'я"]}</div>` : ''}
+          `;
+          const collapseBtn = carHeader.querySelector('.collapse-btn');
+          if (collapseBtn) {
+            collapseBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (!state.collapsedCars) state.collapsedCars = [];
+              if (!state.collapsedCars.includes(String(carId))) {
+                state.collapsedCars.push(String(carId));
+              }
+              renderDayView();
+            });
+          }
         }
+          if (state.currentUser && state.currentUser.role === 'admin') {
+            const photoContainer = carHeader.querySelector('.driver-photo-container');
+            if (photoContainer) {
+              photoContainer.classList.add('admin-editable');
+              photoContainer.title = "Натисніть для зміни фото водія";
+              const overlay = document.createElement('div');
+              overlay.className = 'avatar-edit-overlay';
+              overlay.innerHTML = '<i data-lucide="camera" style="width:14px;height:14px;color:var(--text-color);"></i>';
+              photoContainer.appendChild(overlay);
+              photoContainer.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.onchange = (event) => {
+                  const file = event.target.files[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = function() {
+                      const canvas = document.createElement('canvas');
+                      const MAX_WIDTH = 200;
+                      const MAX_HEIGHT = 200;
+                      let width = img.width;
+                      let height = img.height;
+                      
+                      if (width > height) {
+                        if (width > MAX_WIDTH) {
+                          height *= MAX_WIDTH / width;
+                          width = MAX_WIDTH;
+                        }
+                      } else {
+                        if (height > MAX_HEIGHT) {
+                          width *= MAX_HEIGHT / height;
+                          height = MAX_HEIGHT;
+                        }
+                      }
+                      
+                      canvas.width = width;
+                      canvas.height = height;
+                      
+                      const ctx = canvas.getContext('2d');
+                      ctx.drawImage(img, 0, 0, width, height);
+                      
+                      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                      
+                      const driverObj = (state.drivers && Array.isArray(state.drivers)) ? state.drivers.find(d => d['ID_Авто'] == carId) : null;
+                      if (driverObj) {
+                        driverObj['Фото'] = compressedBase64;
+                      } else {
+                        if (!state.drivers) state.drivers = [];
+                        state.drivers.push({ 'ID_Авто': carId, "Ім'я": name, 'Фото': compressedBase64 });
+                      }
+                      renderCalendar();
+                      propexApi.updateDriverPhoto(carId, compressedBase64);
+                    };
+                    img.src = e.target.result;
+                  };
+                  reader.readAsDataURL(file);
+                };
+                fileInput.click();
+              });
+            }
+          }
         grid.appendChild(carHeader);
       });
 
@@ -4240,7 +4279,6 @@ body.light-theme .login-error {
       unassignedHeader.innerHTML = `
         <div class="driver-photo-container" style="background:linear-gradient(135deg,#374151,#4b5563);border:2px solid rgba(156,163,175,0.4);color:#9ca3af;font-size:18px;display:flex;align-items:center;justify-content:center;">❓</div>
         <div style="font-weight:700;color:#9ca3af;">Не призначено</div>
-        <div class="driver-name" style="color:rgba(156,163,175,0.7);">Авто не обрано</div>
       `;
       grid.appendChild(unassignedHeader);
 
@@ -4251,7 +4289,6 @@ body.light-theme .login-error {
       samoHeader.innerHTML = `
         <div class="driver-photo-container" style="background:linear-gradient(135deg,#2d2a1e,#3d3a00);border:2px solid rgba(255,200,50,0.4);color:#ffd700;font-size:18px;display:flex;align-items:center;justify-content:center;">📦</div>
         <div style="font-weight:700;color:#ffd700;">Самовивіз</div>
-        <div class="driver-name" style="color:rgba(255,200,50,0.7);">Клієнти самостійно</div>
       `;
       grid.appendChild(samoHeader);
 
@@ -4262,7 +4299,6 @@ body.light-theme .login-error {
       npHeader.innerHTML = `
         <div class="driver-photo-container" style="background:linear-gradient(135deg,#4a1a1a,#5a0000);border:2px solid rgba(255,100,100,0.4);color:#ff9999;font-size:18px;display:flex;align-items:center;justify-content:center;">📮</div>
         <div style="font-weight:700;color:#ff9999;">Нова Пошта</div>
-        <div class="driver-name" style="color:rgba(255,150,150,0.7);">Кур'єр Нової Пошти</div>
       `;
       grid.appendChild(npHeader);
 
@@ -6099,6 +6135,7 @@ function renderClients() {
       const depts = [
         { id: 'management', name: 'Керівництво', icon: '👑', color: '#f59e0b', roles: ['director', 'керівник', 'директор'] },
         { id: 'sales', name: 'Відділ продажів', icon: '💼', color: '#8b5cf6', roles: ['sales', 'продаж', 'менеджер'] },
+        { id: 'supply', name: 'Постачання', icon: '🚚', color: '#06b6d4', roles: ['постачання', 'supply', 'постачальник', 'закупка', 'закупівля'] },
         { id: 'office_manager', name: 'Офіс-менеджер', icon: '👩‍💼', color: '#3b82f6', roles: ['офіс', 'office'] },
         { id: 'drivers', name: 'Водії', icon: '🚗', color: '#10b981', roles: ['driver', 'водій'] },
         { id: 'warehouse', name: 'Склад', icon: '📦', color: '#ef4444', roles: ['warehouse', 'комірник', 'склад', 'головний комірник'] },
@@ -6113,7 +6150,10 @@ function renderClients() {
         let found = false;
         
         // Match specific groups in order of specificity
-        if (r.includes('офіс') || r.includes('office')) {
+        if (['постачання', 'supply', 'постачальник', 'закупка', 'закупівля'].some(role => r.includes(role))) {
+          counts['supply']++;
+          found = true;
+        } else if (r.includes('офіс') || r.includes('office')) {
           counts['office_manager']++;
           found = true;
         } else if (['director', 'директор', 'керівник'].some(role => r.includes(role))) {
@@ -8328,6 +8368,9 @@ function renderEmployees() {
     if (currentEmployeeDepartment) {
       employees = employees.filter(e => {
         let r = (e['Роль'] || '').toLowerCase().trim();
+        if (currentEmployeeDepartment === 'supply') {
+          return ['постачання', 'supply', 'постачальник', 'закупка', 'закупівля'].some(role => r.includes(role));
+        }
         if (currentEmployeeDepartment === 'office_manager') {
           return r.includes('офіс') || r.includes('office');
         }
@@ -8341,15 +8384,16 @@ function renderEmployees() {
           return ['warehouse', 'комірник', 'склад'].some(role => r.includes(role));
         }
         if (currentEmployeeDepartment === 'sales') {
-          return ['sales', 'продаж', 'менеджер', 'manager'].some(role => r.includes(role)) && !r.includes('офіс') && !r.includes('керівник') && !r.includes('директор');
+          return ['sales', 'продаж', 'менеджер', 'manager'].some(role => r.includes(role)) && !r.includes('офіс') && !r.includes('керівник') && !r.includes('директор') && !['постачання', 'supply', 'постачальник', 'закупка', 'закупівля'].some(role => r.includes(role));
         }
         if (currentEmployeeDepartment === 'other') {
+          const isSupply = ['постачання', 'supply', 'постачальник', 'закупка', 'закупівля'].some(role => r.includes(role));
           const isOffice = r.includes('офіс') || r.includes('office');
           const isMgmt = ['director', 'директор', 'керівник'].some(role => r.includes(role));
           const isDriver = r === 'водій' || r === 'driver';
           const isWarehouse = ['warehouse', 'комірник', 'склад'].some(role => r.includes(role));
           const isSales = ['sales', 'продаж', 'менеджер', 'manager'].some(role => r.includes(role));
-          return !isOffice && !isMgmt && !isDriver && !isWarehouse && !isSales;
+          return !isSupply && !isOffice && !isMgmt && !isDriver && !isWarehouse && !isSales;
         }
         return true;
       });
@@ -8940,6 +8984,7 @@ window.renderPassengerBarCharts = function(currDels, allLogs, ranges) {
             <option value="Всі">Всі ролі</option>
             <option value="Керівник підприємства">Керівники</option>
             <option value="Менеджер">Менеджери</option>
+            <option value="Постачання">Постачання</option>
             <option value="Водій">Водії</option>
             <option value="Монтажник">Монтажники</option>
             <option value="Офіс-менеджер">Офіс-менеджери</option>
