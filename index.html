@@ -3359,13 +3359,22 @@ body.light-theme .login-error {
             const currentDeletedIds = getDeletedDeliveryIds();
             freshDeliveries = freshDeliveries.filter(d => !currentDeletedIds.includes(String(d['ID'] || d['ID_Замовлення'])));
             
-            // Merge any local invoice attachments
+            // Merge any local history and invoice overrides
             const currentInvoiceOverrides = getLocalInvoiceOverrides();
             freshDeliveries.forEach(d => {
               const dId = String(d['ID'] || d['ID_Замовлення']);
               if (currentInvoiceOverrides[dId]) {
                 d['Накладна_URL'] = currentInvoiceOverrides[dId];
                 d['Накладна'] = currentInvoiceOverrides[dId];
+              }
+              const existingLocal = state.deliveries.find(ld => String(ld['ID'] || ld['ID_Замовлення']) === dId);
+              if (existingLocal && existingLocal['Історія_Операцій']) {
+                const sheetHist = d['Історія_Операцій'] || d['Історія'] || '';
+                const localHist = existingLocal['Історія_Операцій'] || '';
+                if (localHist.length > sheetHist.length) {
+                  d['Історія_Операцій'] = localHist;
+                  d['Історія'] = localHist;
+                }
               }
             });
 
