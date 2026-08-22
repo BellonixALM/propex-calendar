@@ -4766,6 +4766,7 @@ body.light-theme .login-error {
       const managerId = del['ID_Менеджера'];
       let managerName = '';
       let managerShort = '';
+      let isIraBadge = false;
       if (managerId) {
         managerName = getEmployeeFullName(managerId, 'Менеджер');
         const parts = managerName.split(' ');
@@ -4773,6 +4774,10 @@ body.light-theme .login-error {
           managerShort = `${parts[0]} ${parts[1].charAt(0)}.`;
         } else {
           managerShort = managerName;
+        }
+        const mLower = managerName.toLowerCase();
+        if (mLower.includes('ira') || mLower.includes('іра') || mLower.includes('ірина')) {
+          isIraBadge = true;
         }
       }
 
@@ -4786,6 +4791,10 @@ body.light-theme .login-error {
         assignedDriverBadgeHTML = `<span class="card-driver-badge" title="Призначений водій: ${driverName}" style="font-size: 10px; opacity: 0.9; color: #10b981; background: rgba(16,185,129,0.12); padding: 1px 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(16,185,129,0.2); white-space: nowrap;">🚚 ${driverShort}</span>`;
       }
 
+      const managerBadgeStyle = isIraBadge 
+        ? `font-size: 10px; font-weight: 700; color: #a855f7; background: rgba(168, 85, 247, 0.18); padding: 2px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(168, 85, 247, 0.4); white-space: nowrap; box-shadow: 0 1px 3px rgba(168, 85, 247, 0.15);`
+        : `font-size: 10px; opacity: 0.85; color: var(--text-color); background: rgba(156,163,175,0.12); padding: 1px 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(156,163,175,0.2); white-space: nowrap;`;
+
       card.innerHTML = `
         <div class="card-meta">
           <span class="card-time">${isProblem ? '⚠️ ' : ''}${del['Час']}</span>
@@ -4795,7 +4804,7 @@ body.light-theme .login-error {
         <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <span title="${subText}" style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${subText}</span>
           <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: auto;">
-            ${managerShort ? `<span class="card-manager-badge" title="Створив менеджер: ${managerName}" style="font-size: 10px; opacity: 0.85; color: var(--text-color); background: rgba(156,163,175,0.12); padding: 1px 5px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(156,163,175,0.2); white-space: nowrap;">👤 ${managerShort}</span>` : ''}
+            ${managerShort ? `<span class="card-manager-badge" title="Створив менеджер з постачання: ${managerName}" style="${managerBadgeStyle}">👤 ${managerShort}</span>` : ''}
             ${assignedDriverBadgeHTML}
           </div>
         </div>
