@@ -3437,6 +3437,17 @@ body.light-theme .login-error {
             if (!d['ID_Водія'] && d['Водій']) {
               d['ID_Водія'] = d['Водій'];
             }
+            // Safely map Ira Order supply manager attribute for planned cards
+            const mgr = String(d['Менеджер'] || d['ID_Менеджера'] || d['Manager'] || '').toLowerCase();
+            const orderNum = String(d['Номер_замовлення'] || d['ID'] || '');
+            if (mgr.includes('ira') || mgr.includes('іра') || orderNum.includes('IRA')) {
+              d['Supply_Type'] = 'supply';
+              d['Тип_Доставки'] = 'Постачання';
+              // Ensure creation timestamp is initialized if missing without altering existing creation date
+              if (!d['Дата_Створення']) {
+                d['Дата_Створення'] = (d['Дата'] ? `${d['Дата']} ${d['Час'] || ''}`.trim() : '22.08.2026 12:00');
+              }
+            }
           });
           window.debugLoadedText = '';
           label.textContent = "⚙️ Оновлення сітки...";
