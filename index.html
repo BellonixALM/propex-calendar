@@ -5483,8 +5483,16 @@ body.light-theme .login-error {
           targetDel['Номер_замовлення'] = order_num;
           targetDel['Адреса'] = address;
           targetDel['Коментар'] = comment;
+          targetDel['Дата'] = formattedDate;
+          targetDel['Час'] = time;
+          targetDel['Статус_оплати'] = payment;
+          targetDel['Ім\'я_одержувача'] = receiver_name;
+          targetDel['Телефон_одержувача'] = cleanReceiverPhone;
+
+          // NEVER overwrite original creation timestamp or manager during edit
           if (!targetDel['Історія_Операцій']) {
-            targetDel['Історія_Операцій'] = initHistoryStr;
+            const originalCreated = targetDel['Дата_Створення'] || `${formattedDate} ${time}`;
+            targetDel['Історія_Операцій'] = `${originalCreated} — Замовлення створено (Менеджер: ${managerName}); ${nowStr} — Коригування замовлення (${managerName});`;
           } else {
             targetDel['Історія_Операцій'] += ` ${nowStr} — Коригування замовлення (${managerName});`;
           }
