@@ -3134,6 +3134,8 @@ body.light-theme .login-error {
           setTimeout(() => toast.remove(), 300);
         }, duration);
       };
+      window.propexApi = new ScriptRunBridge();
+      console.log("💎 Custom propexApi Bridge successfully initialized!");
     })();
     window.onerror = function(message, source, lineno, colno, error) {
       const msg = "JS Error: " + message + " (Line " + lineno + ")";
