@@ -5528,7 +5528,9 @@ body.light-theme .login-error {
           'ID_Водія': driverUserId,
           'ID_Менеджера': document.getElementById('form-manager-id').value.trim(),
           'Накладна_URL': invoice_url,
-          'Накладна': invoice_url
+          'Накладна': invoice_url,
+          'Дата_Створення': nowStr,
+          'Історія_Операцій': initHistoryStr
         };
         if (invoice_url) {
           try {
