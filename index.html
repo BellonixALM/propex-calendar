@@ -5512,7 +5512,7 @@ body.light-theme .login-error {
 
           if (!targetDel['Історія_Операцій']) {
             const originalCreated = targetDel['Дата_Створення'] || `${formattedDate} ${time}`;
-            targetDel['Історія_Операцій'] = `${originalCreated} — Замовлення створено (Менеджер: ${managerName}); ${nowStr} — ${eventTitle} (Менеджер: ${managerName});`;
+            targetDel['Історія_Операцій'] = `${originalCreated} — Замовлення створено (Менеджер: ${managerName}); ${originalCreated} — Передано на склад (Головний комірник: Сергій); ${nowStr} — ${eventTitle} (Менеджер: ${managerName});`;
           } else {
             targetDel['Історія_Операцій'] += ` ${nowStr} — ${eventTitle} (Менеджер: ${managerName});`;
           }
