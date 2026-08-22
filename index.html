@@ -5493,15 +5493,28 @@ body.light-theme .login-error {
           targetDel['Ім\'я_одержувача'] = receiver_name;
           targetDel['Телефон_одержувача'] = cleanReceiverPhone;
 
-          // NEVER overwrite original creation timestamp or manager during edit
+          // Track exact change events in history using Universal Logger logic
+          const oldInvoice = targetDel['Накладна_URL'] || targetDel['Накладна'] || '';
+          let eventTitle = `Коригування замовлення`;
+          if (!oldInvoice && invoice_url) {
+            eventTitle = `Додано 1С прибуткову накладну`;
+          } else if (oldInvoice && !invoice_url) {
+            eventTitle = `Видалено 1С накладну`;
+          }
+
           if (!targetDel['Історія_Операцій']) {
             const originalCreated = targetDel['Дата_Створення'] || `${formattedDate} ${time}`;
-            targetDel['Історія_Операцій'] = `${originalCreated} — Замовлення створено (Менеджер: ${managerName}); ${nowStr} — Коригування замовлення (${managerName});`;
+            targetDel['Історія_Операцій'] = `${originalCreated} — Замовлення створено (Менеджер: ${managerName}); ${nowStr} — ${eventTitle} (Менеджер: ${managerName});`;
           } else {
-            targetDel['Історія_Операцій'] += ` ${nowStr} — Коригування замовлення (${managerName});`;
+            targetDel['Історія_Операцій'] += ` ${nowStr} — ${eventTitle} (Менеджер: ${managerName});`;
+          }
+
+          // Call backend universal logger
+          if (typeof propexApi !== 'undefined' && propexApi.logEvent) {
+            propexApi.logEvent(editDeliveryId, eventTitle, `Менеджер: ${managerName}`);
           }
         }
-        if (invoice_url) {
+        if (invoice_url !== undefined) {
           try {
             const overrides = JSON.parse(localStorage.getItem('propex_invoice_overrides') || '{}');
             overrides[String(editDeliveryId)] = invoice_url;
