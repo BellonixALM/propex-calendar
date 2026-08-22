@@ -202,6 +202,29 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
+    // Handle incoming Telegram webhook updates (button clicks or commands)
+    if (data.callback_query) {
+      var callbackQuery = data.callback_query;
+      var callbackData = callbackQuery.data || '';
+      var fromChatId = callbackQuery.from ? callbackQuery.from.id : null;
+      var msgId = callbackQuery.message ? callbackQuery.message.message_id : null;
+
+      if (callbackData.startsWith('driver_start_') || callbackData.startsWith('driver_pickup_') || callbackData.startsWith('driver_arrived_')) {
+        var orderNum = callbackData.split('_').pop();
+        var statusLabel = 'В процесі';
+        if (callbackData.startsWith('driver_pickup_')) statusLabel = 'Забрано у постачальника';
+        if (callbackData.startsWith('driver_arrived_')) statusLabel = 'Прийнято на склад';
+
+        appendHistoryEvent(orderNum, 'Статус водія у Telegram: ' + statusLabel, 'Водій в Telegram-боті');
+
+        var ackMsg = "✅ Дякуємо! Статус замовлення № " + orderNum + " успішно оновлено на: " + statusLabel;
+        sendTelegramMessage(fromChatId, ackMsg);
+
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Callback handled' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
     return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Unknown action: ' + action }))
       .setMimeType(ContentService.MimeType.JSON);
       
