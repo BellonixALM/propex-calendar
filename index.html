@@ -5558,7 +5558,12 @@ body.light-theme .login-error {
       const parts = rawDate.split('-');
       const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
       const driverUserId = document.getElementById('form-driver-select') ? document.getElementById('form-driver-select').value.trim() : '';
-      const invoice_url = document.getElementById('form-invoice-url') ? document.getElementById('form-invoice-url').value.trim() : '';
+      let invoice_url = document.getElementById('form-invoice-url') ? document.getElementById('form-invoice-url').value.trim() : '';
+      if (selectedInvoiceFiles && selectedInvoiceFiles.length > 0) {
+        invoice_url = JSON.stringify(selectedInvoiceFiles);
+      } else if (selectedInvoiceFiles && selectedInvoiceFiles.length === 0) {
+        invoice_url = '';
+      }
       let cleanReceiverPhone = receiver_phone;
       if (cleanReceiverPhone.startsWith('=') || cleanReceiverPhone.startsWith('+')) {
         cleanReceiverPhone = "'" + cleanReceiverPhone;
