@@ -5046,57 +5046,66 @@ body.light-theme .login-error {
         }
       }
 
-      // Parse and display operation history in Activity Timeline format
+      // Parse and display operation history in Activity Timeline format with exact Date, Time & Responsible Initiator
       const historyContent = document.getElementById('det-history-content');
       if (historyContent) {
         const rawHistory = del['Історія_Операцій'] || del['Історія'] || del['History'] || '';
-        
-        let timelineItems = [];
-        
-        // 1. Initial creation entry if history is empty or to ensure first step exists
         const managerId = del['ID_Менеджера'];
         const managerFullName = getEmployeeFullName(managerId, 'Менеджер');
         
+        // Lookup warehouse worker name if assigned
+        const warehouseWorkerId = del['ID_Комірника'] || del['ID_Склад'];
+        let warehouseWorkerText = '';
+        if (warehouseWorkerId) {
+          const empWorker = (state.employees || []).find(e => {
+            const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
+            const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
+            const targetStr = String(warehouseWorkerId).trim();
+            return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
+          });
+          warehouseWorkerText = empWorker ? (empWorker['ПІБ'] || empWorker["Ім'я"] || warehouseWorkerId) : warehouseWorkerId;
+        }
+
         if (rawHistory) {
           const rawEntries = rawHistory.split(';').filter(e => e.trim());
-          timelineItems = rawEntries.map(entry => {
+          const timelineItems = rawEntries.map(entry => {
             const str = entry.trim();
-            let timePart = "";
+            let dateTimePart = "";
             let textPart = str;
             if (str.includes(" — ")) {
               const parts = str.split(" — ");
-              timePart = parts[0];
-              textPart = parts.slice(1).join(" — ");
+              dateTimePart = parts[0].trim();
+              textPart = parts.slice(1).join(" — ").trim();
             }
 
             let iconClass = 'timeline-icon-blue';
             let iconText = '📌';
             let title = textPart;
-            let subtitle = 'Системна дія';
+            let responsiblePerson = 'Системна дія';
             let badgeText = 'Оновлено';
             let badgeClass = 'rgba(59, 130, 246, 0.15)';
             let badgeColor = '#3b82f6';
 
             // Extract initiator if recorded in textPart format: "Action (Role: Name)" or "Action (Name)"
-            let initiatorSub = '';
+            let extractedName = '';
             if (textPart.includes('(') && textPart.includes(')')) {
               const initMatch = textPart.match(/\(([^)]+)\)/);
               if (initMatch && initMatch[1]) {
-                initiatorSub = initMatch[1];
+                extractedName = initMatch[1].trim();
               }
             }
 
             if (textPart.includes('Створено') || textPart.includes('створено')) {
               iconClass = 'timeline-icon-blue';
               iconText = '✈️';
-              title = `Замовлення розміщено — №${del['Номер_замовлення'] || ''}`;
-              subtitle = `Ініціатор: Менеджер ${managerFullName}`;
+              title = `Замовлення створено — №${del['Номер_замовлення'] || ''}`;
+              responsiblePerson = `Менеджер: ${managerFullName}`;
               badgeText = 'Створено';
             } else if (textPart.includes('Коригування')) {
               iconClass = 'timeline-icon-yellow';
               iconText = '✏️';
               title = textPart;
-              subtitle = `Ініціатор: ${initiatorSub || ('Логіст ' + (window.getDriverName(del['ID_Водія']) || 'Юрій Бортовщук'))}`;
+              responsiblePerson = extractedName || `Логіст / Менеджер: ${managerFullName}`;
               badgeText = 'Коригування';
               badgeClass = 'rgba(234, 179, 8, 0.15)';
               badgeColor = '#eab308';
@@ -5104,7 +5113,7 @@ body.light-theme .login-error {
               iconClass = 'timeline-icon-yellow';
               iconText = '📄';
               title = `Додано PDF / Скріншот 1С`;
-              subtitle = `Ініціатор: Менеджер ${managerFullName}`;
+              responsiblePerson = `Менеджер: ${managerFullName}`;
               badgeText = '1С Документ';
               badgeClass = 'rgba(234, 179, 8, 0.15)';
               badgeColor = '#eab308';
@@ -5112,7 +5121,7 @@ body.light-theme .login-error {
               iconClass = 'timeline-icon-purple';
               iconText = '👷';
               title = textPart;
-              subtitle = `Ініціатор: Головний комірник Сергій`;
+              responsiblePerson = `Головний комірник: Сергій ➔ ${warehouseWorkerText || 'Комірник'}`;
               badgeText = 'Склад';
               badgeClass = 'rgba(139, 92, 246, 0.15)';
               badgeColor = '#8b5cf6';
@@ -5120,39 +5129,39 @@ body.light-theme .login-error {
               iconClass = 'timeline-icon-orange';
               iconText = '📦';
               title = `Складський статус: ${textPart.includes('Зібрано') ? 'Зібрано' : 'Скомплектовано'}`;
-              subtitle = `Ініціатор: Комірник ${initiatorSub || warehouseWorkerText || 'Приходько О.'}`;
+              responsiblePerson = `Комірник: ${extractedName || warehouseWorkerText || 'Приходько О.'}`;
               badgeText = 'Зібрано';
               badgeClass = 'rgba(249, 115, 22, 0.15)';
               badgeColor = '#f97316';
+            } else if (textPart.includes('Прийнято на склад') || textPart.includes('Прийомка')) {
+              iconClass = 'timeline-icon-purple';
+              iconText = '🏬';
+              title = `Приймання товару на склад Propex`;
+              responsiblePerson = `Комірник: ${extractedName || warehouseWorkerText || 'Сергій (Головний комірник)'}`;
+              badgeText = 'Приймання';
+              badgeClass = 'rgba(139, 92, 246, 0.15)';
+              badgeColor = '#8b5cf6';
+            } else if (textPart.includes('Забрано у постачальника') || textPart.includes('Забрано')) {
+              iconClass = 'timeline-icon-purple';
+              iconText = '📥';
+              title = `Забрано товар у постачальника`;
+              responsiblePerson = `Водій: ${extractedName || driverText}`;
+              badgeText = 'Забрано';
+              badgeClass = 'rgba(139, 92, 246, 0.15)';
+              badgeColor = '#8b5cf6';
             } else if (textPart.includes('Надіслано сповіщення водію')) {
               iconClass = 'timeline-icon-green';
               iconText = '📲';
               title = textPart;
-              subtitle = `Ініціатор: Система ➔ Отримувач: Водій ${driverText}`;
+              responsiblePerson = `Система ➔ Водій: ${driverText}`;
               badgeText = 'Сповіщено';
-              badgeClass = 'rgba(16, 185, 129, 0.15)';
-              badgeColor = '#10b981';
-            } else if (textPart.includes('Забрано у постачальника')) {
-              iconClass = 'timeline-icon-purple';
-              iconText = '📥';
-              title = `Отримано товар від постачальника`;
-              subtitle = `Ініціатор: Водій ${driverText}`;
-              badgeText = 'Забрано';
-              badgeClass = 'rgba(139, 92, 246, 0.15)';
-              badgeColor = '#8b5cf6';
-            } else if (textPart.includes('Прийнято на склад')) {
-              iconClass = 'timeline-icon-green';
-              iconText = '🏬';
-              title = `Товар прийнято на склад`;
-              subtitle = `Ініціатор: Головний комірник Сергій`;
-              badgeText = 'Прийнято';
               badgeClass = 'rgba(16, 185, 129, 0.15)';
               badgeColor = '#10b981';
             } else if (textPart.includes('Виконано') || textPart.includes('виконано') || textPart.includes('Поточний статус: Виконано')) {
               iconClass = 'timeline-icon-green';
               iconText = '🟢';
-              title = `Поточний статус: Виконано`;
-              subtitle = `Ініціатор: Водій ${initiatorSub || driverText}`;
+              title = `Статус: Виконано`;
+              responsiblePerson = `Виконавець: ${extractedName || driverText}`;
               badgeText = 'Виконано';
               badgeClass = 'rgba(16, 185, 129, 0.15)';
               badgeColor = '#10b981';
@@ -5160,28 +5169,28 @@ body.light-theme .login-error {
               iconClass = 'timeline-icon-red';
               iconText = '🚨';
               title = textPart;
-              subtitle = `Ініціатор: ${initiatorSub || ('Водій ' + driverText)}`;
+              responsiblePerson = `Відповідальний: ${extractedName || driverText}`;
               badgeText = 'Проблема';
               badgeClass = 'rgba(239, 68, 68, 0.15)';
               badgeColor = '#ef4444';
-            } else if (initiatorSub) {
-              subtitle = `Ініціатор: ${initiatorSub}`;
+            } else if (extractedName) {
+              responsiblePerson = `Відповідальний: ${extractedName}`;
             }
 
             return `
               <div class="timeline-item">
                 <div class="timeline-icon-node ${iconClass}">${iconText}</div>
                 <div class="timeline-title">${title}</div>
-                <div class="timeline-sub">${subtitle}</div>
+                <div class="timeline-sub" style="font-weight: 600; color: var(--text-color);">👤 ${responsiblePerson}</div>
                 <div class="timeline-badge" style="background: ${badgeClass}; color: ${badgeColor};">${badgeText}</div>
-                <div class="timeline-time">${timePart || 'Нещодавно'}</div>
+                <div class="timeline-time" style="font-weight: 700; color: var(--accent-blue);">🕒 ${dateTimePart || 'Час не вказано'}</div>
               </div>
             `;
           });
 
           historyContent.innerHTML = timelineItems.join('');
         } else {
-          // Use exact creation timestamp if recorded, otherwise format current live creation timestamp (now)
+          // Use exact creation timestamp if recorded
           const createdTimeStr = del['Дата_Створення'] || del['Дата_створення'] || del['Created_At'] || '';
           let initialTime = createdTimeStr;
           if (!initialTime) {
@@ -5197,9 +5206,9 @@ body.light-theme .login-error {
             <div class="timeline-item">
               <div class="timeline-icon-node timeline-icon-blue">✈️</div>
               <div class="timeline-title">Замовлення створено — №${del['Номер_замовлення'] || ''}</div>
-              <div class="timeline-sub">${managerFullName}</div>
+              <div class="timeline-sub" style="font-weight: 600; color: var(--text-color);">👤 Відповідальний: Менеджер ${managerFullName}</div>
               <div class="timeline-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">Створено</div>
-              <div class="timeline-time">${initialTime}</div>
+              <div class="timeline-time" style="font-weight: 700; color: var(--accent-blue);">🕒 ${initialTime}</div>
             </div>
           `;
           
@@ -5208,9 +5217,9 @@ body.light-theme .login-error {
               <div class="timeline-item">
                 <div class="timeline-icon-node timeline-icon-yellow">📄</div>
                 <div class="timeline-title">Додано 1С прибуткову накладну</div>
-                <div class="timeline-sub">${managerFullName}</div>
+                <div class="timeline-sub" style="font-weight: 600; color: var(--text-color);">👤 Відповідальний: Менеджер ${managerFullName}</div>
                 <div class="timeline-badge" style="background: rgba(234, 179, 8, 0.15); color: #eab308;">1С Документ</div>
-                <div class="timeline-time">${initialTime}</div>
+                <div class="timeline-time" style="font-weight: 700; color: var(--accent-blue);">🕒 ${initialTime}</div>
               </div>
             `;
           }
@@ -5219,46 +5228,22 @@ body.light-theme .login-error {
             defaultItemsHtml += `
               <div class="timeline-item">
                 <div class="timeline-icon-node timeline-icon-purple">🚚</div>
-                <div class="timeline-title">Призначено водія — ${driverText}</div>
-                <div class="timeline-sub">Логіст: Юрій Бортовщук / Авто: ${window.getCarName(del['ID_Авто'])}</div>
+                <div class="timeline-title">Призначено авто та водія</div>
+                <div class="timeline-sub" style="font-weight: 600; color: var(--text-color);">👤 Відповідальний: Логіст Юрій Бортовщук ➔ Водій: ${driverText}</div>
                 <div class="timeline-badge" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">Призначено</div>
-                <div class="timeline-time">${initialTime}</div>
+                <div class="timeline-time" style="font-weight: 700; color: var(--accent-blue);">🕒 ${initialTime}</div>
               </div>
             `;
           }
-
-          // Look up warehouse worker name if assigned
-          const warehouseWorkerId = del['ID_Комірника'] || del['ID_Склад'];
-          let warehouseWorkerText = '';
-          if (warehouseWorkerId) {
-            const empWorker = (state.employees || []).find(e => {
-              const tgId = e['Telegram_ID'] || e['Telegram'] || e['telegramId'];
-              const pib = e['ПІБ'] || e["Ім'я"] || e['Логін'];
-              const targetStr = String(warehouseWorkerId).trim();
-              return (tgId && String(tgId).trim() === targetStr) || (pib && String(pib).trim() === targetStr);
-            });
-            warehouseWorkerText = empWorker ? (empWorker['ПІБ'] || empWorker["Ім'я"] || warehouseWorkerId) : warehouseWorkerId;
-          }
-
-          // Head warehouse worker reception step
-          defaultItemsHtml += `
-            <div class="timeline-item">
-              <div class="timeline-icon-node timeline-icon-blue">🏬</div>
-              <div class="timeline-title">Передано на склад</div>
-              <div class="timeline-sub">Головний комірник: Сергій</div>
-              <div class="timeline-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">Склад</div>
-              <div class="timeline-time">${initialTime}</div>
-            </div>
-          `;
 
           if (warehouseWorkerText) {
             defaultItemsHtml += `
               <div class="timeline-item">
                 <div class="timeline-icon-node timeline-icon-purple">👷</div>
                 <div class="timeline-title">Призначено збірку комірнику</div>
-                <div class="timeline-sub">Головний комірник: Сергій ➔ Комірник: ${warehouseWorkerText}</div>
+                <div class="timeline-sub" style="font-weight: 600; color: var(--text-color);">👤 Відповідальний: Головний комірник Сергій ➔ Комірник: ${warehouseWorkerText}</div>
                 <div class="timeline-badge" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">Склад</div>
-                <div class="timeline-time">${initialTime}</div>
+                <div class="timeline-time" style="font-weight: 700; color: var(--accent-blue);">🕒 ${initialTime}</div>
               </div>
             `;
           }
@@ -5269,22 +5254,11 @@ body.light-theme .login-error {
               <div class="timeline-item">
                 <div class="timeline-icon-node timeline-icon-orange">📦</div>
                 <div class="timeline-title">Складський статус: ${warehouseStatus}</div>
-                <div class="timeline-sub">Комірник: ${warehouseWorkerText || 'Приходько О.'}</div>
+                <div class="timeline-sub" style="font-weight: 600; color: var(--text-color);">👤 Відповідальний: Комірник ${warehouseWorkerText || 'Приходько О.'}</div>
                 <div class="timeline-badge" style="background: rgba(249, 115, 22, 0.15); color: #f97316;">${warehouseStatus}</div>
-                <div class="timeline-time">${initialTime}</div>
+                <div class="timeline-time" style="font-weight: 700; color: var(--accent-blue);">🕒 ${initialTime}</div>
               </div>
             `;
-            if ((warehouseStatus === 'Зібрано' || warehouseStatus === 'Скомплектовано') && driverText && driverText !== 'Не призначено' && !driverText.toLowerCase().includes('самовивіз')) {
-              defaultItemsHtml += `
-                <div class="timeline-item">
-                  <div class="timeline-icon-node timeline-icon-green">📲</div>
-                  <div class="timeline-title">Надіслано сповіщення водію — ${driverText}</div>
-                  <div class="timeline-sub">Отримувач: Водій ${driverText}</div>
-                  <div class="timeline-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Сповіщено</div>
-                  <div class="timeline-time">${initialTime}</div>
-                </div>
-              `;
-            }
           }
 
           if (del['Статус'] && del['Статус'] !== 'Заплановано') {
@@ -5292,9 +5266,9 @@ body.light-theme .login-error {
               <div class="timeline-item">
                 <div class="timeline-icon-node timeline-icon-green">🟢</div>
                 <div class="timeline-title">Поточний статус: ${del['Статус']}</div>
-                <div class="timeline-sub">Виконав: Водій ${driverText || 'Призначений водій'}</div>
+                <div class="timeline-sub" style="font-weight: 600; color: var(--text-color);">👤 Відповідальний: Водій ${driverText || 'Призначений водій'}</div>
                 <div class="timeline-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">${del['Статус']}</div>
-                <div class="timeline-time">${initialTime}</div>
+                <div class="timeline-time" style="font-weight: 700; color: var(--accent-blue);">🕒 ${initialTime}</div>
               </div>
             `;
           }
