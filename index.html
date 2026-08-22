@@ -4068,6 +4068,8 @@ body.light-theme .login-error {
       // Populate existing 1C invoice URLs / Base64 into edit modal
       const existingInvoice = currentDetailDelivery['Накладна_URL'] || currentDetailDelivery['Накладна'] || currentDetailDelivery['Invoice_URL'] || '';
       selectedInvoiceFiles = [];
+      const fileInput = document.getElementById('form-invoice-file');
+      if (fileInput) fileInput.value = '';
       if (existingInvoice) {
         try {
           if (existingInvoice.startsWith('[')) {
