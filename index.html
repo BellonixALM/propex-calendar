@@ -3095,8 +3095,45 @@ body.light-theme .login-error {
         this._callAPI('broadcastMessageToEmployees', { messageText: messageText });
         return this;
       };
-      window.propexApi = new ScriptRunBridge();
-      console.log("💎 Custom propexApi Bridge successfully initialized!");
+      window.showAutoDismissToast = function(message, duration) {
+        duration = duration || 2200;
+        const toast = document.createElement('div');
+        toast.className = 'custom-auto-toast';
+        toast.style.cssText = `
+          position: fixed;
+          top: 40px;
+          left: 50%;
+          transform: translateX(-50%) translateY(-20px);
+          background: rgba(16, 185, 129, 0.95);
+          color: #ffffff;
+          padding: 12px 24px;
+          border-radius: 12px;
+          font-family: var(--font-main);
+          font-weight: 700;
+          font-size: 14px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+          z-index: 999999;
+          opacity: 0;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          pointer-events: none;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        `;
+        toast.innerHTML = `<span>✅</span> <span>${message}</span>`;
+        document.body.appendChild(toast);
+
+        requestAnimationFrame(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateX(-50%) translateY(0)';
+        });
+
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(-50%) translateY(-20px)';
+          setTimeout(() => toast.remove(), 300);
+        }, duration);
+      };
     })();
     window.onerror = function(message, source, lineno, colno, error) {
       const msg = "JS Error: " + message + " (Line " + lineno + ")";
@@ -5469,7 +5506,7 @@ body.light-theme .login-error {
             closeModal('details-modal');
             saveDeliveriesToLocalStorage();
             renderCalendar();
-            alert("Статус доставки успішно оновлено!");
+            showAutoDismissToast("Статус доставки успішно оновлено!");
           })
           .withFailureHandler(function(err) {
             document.getElementById('update-status-btn').disabled = false;
