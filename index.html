@@ -5657,6 +5657,11 @@ body.light-theme .login-error {
           targetDel['Ім\'я_одержувача'] = receiver_name;
           targetDel['Телефон_одержувача'] = cleanReceiverPhone;
 
+          if (currentDetailDelivery && String(currentDetailDelivery['ID']) === String(editDeliveryId)) {
+            currentDetailDelivery['Накладна_URL'] = invoice_url;
+            currentDetailDelivery['Накладна'] = invoice_url;
+          }
+
           // Track exact change events in history using Universal Logger logic
           const isPostExecution = targetDel['Статус'] === 'Виконано';
           const oldInvoice = targetDel['Накладна_URL'] || targetDel['Накладна'] || '';
