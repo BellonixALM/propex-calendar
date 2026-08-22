@@ -3379,6 +3379,15 @@ body.light-theme .login-error {
           let parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
             parsed = parsed.filter(d => !deletedIds.includes(String(d['ID'] || d['ID_Замовлення'])));
+            parsed.forEach(d => {
+              const dId = String(d['ID'] || d['ID_Замовлення']);
+              const oNum = String(d['Номер_замовлення'] || '');
+              const overrideVal = invoiceOverrides[dId] || (oNum ? invoiceOverrides[oNum] : null);
+              if (overrideVal) {
+                d['Накладна_URL'] = overrideVal;
+                d['Накладна'] = overrideVal;
+              }
+            });
             state.deliveries = parsed;
             renderCalendar();
           }
