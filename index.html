@@ -5120,6 +5120,14 @@ body.light-theme .login-error {
               badgeText = '1С Документ';
               badgeClass = 'rgba(234, 179, 8, 0.15)';
               badgeColor = '#eab308';
+            } else if (textPart.includes('Передано на склад')) {
+              iconClass = 'timeline-icon-blue';
+              iconText = '🏢';
+              title = `Передано на склад (очікує призначення збірки)`;
+              responsiblePerson = `Головний комірник: Сергій`;
+              badgeText = 'Склад';
+              badgeClass = 'rgba(59, 130, 246, 0.15)';
+              badgeColor = '#3b82f6';
             } else if (textPart.includes('Призначено комірника')) {
               iconClass = 'timeline-icon-purple';
               iconText = '👷';
@@ -5471,7 +5479,7 @@ body.light-theme .login-error {
       const min = String(now.getMinutes()).padStart(2, '0');
       const nowStr = `${dd}.${mm}.${yyyy} ${hh}:${min}`;
 
-      let initHistoryStr = `${nowStr} — Замовлення створено (Менеджер: ${managerName});`;
+      let initHistoryStr = `${nowStr} — Замовлення створено (Менеджер: ${managerName}); ${nowStr} — Передано на склад (Головний комірник: Сергій);`;
       if (invoice_url) {
         initHistoryStr += ` ${nowStr} — Додано 1С прибуткову накладну (Менеджер: ${managerName});`;
       }
