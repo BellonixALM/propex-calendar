@@ -3408,10 +3408,12 @@ body.light-theme .login-error {
             const currentInvoiceOverrides = getLocalInvoiceOverrides();
             freshDeliveries.forEach(d => {
               const dId = String(d['ID'] || d['ID_Замовлення']);
+              const oNum = String(d['Номер_замовлення'] || '');
+              const overrideVal = currentInvoiceOverrides[dId] || (oNum ? currentInvoiceOverrides[oNum] : null);
               const existingLocal = state.deliveries.find(ld => String(ld['ID'] || ld['ID_Замовлення']) === dId);
-              if (currentInvoiceOverrides[dId]) {
-                d['Накладна_URL'] = currentInvoiceOverrides[dId];
-                d['Накладна'] = currentInvoiceOverrides[dId];
+              if (overrideVal) {
+                d['Накладна_URL'] = overrideVal;
+                d['Накладна'] = overrideVal;
               } else if (existingLocal && (existingLocal['Накладна_URL'] || existingLocal['Накладна'])) {
                 d['Накладна_URL'] = existingLocal['Накладна_URL'] || existingLocal['Накладна'];
                 d['Накладна'] = existingLocal['Накладна_URL'] || existingLocal['Накладна'];
@@ -5716,7 +5718,9 @@ body.light-theme .login-error {
         if (invoice_url !== undefined) {
           try {
             const overrides = JSON.parse(localStorage.getItem('propex_invoice_overrides') || '{}');
-            overrides[String(editDeliveryId)] = invoice_url;
+            const targetId = String(editDeliveryId);
+            overrides[targetId] = invoice_url;
+            if (order_num) overrides[String(order_num)] = invoice_url;
             localStorage.setItem('propex_invoice_overrides', JSON.stringify(overrides));
           } catch(e) {}
         }
