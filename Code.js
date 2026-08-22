@@ -1780,10 +1780,79 @@ function deleteDelivery(deliveryId, userFullName, userRole) {
       sheet.deleteRow(targetRowIdx);
       return { status: 'success', message: 'Замовлення видалено та залоговано', id: deliveryId };
     } else {
-      return { status: 'success', message: 'Запис вилучено з журналу', id: deliveryId };
+      return { status: 'success', message: 'Замовлення ' + deletedOrderNum + ' успішно видалено', deliveryId: deliveryId };
     }
   } catch (err) {
     return { status: 'error', message: err.toString() };
   }
 }
 
+/**
+ * УНІВЕРСАЛЬНИЙ ЛОГЕР ПОДІЙ (Universal Event Logger)
+ * Безпечно дописує нову подію в Історія_Операцій без втрати попередніх даних.
+ */
+function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return false;
+    var sheet = ss.getSheetByName('Доставки');
+    if (!sheet) return false;
+
+    var range = sheet.getDataRange();
+    var data = range.getDisplayValues();
+    var headers = data[0];
+
+    var idCol = headers.indexOf('ID');
+    if (idCol === -1) idCol = headers.indexOf('Код');
+    var historyCol = headers.indexOf('Історія_Операцій');
+    if (historyCol === -1) historyCol = headers.indexOf('Історія');
+    var createdCol = headers.indexOf('Дата_Створення');
+
+    if (idCol === -1) return false;
+
+    // Створити колонки якщо відсутні
+    if (historyCol === -1) {
+      sheet.getRange(1, headers.length + 1).setValue('Історія_Операцій');
+      historyCol = headers.length;
+      headers.push('Історія_Операцій');
+    }
+    if (createdCol === -1) {
+      sheet.getRange(1, headers.length + 1).setValue('Дата_Створення');
+      createdCol = headers.length;
+      headers.push('Дата_Створення');
+    }
+
+    var searchId = String(deliveryId).replace(/-/g, '').trim();
+
+    for (var i = 1; i < data.length; i++) {
+      var currentIdRaw = data[i][idCol];
+      if (!currentIdRaw || currentIdRaw === 'undefined') currentIdRaw = String(i + 1);
+      var currentId = String(currentIdRaw).replace(/-/g, '').trim();
+
+      if (currentId === searchId || String(data[i][idCol]).trim() === String(deliveryId).trim()) {
+        var rowNum = i + 1;
+        var nowFormatted = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy HH:mm");
+        var existingHistory = data[i][historyCol] || '';
+
+        // Фіксувати Дата_Створення якщо вона порожня
+        var existingCreated = data[i][createdCol];
+        if (!existingCreated) {
+          sheet.getRange(rowNum, createdCol + 1).setValue(nowFormatted);
+        }
+
+        var initiatorStr = initiatorInfo ? (" (" + initiatorInfo + ")") : "";
+        var newEntry = nowFormatted + " — " + eventTitle + initiatorStr + ";";
+
+        var updatedHistory = existingHistory
+          ? (existingHistory.trim() + " " + newEntry)
+          : newEntry;
+
+        sheet.getRange(rowNum, historyCol + 1).setValue(updatedHistory);
+        return true;
+      }
+    }
+  } catch (err) {
+    Logger.log("Error in appendHistoryEvent: " + err.toString());
+  }
+  return false;
+}

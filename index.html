@@ -3037,6 +3037,10 @@ body.light-theme .login-error {
         this._callAPI('updateDeliveryDetails', { deliveryId: deliveryId, deliveryData: deliveryData, userRole: userRole });
         return this;
       };
+      ScriptRunBridge.prototype.logEvent = function(deliveryId, eventTitle, initiatorInfo) {
+        this._callAPI('logEvent', { deliveryId: deliveryId, eventTitle: eventTitle, initiatorInfo: initiatorInfo });
+        return this;
+      };
       ScriptRunBridge.prototype.deleteDelivery = function(deliveryId, userFullName, userRole) {
         this._callAPI('deleteDelivery', { deliveryId: deliveryId, userFullName: userFullName, userRole: userRole });
         return this;
