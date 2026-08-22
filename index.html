@@ -5190,6 +5190,13 @@ body.light-theme .login-error {
               badgeText = 'Виконано';
               badgeClass = 'rgba(16, 185, 129, 0.15)';
               badgeColor = '#10b981';
+            } else if (textPart.includes('⚠️')) {
+              iconClass = 'timeline-icon-yellow';
+              iconText = '⚠️';
+              title = textPart;
+              badgeText = 'Правка після закриття';
+              badgeClass = 'rgba(245, 158, 11, 0.15)';
+              badgeColor = '#f59e0b';
             } else if (textPart.includes('Проблема') || textPart.includes('Відмова')) {
               iconClass = 'timeline-icon-red';
               iconText = '🚨';
@@ -5575,12 +5582,13 @@ body.light-theme .login-error {
           targetDel['Телефон_одержувача'] = cleanReceiverPhone;
 
           // Track exact change events in history using Universal Logger logic
+          const isPostExecution = targetDel['Статус'] === 'Виконано';
           const oldInvoice = targetDel['Накладна_URL'] || targetDel['Накладна'] || '';
-          let eventTitle = `Коригування замовлення`;
+          let eventTitle = isPostExecution ? `⚠️ Коригування закритого (Виконаного) замовлення` : `Коригування замовлення`;
           if (!oldInvoice && invoice_url) {
-            eventTitle = `Додано 1С прибуткову накладну`;
+            eventTitle = isPostExecution ? `⚠️ Додано 1С накладну у виконане замовлення` : `Додано 1С прибуткову накладну`;
           } else if (oldInvoice && !invoice_url) {
-            eventTitle = `Видалено 1С накладну`;
+            eventTitle = isPostExecution ? `⚠️ Видалено 1С накладну з виконаного замовлення` : `Видалено 1С накладну`;
           }
 
           if (!targetDel['Історія_Операцій']) {
