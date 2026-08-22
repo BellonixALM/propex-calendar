@@ -3459,6 +3459,13 @@ body.light-theme .login-error {
         propexApi
           .withSuccessHandler(function(response) {
             state.employees = (response && response.status === 'success') ? response.data : (response || []);
+            // Map Ira Order to Supply Manager
+            (state.employees || []).forEach(e => {
+              const name = String(e['ПІБ'] || e['Ім\'я'] || e['Логін'] || '').toLowerCase();
+              if (name.includes('ira') || name.includes('іра') || name.includes('ірина')) {
+                e['Роль'] = 'Менеджер з постачання';
+              }
+            });
             if (currentEmployeeDepartment) {
               if (typeof renderEmployees === 'function') renderEmployees();
             } else {
