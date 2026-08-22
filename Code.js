@@ -461,15 +461,21 @@ function addDelivery(deliveryData) {
     newRow.push('Очікує');
   }
 
-  var hasInvoiceCol = headers.indexOf('Накладна_URL') !== -1 || headers.indexOf('Накладна') !== -1;
-  if (!hasInvoiceCol) {
-    sheet.getRange(1, headers.length + 1).setValue('Накладна_URL');
-    headers.push('Накладна_URL');
-    newRow.push(deliveryData.invoice_url || '');
-  } else {
-    setVal('Накладна_URL', deliveryData.invoice_url || '');
-    setVal('Накладна', deliveryData.invoice_url || '');
+  var hasHistoryCol = headers.indexOf('Історія_Операцій') !== -1 || headers.indexOf('Історія') !== -1;
+  if (!hasHistoryCol) {
+    sheet.getRange(1, headers.length + 1).setValue('Історія_Операцій');
+    headers.push('Історія_Операцій');
   }
+
+  var formattedNow = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy HH:mm");
+  var managerInfo = deliveryData.manager_name || deliveryData.manager_chat_id || 'Ira Order';
+  var initialHistory = formattedNow + " — Замовлення створено (Менеджер: " + managerInfo + ");";
+  if (deliveryData.invoice_url) {
+    initialHistory += " " + formattedNow + " — Додано 1С прибуткову накладну (Менеджер: " + managerInfo + ");";
+  }
+
+  setVal('Історія_Операцій', initialHistory);
+  setVal('Історія', initialHistory);
 
   sheet.appendRow(newRow);
   
