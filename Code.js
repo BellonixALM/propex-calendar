@@ -120,7 +120,8 @@ function doPost(e) {
     var action = data.action;
     
     if (action === 'add_delivery' || action === 'addDelivery') {
-      return ContentService.createTextOutput(JSON.stringify(addDelivery(data.data)))
+      var payload = data.data || data;
+      return ContentService.createTextOutput(JSON.stringify(addDelivery(payload)))
         .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'register_driver') {
       return ContentService.createTextOutput(JSON.stringify(register_driver(data.data)))
