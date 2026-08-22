@@ -3407,11 +3407,14 @@ body.light-theme .login-error {
             const currentInvoiceOverrides = getLocalInvoiceOverrides();
             freshDeliveries.forEach(d => {
               const dId = String(d['ID'] || d['ID_Замовлення']);
+              const existingLocal = state.deliveries.find(ld => String(ld['ID'] || ld['ID_Замовлення']) === dId);
               if (currentInvoiceOverrides[dId]) {
                 d['Накладна_URL'] = currentInvoiceOverrides[dId];
                 d['Накладна'] = currentInvoiceOverrides[dId];
+              } else if (existingLocal && (existingLocal['Накладна_URL'] || existingLocal['Накладна'])) {
+                d['Накладна_URL'] = existingLocal['Накладна_URL'] || existingLocal['Накладна'];
+                d['Накладна'] = existingLocal['Накладна_URL'] || existingLocal['Накладна'];
               }
-              const existingLocal = state.deliveries.find(ld => String(ld['ID'] || ld['ID_Замовлення']) === dId);
               if (existingLocal && existingLocal['Історія_Операцій']) {
                 const sheetHist = d['Історія_Операцій'] || d['Історія'] || '';
                 const localHist = existingLocal['Історія_Операцій'] || '';
