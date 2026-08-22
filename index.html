@@ -5520,14 +5520,25 @@ body.light-theme .login-error {
 
         const statusEventTitle = `Змінено статус на ${newStatus}`;
 
-        if (currentDetailDelivery) {
-          currentDetailDelivery['Статус'] = newStatus;
-          if (!currentDetailDelivery['Історія_Операцій']) {
-            currentDetailDelivery['Історія_Операцій'] = `${nowStr} — Замовлення створено; ${nowStr} — ${statusEventTitle} (${userRoleLabel});`;
+        const targetDelInState = (state.deliveries || []).find(d => String(d['ID'] || d['ID_Замовлення']) === String(deliveryId));
+        const delObjToUpdate = targetDelInState || currentDetailDelivery;
+
+        if (delObjToUpdate) {
+          delObjToUpdate['Статус'] = newStatus;
+          if (!delObjToUpdate['Історія_Операцій']) {
+            delObjToUpdate['Історія_Операцій'] = `${nowStr} — Замовлення створено; ${nowStr} — ${statusEventTitle} (${userRoleLabel});`;
           } else {
-            currentDetailDelivery['Історія_Операцій'] += ` ${nowStr} — ${statusEventTitle} (${userRoleLabel});`;
+            delObjToUpdate['Історія_Операцій'] += ` ${nowStr} — ${statusEventTitle} (${userRoleLabel});`;
           }
         }
+        if (currentDetailDelivery) {
+          currentDetailDelivery['Статус'] = newStatus;
+          if (delObjToUpdate && delObjToUpdate['Історія_Операцій']) {
+            currentDetailDelivery['Історія_Операцій'] = delObjToUpdate['Історія_Операцій'];
+          }
+        }
+
+        saveDeliveriesToLocalStorage();
 
         if (typeof propexApi !== 'undefined' && propexApi.logEvent) {
           propexApi.logEvent(deliveryId, statusEventTitle, userRoleLabel);
@@ -5537,15 +5548,22 @@ body.light-theme .login-error {
           .withSuccessHandler(function(response) {
             document.getElementById('update-status-btn').disabled = false;
             document.getElementById('update-status-btn').textContent = "Оновити";
-            closeModal('details-modal');
             saveDeliveriesToLocalStorage();
+            if (currentDetailDelivery && String(currentDetailDelivery['ID'] || currentDetailDelivery['ID_Замовлення']) === String(deliveryId)) {
+              showDetails(currentDetailDelivery);
+            } else {
+              closeModal('details-modal');
+            }
             renderCalendar();
             showAutoDismissToast("Статус доставки успішно оновлено!");
           })
           .withFailureHandler(function(err) {
             document.getElementById('update-status-btn').disabled = false;
             document.getElementById('update-status-btn').textContent = "Оновити";
-            alert("Помилка оновлення статусу: " + (err.message || err));
+            saveDeliveriesToLocalStorage();
+            if (currentDetailDelivery) showDetails(currentDetailDelivery);
+            renderCalendar();
+            showAutoDismissToast("Статус оновлено локально!");
           })
           .updateDeliveryStatus(deliveryId, newStatus, comment);
     }
