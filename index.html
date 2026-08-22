@@ -2878,7 +2878,12 @@ body.light-theme .login-error {
           <!-- RIGHT COLUMN: Real-time Omnichannel Activity Timeline -->
           <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; max-height: 480px;">
             <div style="font-family: var(--font-title); font-size: 13px; font-weight: 800; color: var(--text-color); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
-              <span>⚡ Activity Timeline</span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                ⚡ Activity Timeline
+                <button onclick="copyTimelineToClipboard()" class="btn btn-secondary" style="padding: 2px 7px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; background: rgba(255,255,255,0.06);" title="Скопіювати весь таймлайн замовлення">
+                  📋 Скопіювати
+                </button>
+              </span>
               <span style="font-size: 10px; color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); padding: 2px 6px; border-radius: 10px; font-weight: 600;">Real-time</span>
             </div>
             
@@ -5276,6 +5281,31 @@ body.light-theme .login-error {
           scrollContainer.scrollTop = 0;
         }
       }, 50);
+    }
+
+    function copyTimelineToClipboard() {
+      if (!currentDetailDelivery) return;
+      const orderNum = currentDetailDelivery['Номер_замовлення'] || currentDetailDelivery['ID'] || 'Б/Н';
+      const historyStr = currentDetailDelivery['Історія_Операцій'] || currentDetailDelivery['Історія'] || '';
+
+      let textToCopy = `📋 Історія замовлення № ${orderNum}:\n`;
+      textToCopy += `------------------------------------\n`;
+
+      if (historyStr) {
+        const entries = historyStr.split(';').filter(e => e.trim());
+        entries.forEach((e, idx) => {
+          textToCopy += `${idx + 1}. ${e.trim()}\n`;
+        });
+      } else {
+        const createdTime = currentDetailDelivery['Дата_Створення'] || `${currentDetailDelivery['Дата'] || ''} ${currentDetailDelivery['Час'] || ''}`.trim();
+        textToCopy += `1. ${createdTime} — Замовлення створено\n`;
+      }
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        alert("✅ Історію замовлення успішно скопійовано у буфер обміну!\nТепер ви можете вставити її в Telegram чи будь-який чат.");
+      }).catch(err => {
+        console.error("Failed to copy timeline:", err);
+      });
     }
 
     function deleteCurrentDelivery() {
