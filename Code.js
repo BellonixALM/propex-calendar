@@ -1018,15 +1018,26 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
           changed = true;
         }
         
-        if (changed) {
-          var notificationText = "🔄 <b>Коригування доставки логістом!</b>\n\n" +
-                                 "📦 <b>Замовлення №:</b> " + (deliveryData.order_num || oldOrderNum) + "\n\n" +
-                                 "Логіст оновив параметри вашої доставки:\n" + diffText + "\n" +
-                                 "ℹ️ Будь ласка, врахуйте ці зміни у вашій роботі.";
-          sendTelegramMessage(managerId, notificationText);
+      // Preserve and update History log upon moving or editing
+      var historyCol = headers.indexOf('Історія_Операцій');
+      if (historyCol === -1) historyCol = headers.indexOf('Історія');
+      if (historyCol !== -1) {
+        var existingHistory = data[i][historyCol] || '';
+        var formattedNow = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy HH:mm");
+        var userRoleLabel = (userRole === 'logist' || userRole === 'логіст') ? 'Логіст: Юрій Бортовщук' : (userRole || 'Менеджер');
+        
+        var changeDesc = "Коригування замовлення (" + userRoleLabel + ")";
+        if (oldTime !== deliveryData.time || oldDate !== deliveryData.date) {
+          changeDesc = "Перенесено час/дату (" + userRoleLabel + ")";
         }
+        
+        var updatedHistory = existingHistory 
+          ? (existingHistory + " " + formattedNow + " — " + changeDesc + ";")
+          : (formattedNow + " — " + changeDesc + ";");
+          
+        sheet.getRange(rowNum, historyCol + 1).setValue(updatedHistory);
       }
-      
+
       return { status: 'success', id: deliveryId };
     }
   }
