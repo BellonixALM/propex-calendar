@@ -4930,6 +4930,7 @@ body.light-theme .login-error {
       const files = Array.from(event.target.files);
       if (!files.length) return;
       
+      selectedInvoiceFiles = []; // Reset old files to completely replace with newly selected ones
       let readCount = 0;
       files.forEach(file => {
         const reader = new FileReader();
