@@ -5809,11 +5809,32 @@ body.light-theme .login-error {
         newAddress = "Не вказана адреса";
       }
       
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const nowStr = `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+
+      const userRoleLabel = (user.role === 'logist' || user.role === 'логіст') ? 'Логіст: Юрій Бортовщук' : (user.name || user.login || 'Менеджер');
+      const moveEventTitle = `Змінено час/авто з ${oldTime} на ${targetTime}`;
+      
+      if (!del['Історія_Операцій']) {
+        del['Історія_Операцій'] = `${nowStr} — Замовлення створено; ${nowStr} — ${moveEventTitle} (${userRoleLabel});`;
+      } else {
+        del['Історія_Операцій'] += ` ${nowStr} — ${moveEventTitle} (${userRoleLabel});`;
+      }
+
       del['Час'] = targetTime;
       del['ID_Авто'] = String(targetCar);
       del['Дата'] = targetDate;
       del['Адреса'] = newAddress;
       renderCalendar();
+
+      if (typeof propexApi !== 'undefined' && propexApi.logEvent) {
+        propexApi.logEvent(delId, moveEventTitle, userRoleLabel);
+      }
       const deliveryData = {
         driver_id: del['ID_Авто'],
         date: del['Дата'],
