@@ -5268,6 +5268,13 @@ body.light-theme .login-error {
       }
       
       openModal('details-modal');
+
+      // Auto-scroll timeline to display latest events first
+      setTimeout(() => {
+        if (historyContent) {
+          historyContent.scrollTop = historyContent.scrollHeight;
+        }
+      }, 50);
     }
 
     function deleteCurrentDelivery() {
