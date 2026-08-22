@@ -406,12 +406,14 @@ function addDelivery(deliveryData) {
   
   var headers = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0];
   if (headers.length === 1 && headers[0] === "") {
-    sheet.appendRow(['ID', 'ID_Авто', 'Дата', 'Час', 'Адреса', 'Номер_замовлення', 'Статус_оплати', 'Статус', 'Коментар', 'Ім\'я_одержувача', 'Телефон_одержувача', 'ID_Менеджера', 'ID_Комірника', 'Статус_збору']);
+    sheet.appendRow(['ID', 'ID_Авто', 'Дата', 'Час', 'Адреса', 'Номер_замовлення', 'Статус_оплати', 'Статус', 'Коментар', 'Ім\'я_одержувача', 'Телефон_одержувача', 'ID_Менеджера', 'ID_Комірника', 'Статус_збору', 'Дата_Створення', 'Історія_Операцій']);
     headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   } else {
     // Add missing columns if they don't exist
     var hasWorker = headers.indexOf('ID_Комірника') !== -1;
     var hasGatherStatus = headers.indexOf('Статус_збору') !== -1;
+    var hasCreatedCol = headers.indexOf('Дата_Створення') !== -1 || headers.indexOf('Created_At') !== -1;
+    var hasHistoryCol = headers.indexOf('Історія_Операцій') !== -1 || headers.indexOf('Історія') !== -1;
     
     if (!hasWorker) {
       sheet.getRange(1, headers.length + 1).setValue('ID_Комірника');
@@ -420,6 +422,14 @@ function addDelivery(deliveryData) {
     if (!hasGatherStatus) {
       sheet.getRange(1, headers.length + 1).setValue('Статус_збору');
       headers.push('Статус_збору');
+    }
+    if (!hasCreatedCol) {
+      sheet.getRange(1, headers.length + 1).setValue('Дата_Створення');
+      headers.push('Дата_Створення');
+    }
+    if (!hasHistoryCol) {
+      sheet.getRange(1, headers.length + 1).setValue('Історія_Операцій');
+      headers.push('Історія_Операцій');
     }
   }
   
@@ -474,6 +484,7 @@ function addDelivery(deliveryData) {
     initialHistory += " " + formattedNow + " — Додано 1С прибуткову накладну (Менеджер: " + managerInfo + ");";
   }
 
+  setVal('Дата_Створення', formattedNow);
   setVal('Історія_Операцій', initialHistory);
   setVal('Історія', initialHistory);
 
