@@ -4737,20 +4737,39 @@ body.light-theme .login-error {
       let whIcon = '';
       const whStatus = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
       const isWhProblem = whStatus.startsWith('Проблема') || whStatus.startsWith('Відмова');
-      if (statusClass === 'completed') {
-        whIcon = '<span class="wh-icon" title="Доставку успішно підтверджено водієм" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
-      } else if (smartOnRoute && statusClass !== 'problem') {
-        const truckColor = isIraOrder ? '#a855f7' : '#3b82f6';
-        const truckTitle = isIraOrder ? 'Активна поставка (Водій прямує до постачальника)' : 'Передано водію (в дорозі)';
-        whIcon = `<span class="wh-icon" title="${truckTitle}" style="color:${truckColor}; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>`;
-      } else if (whStatus === 'Очікує') {
-        whIcon = '<span class="wh-icon" title="Очікує збірки" style="color:#9ca3af; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="clock" style="width:20px;height:20px;"></i></span>';
-      } else if (whStatus === 'В процесі збору' || whStatus === 'Збирається') {
-        whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
-      } else if (whStatus === 'Зібрано') {
-        whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
-      } else if (isWhProblem) {
-        whIcon = '<span class="wh-icon" title="Проблема зі збіркою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
+      
+      // Dedicated 3-Stage Icon Logic for Ira Order Supply Workflow:
+      if (isIraOrder) {
+        if (whStatus === 'Прийнято на склад' || whStatus === 'Отримано' || statusClass === 'completed' || del['Статус'] === 'Виконано') {
+          // Stage 3: Warehouse finished reception -> Green Checkmark Circle
+          whIcon = '<span class="wh-icon" title="Товар успішно прийнято на склад Propex" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
+        } else if (whStatus === 'Прийомка в процесі' || whStatus === 'Приймається' || whStatus === 'В процесі збору' || whStatus === 'Збирається') {
+          // Stage 2: Warehouse started receiving (checked 1st item) -> Amber Box Icon (який на скріншоті)
+          whIcon = '<span class="wh-icon" title="Відбувається приймання товару на складі Propex" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
+        } else if (whStatus === 'В дорозі на склад' || del['Водій_Прийняв'] === 'Так' || whStatus === 'Товар забрано водієм') {
+          // Stage 1: Driver picked up goods & driving to Propex -> Green Truck Icon
+          whIcon = '<span class="wh-icon" title="Товар забрано у постачальника (Водій везе на склад)" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
+        } else if (smartOnRoute && statusClass !== 'problem') {
+          // Initial Stage: Driver route active, heading to supplier -> Purple Truck Icon
+          whIcon = '<span class="wh-icon" title="Активна поставка (Водій прямує до постачальника)" style="color:#a855f7; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
+        } else if (isWhProblem) {
+          whIcon = '<span class="wh-icon" title="Проблема з поставкою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
+        }
+      } else {
+        // Standard delivery status icon logic
+        if (statusClass === 'completed') {
+          whIcon = '<span class="wh-icon" title="Доставку успішно підтверджено водієм" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
+        } else if (smartOnRoute && statusClass !== 'problem') {
+          whIcon = `<span class="wh-icon" title="Передано водію (в дорозі)" style="color:#3b82f6; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>`;
+        } else if (whStatus === 'Очікує') {
+          whIcon = '<span class="wh-icon" title="Очікує збірки" style="color:#9ca3af; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="clock" style="width:20px;height:20px;"></i></span>';
+        } else if (whStatus === 'В процесі збору' || whStatus === 'Збирається') {
+          whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
+        } else if (whStatus === 'Зібрано') {
+          whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
+        } else if (isWhProblem) {
+          whIcon = '<span class="wh-icon" title="Проблема зі збіркою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
+        }
       }
 
       if (isWhProblem) {
