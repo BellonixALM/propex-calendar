@@ -767,6 +767,9 @@ function updateWarehouseStatus(deliveryId, statusStr) {
       var managerCol = headers.indexOf('ID_Менеджера');
       var managerId = managerCol !== -1 ? String(data[i][managerCol]).trim() : "";
       
+      // Log warehouse status event to Activity Timeline
+      appendHistoryEvent(orderNum, "Статус збору складом: " + statusStr, "Склад / Комірник Сергій");
+      
       // If it's a problem or refusal, notify Heads and Manager
       if (statusStr.indexOf('Проблема') === 0 || statusStr.indexOf('Відмова') === 0) {
         var whData = getWarehouseWorkers();
