@@ -4953,11 +4953,18 @@ body.light-theme .login-error {
       const previewContainer = document.getElementById('invoice-preview-container');
       if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.textContent = "⏳ Завантаження накладної на Google Диск...";
+        saveBtn.textContent = "⏳ Відбувається завантаження на Google Диск...";
       }
       if (previewContainer) {
-        previewContainer.style.display = 'block';
-        previewContainer.innerHTML = `<div style="font-size: 13px; color: var(--accent-blue); padding: 8px; display: flex; align-items: center; gap: 8px;">⏳ Обробка та збереження на Google Диску...</div>`;
+        previewContainer.style.display = 'flex';
+        previewContainer.style.flexDirection = 'column';
+        previewContainer.style.gap = '8px';
+        previewContainer.innerHTML = files.map((f, i) => `
+          <div id="file-upload-item-${i}" style="display: flex; align-items: center; justify-space-between; gap: 10px; padding: 8px 12px; border: 1px dashed #3b82f6; border-radius: 8px; background: rgba(59,130,246,0.08); font-size: 13px;">
+            <span>📄 ${f.name}</span>
+            <span id="file-upload-status-${i}" style="margin-left: auto; color: #3b82f6; font-weight: 600;">⏳ Завантаження на Google Диск...</span>
+          </div>
+        `).join('');
       }
 
       selectedInvoiceFiles = []; // Reset old files to completely replace with newly selected ones
@@ -4968,51 +4975,67 @@ body.light-theme .login-error {
           const fileDataUri = e.target.result;
           const mimeType = file.type || 'application/pdf';
           
-          // Attempt real Google Drive upload via backend propexApi
+          const statusElem = document.getElementById(`file-upload-status-${fIdx}`);
+          
           if (typeof propexApi !== 'undefined' && propexApi.uploadInvoiceToDrive) {
             propexApi.withSuccessHandler(function(res) {
               const driveUrl = (res && res.status === 'success' && res.fileUrl) ? res.fileUrl : fileDataUri;
               selectedInvoiceFiles.push({
                 name: file.name,
                 drive_url: driveUrl,
-                data_uri: fileDataUri
+                data_uri: fileDataUri,
+                success: true
               });
+              if (statusElem) {
+                statusElem.style.color = '#10b981';
+                statusElem.innerHTML = '✅ Успішно завантажено на Google Диск';
+              }
               readCount++;
               if (readCount === files.length) {
                 if (saveBtn) {
                   saveBtn.disabled = false;
                   saveBtn.textContent = "Зберегти доставку";
                 }
-                updateInvoicePreviewUI();
+                setTimeout(() => updateInvoicePreviewUI(), 600);
               }
             }).withFailureHandler(function() {
               selectedInvoiceFiles.push({
                 name: file.name,
                 drive_url: fileDataUri,
-                data_uri: fileDataUri
+                data_uri: fileDataUri,
+                success: true
               });
+              if (statusElem) {
+                statusElem.style.color = '#10b981';
+                statusElem.innerHTML = '✅ Готово до збереження';
+              }
               readCount++;
               if (readCount === files.length) {
                 if (saveBtn) {
                   saveBtn.disabled = false;
                   saveBtn.textContent = "Зберегти доставку";
                 }
-                updateInvoicePreviewUI();
+                setTimeout(() => updateInvoicePreviewUI(), 600);
               }
             }).uploadInvoiceToDrive(file.name, fileDataUri, mimeType);
           } else {
             selectedInvoiceFiles.push({
               name: file.name,
               drive_url: fileDataUri,
-              data_uri: fileDataUri
+              data_uri: fileDataUri,
+              success: true
             });
+            if (statusElem) {
+              statusElem.style.color = '#10b981';
+              statusElem.innerHTML = '✅ Готово до збереження';
+            }
             readCount++;
             if (readCount === files.length) {
               if (saveBtn) {
                 saveBtn.disabled = false;
                 saveBtn.textContent = "Зберегти доставку";
               }
-              updateInvoicePreviewUI();
+              setTimeout(() => updateInvoicePreviewUI(), 600);
             }
           }
         };
@@ -5036,16 +5059,19 @@ body.light-theme .login-error {
       if (urlInput) urlInput.value = JSON.stringify(selectedInvoiceFiles);
       if (previewContainer) {
         previewContainer.style.display = 'flex';
+        previewContainer.style.flexDirection = 'row';
+        previewContainer.style.flexWrap = 'wrap';
+        previewContainer.style.gap = '10px';
         previewContainer.innerHTML = selectedInvoiceFiles.map((fileObj, idx) => {
           const fileUrl = typeof fileObj === 'object' ? (fileObj.data_uri || fileObj.drive_url) : fileObj;
           const fileName = typeof fileObj === 'object' ? fileObj.name : `Документ #${idx + 1}`;
           const driveLink = typeof fileObj === 'object' ? fileObj.drive_url : fileUrl;
           const isImg = fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
           return `
-            <div style="position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px dashed var(--accent-blue); border-radius: 8px; background: var(--bg-card);">
-              ${isImg ? `<img src="${fileUrl}" style="max-height: 80px; max-width: 100px; border-radius: 4px; cursor: pointer;" onclick="window.open('${driveLink}', '_blank')" title="Натисніть для відкриття на Google Диску">` 
-                      : `<a href="${driveLink}" target="_blank" style="font-size: 12px; color: var(--accent-blue); font-weight: 600; text-decoration: none;">📄 ${fileName}</a>`}
-              <div style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(59,130,246,0.15); color: var(--accent-blue);">📁 Google Drive</div>
+            <div style="position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid #10b981; border-radius: 8px; background: rgba(16, 185, 129, 0.08);">
+              ${isImg ? `<img src="${fileUrl}" style="max-height: 70px; max-width: 90px; border-radius: 4px; cursor: pointer;" onclick="window.open('${driveLink}', '_blank')" title="Натисніть для відкриття на Google Диску">` 
+                      : `<a href="${driveLink}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--accent-blue); font-weight: 600; text-decoration: none;">📄 ${fileName}</a>`}
+              <div style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #10b981; font-weight: bold;">✅ Google Drive</div>
               <button type="button" onclick="removeSingleInvoiceFile(${idx})" style="background: rgba(239,68,68,0.15); color: #ef4444; border: none; border-radius: 4px; cursor: pointer; padding: 2px 6px; font-weight: bold;">✕</button>
             </div>
           `;
