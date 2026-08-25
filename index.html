@@ -5815,6 +5815,7 @@ body.light-theme .login-error {
           try {
             const overrides = JSON.parse(localStorage.getItem('propex_invoice_overrides') || '{}');
             overrides[tempId] = invoice_url;
+            if (order_num) overrides[String(order_num)] = invoice_url;
             localStorage.setItem('propex_invoice_overrides', JSON.stringify(overrides));
           } catch(e) {}
         }
