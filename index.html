@@ -5801,6 +5801,9 @@ body.light-theme .login-error {
           } catch(e) {}
         }
         saveDeliveriesToLocalStorage();
+        closeModal('delivery-modal');
+        if (targetDel) showDetails(targetDel);
+        renderCalendar();
         propexApi.withSuccessHandler(function(response) {
           document.getElementById('save-btn').disabled = false;
           document.getElementById('save-btn').textContent = "Зберегти доставку";
