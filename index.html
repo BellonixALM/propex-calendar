@@ -4949,6 +4949,17 @@ body.light-theme .login-error {
       const files = Array.from(event.target.files);
       if (!files.length) return;
       
+      const saveBtn = document.getElementById('save-btn');
+      const previewContainer = document.getElementById('invoice-preview-container');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "⏳ Завантаження накладної на Google Диск...";
+      }
+      if (previewContainer) {
+        previewContainer.style.display = 'block';
+        previewContainer.innerHTML = `<div style="font-size: 13px; color: var(--accent-blue); padding: 8px; display: flex; align-items: center; gap: 8px;">⏳ Обробка та збереження на Google Диску...</div>`;
+      }
+
       selectedInvoiceFiles = []; // Reset old files to completely replace with newly selected ones
       let readCount = 0;
       files.forEach((file, fIdx) => {
@@ -4967,7 +4978,13 @@ body.light-theme .login-error {
                 data_uri: fileDataUri
               });
               readCount++;
-              if (readCount === files.length) updateInvoicePreviewUI();
+              if (readCount === files.length) {
+                if (saveBtn) {
+                  saveBtn.disabled = false;
+                  saveBtn.textContent = "Зберегти доставку";
+                }
+                updateInvoicePreviewUI();
+              }
             }).withFailureHandler(function() {
               selectedInvoiceFiles.push({
                 name: file.name,
@@ -4975,7 +4992,13 @@ body.light-theme .login-error {
                 data_uri: fileDataUri
               });
               readCount++;
-              if (readCount === files.length) updateInvoicePreviewUI();
+              if (readCount === files.length) {
+                if (saveBtn) {
+                  saveBtn.disabled = false;
+                  saveBtn.textContent = "Зберегти доставку";
+                }
+                updateInvoicePreviewUI();
+              }
             }).uploadInvoiceToDrive(file.name, fileDataUri, mimeType);
           } else {
             selectedInvoiceFiles.push({
@@ -4984,7 +5007,13 @@ body.light-theme .login-error {
               data_uri: fileDataUri
             });
             readCount++;
-            if (readCount === files.length) updateInvoicePreviewUI();
+            if (readCount === files.length) {
+              if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = "Зберегти доставку";
+              }
+              updateInvoicePreviewUI();
+            }
           }
         };
         reader.readAsDataURL(file);
