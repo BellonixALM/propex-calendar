@@ -5164,18 +5164,19 @@ body.light-theme .login-error {
             let driveLink = typeof item === 'object' ? item.drive_url : url;
             const fileName = typeof item === 'object' ? item.name : `Документ 1С #${idx + 1}`;
             
-            // Convert standard Drive view URLs to direct export view links for Safari popup prevention
-            if (driveLink && driveLink.includes('drive.google.com/file/d/')) {
-              const driveIdMatch = driveLink.match(/\/file\/d\/([^\/]+)/);
+            // Format Google Drive links for universal preview without popup blocks
+            if (driveLink && driveLink.includes('drive.google.com')) {
+              const driveIdMatch = driveLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
               if (driveIdMatch && driveIdMatch[1]) {
-                driveLink = `https://drive.google.com/uc?export=view&id=${driveIdMatch[1]}`;
+                driveLink = `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
               }
             }
 
-            if (url.startsWith('data:image/') || url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-              return `<a href="${driveLink}" target="_blank"><img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" title="${fileName} (Натисніть для відкриття на Google Диску)"></a>`;
+            if (url && (url.startsWith('data:image/') || url.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
+              return `<a href="${driveLink}" target="_blank" rel="noopener noreferrer"><img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" title="${fileName} (Натисніть для відкриття на Google Диску)"></a>`;
             } else {
-              return `<a href="${driveLink}" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;">📄 ${fileName} (Google Drive)</a>`;
+              const fileHref = (driveLink && driveLink.startsWith('http')) ? driveLink : url;
+              return `<a href="${fileHref}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;">📄 ${fileName} (Google Drive)</a>`;
             }
           }).join('') + `</div>`;
         } else {
