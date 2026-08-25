@@ -5228,10 +5228,13 @@ body.light-theme .login-error {
             }
 
             if (url && (url.startsWith('data:image/') || url.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
-              return `<a href="${driveLink}" target="_blank" rel="noopener noreferrer"><img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" title="${fileName} (Натисніть для відкриття на Google Диску)"></a>`;
+              return `<div style="position: relative; display: inline-block;">
+                <img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" onclick="window.open('${url.startsWith('data:') ? url : driveLink}', '_blank')" title="${fileName} (Клацніть для перегляду)">
+                <a href="${driveLink}" target="_blank" rel="noopener noreferrer" style="display: block; font-size: 11px; margin-top: 4px; color: var(--accent-blue); text-decoration: none;">🔗 Відкрити на Google Диску</a>
+              </div>`;
             } else {
-              const fileHref = (driveLink && driveLink.startsWith('http')) ? driveLink : url;
-              return `<a href="${fileHref}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;">📄 ${fileName} (Google Drive)</a>`;
+              const fileHref = (url && url.startsWith('data:')) ? url : driveLink;
+              return `<a href="${fileHref}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;">📄 ${fileName}</a>`;
             }
           }).join('') + `</div>`;
         } else {
