@@ -5728,6 +5728,28 @@ body.light-theme .login-error {
       if (isEditMode && editDeliveryId) {
         const targetDel = (state.deliveries || []).find(d => String(d['ID']) === String(editDeliveryId));
         if (targetDel) {
+          // Detect specific changed fields for explicit Timeline logging
+          let changesList = [];
+          if (targetDel['Час'] !== time) changesList.push(`зміна часу: ${targetDel['Час'] || 'б/ч'} ➔ ${time}`);
+          if (targetDel['Дата'] !== formattedDate) changesList.push(`зміна дати: ${targetDel['Дата'] || 'б/д'} ➔ ${formattedDate}`);
+          if (String(targetDel['ID_Авто'] || '') !== String(car || '')) {
+            const oldCar = window.getCarName(targetDel['ID_Авто']);
+            const newCar = window.getCarName(car);
+            changesList.push(`зміна авто: ${oldCar} ➔ ${newCar}`);
+          }
+          if (String(targetDel['ID_Водія'] || '') !== String(driverUserId || '')) {
+            const oldDriver = getEmployeeFullName(targetDel['ID_Водія'], 'Не призначено');
+            const newDriver = getEmployeeFullName(driverUserId, 'Не призначено');
+            changesList.push(`зміна водія: ${oldDriver} ➔ ${newDriver}`);
+          }
+          if ((targetDel['Адреса'] || '').trim() !== address.trim()) {
+            changesList.push(`зміна адреси: ${targetDel['Адреса'] || ''} ➔ ${address}`);
+          }
+
+          const oldInvoice = targetDel['Накладна_URL'] || targetDel['Накладна'] || '';
+          if (!oldInvoice && invoice_url) changesList.push(`додано 1С накладну`);
+          else if (oldInvoice && !invoice_url) changesList.push(`видалено 1С накладну`);
+
           targetDel['Накладна_URL'] = invoice_url;
           targetDel['Накладна'] = invoice_url;
           targetDel['Номер_замовлення'] = order_num;
@@ -5754,13 +5776,8 @@ body.light-theme .login-error {
 
           // Track exact change events in history using Universal Logger logic
           const isPostExecution = targetDel['Статус'] === 'Виконано';
-          const oldInvoice = targetDel['Накладна_URL'] || targetDel['Накладна'] || '';
-          let eventTitle = isPostExecution ? `⚠️ Коригування закритого (Виконаного) замовлення` : `Коригування замовлення`;
-          if (!oldInvoice && invoice_url) {
-            eventTitle = isPostExecution ? `⚠️ Додано 1С накладну у виконане замовлення` : `Додано 1С прибуткову накладну`;
-          } else if (oldInvoice && !invoice_url) {
-            eventTitle = isPostExecution ? `⚠️ Видалено 1С накладну з виконаного замовлення` : `Видалено 1С накладну`;
-          }
+          const detailsStr = changesList.length > 0 ? ` (${changesList.join('; ')})` : '';
+          let eventTitle = isPostExecution ? `⚠️ Коригування закритого замовлення${detailsStr}` : `Коригування: ${changesList.length > 0 ? changesList.join(', ') : 'оновлено реквізити'}`;
 
           if (!targetDel['Історія_Операцій']) {
             const originalCreated = targetDel['Дата_Створення'] || `${formattedDate} ${time}`;
