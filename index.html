@@ -4955,20 +4955,36 @@ body.light-theme .login-error {
         const reader = new FileReader();
         reader.onload = function(e) {
           const fileDataUri = e.target.result;
-          const fileExtension = file.name.split('.').pop() || 'pdf';
-          const simulatedDriveId = '1Drive_' + Math.random().toString(36).substring(2, 10);
-          const simulatedDriveUrl = `https://drive.google.com/file/d/${simulatedDriveId}/view?name=${encodeURIComponent(file.name)}`;
+          const mimeType = file.type || 'application/pdf';
           
-          // Store both base64 (for instant local OCR) and simulated Google Drive URL
-          selectedInvoiceFiles.push({
-            name: file.name,
-            drive_url: simulatedDriveUrl,
-            data_uri: fileDataUri
-          });
-          
-          readCount++;
-          if (readCount === files.length) {
-            updateInvoicePreviewUI();
+          // Attempt real Google Drive upload via backend propexApi
+          if (typeof propexApi !== 'undefined' && propexApi.uploadInvoiceToDrive) {
+            propexApi.withSuccessHandler(function(res) {
+              const driveUrl = (res && res.status === 'success' && res.fileUrl) ? res.fileUrl : fileDataUri;
+              selectedInvoiceFiles.push({
+                name: file.name,
+                drive_url: driveUrl,
+                data_uri: fileDataUri
+              });
+              readCount++;
+              if (readCount === files.length) updateInvoicePreviewUI();
+            }).withFailureHandler(function() {
+              selectedInvoiceFiles.push({
+                name: file.name,
+                drive_url: fileDataUri,
+                data_uri: fileDataUri
+              });
+              readCount++;
+              if (readCount === files.length) updateInvoicePreviewUI();
+            }).uploadInvoiceToDrive(file.name, fileDataUri, mimeType);
+          } else {
+            selectedInvoiceFiles.push({
+              name: file.name,
+              drive_url: fileDataUri,
+              data_uri: fileDataUri
+            });
+            readCount++;
+            if (readCount === files.length) updateInvoicePreviewUI();
           }
         };
         reader.readAsDataURL(file);

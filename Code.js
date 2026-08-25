@@ -145,6 +145,11 @@ function doPost(e) {
       var result = authenticateUser(data.data.login, data.data.password);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'upload_invoice_drive' || action === 'uploadInvoiceToDrive') {
+      var payload = data.data || data;
+      var result = saveInvoiceFileToDrive(payload.fileName, payload.fileBase64, payload.mimeType);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'update_delivery_details' || action === 'updateDeliveryDetails') {
       var payload = data.data || data;
       var result = updateDeliveryDetails(payload.id || payload.deliveryId, payload.deliveryData || payload, payload.userRole);
@@ -1863,5 +1868,47 @@ function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
     Logger.log("Error in appendHistoryEvent: " + err.toString());
   }
   return false;
+}
+
+/**
+ * Saves base64 invoice file directly into Google Drive folder "Накладні Propex 1С"
+ * and returns public shareable view URL.
+ */
+function saveInvoiceFileToDrive(fileName, fileBase64, mimeType) {
+  try {
+    var folderName = "Накладні Propex 1С";
+    var folders = DriveApp.getFoldersByName(folderName);
+    var targetFolder;
+    
+    if (folders.hasNext()) {
+      targetFolder = folders.next();
+    } else {
+      targetFolder = DriveApp.createFolder(folderName);
+    }
+    
+    // Clean base64 header if present
+    var cleanBase64 = fileBase64;
+    if (cleanBase64.indexOf(',') > -1) {
+      cleanBase64 = cleanBase64.split(',')[1];
+    }
+    
+    var decodedBlob = Utilities.newBlob(Utilities.base64Decode(cleanBase64), mimeType || 'application/pdf', fileName || 'Накладна_1С.pdf');
+    var createdFile = targetFolder.createFile(decodedBlob);
+    createdFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    var fileUrl = createdFile.getUrl();
+    return {
+      status: 'success',
+      fileUrl: fileUrl,
+      fileName: fileName,
+      fileId: createdFile.getId()
+    };
+  } catch(e) {
+    Logger.log("Error in saveInvoiceFileToDrive: " + e.toString());
+    return {
+      status: 'error',
+      message: e.toString()
+    };
+  }
 }
 
