@@ -5,6 +5,12 @@ var SPREADSHEET_ID = '198_7ofajvsBszwRDm5pnbIrGxHUMphqPumX9pNOPZ6w';
 // ТОКЕН ВАШОГО TELEGRAM БОТА ДЛЯ АВТОМАТИЧНИХ СПОВІЩЕНЬ
 var BOT_TOKEN = '8662663470:AAGl8KqJHrmxXVUO3d-j1Rakjgg4W60PTzg';
 
+function authorizeGoogleDrive() {
+  var folder = DriveApp.getRootFolder();
+  Logger.log("Google Drive access authorized successfully! Root folder: " + folder.getName());
+  return "SUCCESS";
+}
+
 function getSpreadsheet() {
   var ss = null;
   if (SPREADSHEET_ID) {
@@ -1026,6 +1032,19 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
         sheet.getRange(rowNum, driverUserCol + 1).setValue(deliveryData.driver_user_id || '');
       }
       
+      // Write invoice URL / JSON to spreadsheet columns
+      var invoiceUrlCol = headers.indexOf('Нкладна_URL');
+      if (invoiceUrlCol === -1) invoiceUrlCol = headers.indexOf('Накладна_URL');
+      if (invoiceUrlCol === -1) invoiceUrlCol = headers.indexOf('Накладна');
+      if (invoiceUrlCol === -1) {
+        sheet.getRange(1, headers.length + 1).setValue('Накладна_URL');
+        invoiceUrlCol = headers.length;
+        headers.push('Накладна_URL');
+      }
+      if (invoiceUrlCol !== -1 && deliveryData.invoice_url !== undefined) {
+        sheet.getRange(rowNum, invoiceUrlCol + 1).setValue(deliveryData.invoice_url || '');
+      }
+
       // Check if changes are made by logist/director/admin and notify manager if critical fields shifted
       if (managerId && (userRole === 'logist' || userRole === 'director' || userRole === 'admin')) {
         var changed = false;
