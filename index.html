@@ -5742,6 +5742,14 @@ body.light-theme .login-error {
           if (currentDetailDelivery && String(currentDetailDelivery['ID']) === String(editDeliveryId)) {
             currentDetailDelivery['Накладна_URL'] = invoice_url;
             currentDetailDelivery['Накладна'] = invoice_url;
+            currentDetailDelivery['Номер_замовлення'] = order_num;
+            currentDetailDelivery['Адреса'] = address;
+            currentDetailDelivery['Коментар'] = comment;
+            currentDetailDelivery['Дата'] = formattedDate;
+            currentDetailDelivery['Час'] = time;
+            currentDetailDelivery['Статус_оплати'] = payment;
+            currentDetailDelivery['Ім\'я_одержувача'] = receiver_name;
+            currentDetailDelivery['Телефон_одержувача'] = cleanReceiverPhone;
           }
 
           // Track exact change events in history using Universal Logger logic
