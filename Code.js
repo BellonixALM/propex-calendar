@@ -1896,12 +1896,13 @@ function saveInvoiceFileToDrive(fileName, fileBase64, mimeType) {
     var createdFile = targetFolder.createFile(decodedBlob);
     createdFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     
-    var fileUrl = createdFile.getUrl();
+    var fileId = createdFile.getId();
+    var directViewUrl = "https://drive.google.com/uc?export=view&id=" + fileId;
     return {
       status: 'success',
-      fileUrl: fileUrl,
+      fileUrl: directViewUrl,
       fileName: fileName,
-      fileId: createdFile.getId()
+      fileId: fileId
     };
   } catch(e) {
     Logger.log("Error in saveInvoiceFileToDrive: " + e.toString());

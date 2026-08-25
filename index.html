@@ -5160,11 +5160,20 @@ body.light-theme .login-error {
           }
 
           invoiceContent.innerHTML = `<div style="display: flex; flex-wrap: wrap; gap: 10px;">` + filesList.map((item, idx) => {
-            const url = typeof item === 'object' ? (item.data_uri || item.drive_url) : item;
-            const driveLink = typeof item === 'object' ? item.drive_url : url;
+            let url = typeof item === 'object' ? (item.data_uri || item.drive_url) : item;
+            let driveLink = typeof item === 'object' ? item.drive_url : url;
             const fileName = typeof item === 'object' ? item.name : `Документ 1С #${idx + 1}`;
+            
+            // Convert standard Drive view URLs to direct export view links for Safari popup prevention
+            if (driveLink && driveLink.includes('drive.google.com/file/d/')) {
+              const driveIdMatch = driveLink.match(/\/file\/d\/([^\/]+)/);
+              if (driveIdMatch && driveIdMatch[1]) {
+                driveLink = `https://drive.google.com/uc?export=view&id=${driveIdMatch[1]}`;
+              }
+            }
+
             if (url.startsWith('data:image/') || url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-              return `<a href="${driveLink}" target="_blank"><img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" title="${fileName} (Клікніть для відкриття оригінала на Google Диску)"></a>`;
+              return `<a href="${driveLink}" target="_blank"><img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" title="${fileName} (Натисніть для відкриття на Google Диску)"></a>`;
             } else {
               return `<a href="${driveLink}" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;">📄 ${fileName} (Google Drive)</a>`;
             }
