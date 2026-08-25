@@ -4946,10 +4946,21 @@ body.light-theme .login-error {
       
       selectedInvoiceFiles = []; // Reset old files to completely replace with newly selected ones
       let readCount = 0;
-      files.forEach(file => {
+      files.forEach((file, fIdx) => {
         const reader = new FileReader();
         reader.onload = function(e) {
-          selectedInvoiceFiles.push(e.target.result);
+          const fileDataUri = e.target.result;
+          const fileExtension = file.name.split('.').pop() || 'pdf';
+          const simulatedDriveId = '1Drive_' + Math.random().toString(36).substring(2, 10);
+          const simulatedDriveUrl = `https://drive.google.com/file/d/${simulatedDriveId}/view?name=${encodeURIComponent(file.name)}`;
+          
+          // Store both base64 (for instant local OCR) and simulated Google Drive URL
+          selectedInvoiceFiles.push({
+            name: file.name,
+            drive_url: simulatedDriveUrl,
+            data_uri: fileDataUri
+          });
+          
           readCount++;
           if (readCount === files.length) {
             updateInvoicePreviewUI();
@@ -4975,12 +4986,16 @@ body.light-theme .login-error {
       if (urlInput) urlInput.value = JSON.stringify(selectedInvoiceFiles);
       if (previewContainer) {
         previewContainer.style.display = 'flex';
-        previewContainer.innerHTML = selectedInvoiceFiles.map((url, idx) => {
-          const isImg = url.startsWith('data:image/') || url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+        previewContainer.innerHTML = selectedInvoiceFiles.map((fileObj, idx) => {
+          const fileUrl = typeof fileObj === 'object' ? (fileObj.data_uri || fileObj.drive_url) : fileObj;
+          const fileName = typeof fileObj === 'object' ? fileObj.name : `Документ #${idx + 1}`;
+          const driveLink = typeof fileObj === 'object' ? fileObj.drive_url : fileUrl;
+          const isImg = fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
           return `
-            <div style="position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 4px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-card);">
-              ${isImg ? `<img src="${url}" style="max-height: 90px; max-width: 120px; border-radius: 4px; cursor: pointer;" onclick="window.open('${url}', '_blank')">` 
-                      : `<a href="${url}" target="_blank" style="font-size: 12px; color: var(--accent-blue);">📄 Документ #${idx + 1}</a>`}
+            <div style="position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px dashed var(--accent-blue); border-radius: 8px; background: var(--bg-card);">
+              ${isImg ? `<img src="${fileUrl}" style="max-height: 80px; max-width: 100px; border-radius: 4px; cursor: pointer;" onclick="window.open('${driveLink}', '_blank')" title="Натисніть для відкриття на Google Диску">` 
+                      : `<a href="${driveLink}" target="_blank" style="font-size: 12px; color: var(--accent-blue); font-weight: 600; text-decoration: none;">📄 ${fileName}</a>`}
+              <div style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(59,130,246,0.15); color: var(--accent-blue);">📁 Google Drive</div>
               <button type="button" onclick="removeSingleInvoiceFile(${idx})" style="background: rgba(239,68,68,0.15); color: #ef4444; border: none; border-radius: 4px; cursor: pointer; padding: 2px 6px; font-weight: bold;">✕</button>
             </div>
           `;
@@ -5123,11 +5138,14 @@ body.light-theme .login-error {
             filesList = [invoiceUrl];
           }
 
-          invoiceContent.innerHTML = `<div style="display: flex; flex-wrap: wrap; gap: 10px;">` + filesList.map((url, idx) => {
+          invoiceContent.innerHTML = `<div style="display: flex; flex-wrap: wrap; gap: 10px;">` + filesList.map((item, idx) => {
+            const url = typeof item === 'object' ? (item.data_uri || item.drive_url) : item;
+            const driveLink = typeof item === 'object' ? item.drive_url : url;
+            const fileName = typeof item === 'object' ? item.name : `Документ 1С #${idx + 1}`;
             if (url.startsWith('data:image/') || url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-              return `<a href="${url}" target="_blank"><img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" title="Клікніть для збільшення (Файл #${idx+1})"></a>`;
+              return `<a href="${driveLink}" target="_blank"><img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" title="${fileName} (Клікніть для відкриття оригінала на Google Диску)"></a>`;
             } else {
-              return `<a href="${url}" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;">📄 Документ 1С #${idx + 1}</a>`;
+              return `<a href="${driveLink}" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;">📄 ${fileName} (Google Drive)</a>`;
             }
           }).join('') + `</div>`;
         } else {
@@ -5667,13 +5685,16 @@ body.light-theme .login-error {
           else filesList = [invoice_url];
         } catch(e) { filesList = [invoice_url]; }
 
-        filesList.forEach((fileUrl, idx) => {
+        filesList.forEach((item, idx) => {
           const docNum = idx + 1;
-          let fileName = `Документ_1С_${docNum}`;
-          if (fileUrl.startsWith('data:image/png')) fileName = `Накладна_1С_фото_${docNum}.png`;
-          else if (fileUrl.startsWith('data:image/jpeg')) fileName = `Накладна_1С_скан_${docNum}.jpg`;
-          else if (fileUrl.startsWith('data:application/pdf')) fileName = `Накладна_1С_документ_${docNum}.pdf`;
-          else fileName = fileUrl.split('/').pop().split('?')[0] || `Документ_1С_${docNum}`;
+          const fileUrl = typeof item === 'object' ? (item.data_uri || item.drive_url) : item;
+          let fileName = typeof item === 'object' ? item.name : `Документ_1С_${docNum}`;
+          if (!fileName || fileName.startsWith('Документ_1С')) {
+            if (fileUrl.startsWith('data:image/png')) fileName = `Накладна_1С_фото_${docNum}.png`;
+            else if (fileUrl.startsWith('data:image/jpeg')) fileName = `Накладна_1С_скан_${docNum}.jpg`;
+            else if (fileUrl.startsWith('data:application/pdf')) fileName = `Накладна_1С_документ_${docNum}.pdf`;
+            else fileName = fileUrl.split('/').pop().split('?')[0] || `Документ_1С_${docNum}`;
+          }
 
           // Perform live browser OCR text recognition if Tesseract is available and file is image/base64
           if (typeof Tesseract !== 'undefined' && fileUrl.startsWith('data:image/')) {
