@@ -5079,6 +5079,31 @@ body.light-theme .login-error {
       }
     }
 
+    function openInvoiceLightbox(imgSrc, driveLink, fileName) {
+      let modal = document.getElementById('invoice-lightbox-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'invoice-lightbox-modal';
+        modal.style.cssText = 'position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;';
+        modal.innerHTML = `
+          <div style="position: absolute; top: 16px; right: 20px; display: flex; gap: 12px; align-items: center; z-index: 100000;">
+            <a id="lightbox-drive-btn" href="#" target="_blank" rel="noopener noreferrer" style="background: #3b82f6; color: #fff; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600;">📁 Відкрити на Google Диску</a>
+            <button onclick="document.getElementById('invoice-lightbox-modal').style.display='none'" style="background: rgba(255,255,255,0.2); color: #fff; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 20px; cursor: pointer; font-weight: bold;">✕</button>
+          </div>
+          <div style="max-width: 90vw; max-height: 85vh; display: flex; align-items: center; justify-center: center;">
+            <img id="lightbox-img" src="" style="max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+          </div>
+          <div id="lightbox-caption" style="color: #e2e8f0; margin-top: 12px; font-size: 14px; font-weight: 500;"></div>
+        `;
+        document.body.appendChild(modal);
+      }
+      document.getElementById('lightbox-img').src = imgSrc;
+      document.getElementById('lightbox-caption').textContent = fileName || '';
+      const driveBtn = document.getElementById('lightbox-drive-btn');
+      if (driveBtn) driveBtn.href = driveLink || imgSrc;
+      modal.style.display = 'flex';
+    }
+
     function removeSingleInvoiceFile(index) {
       selectedInvoiceFiles.splice(index, 1);
       updateInvoicePreviewUI();
@@ -5228,9 +5253,11 @@ body.light-theme .login-error {
             }
 
             if (url && (url.startsWith('data:image/') || url.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
+              const safeImgSrc = url.replace(/'/g, "\\'");
+              const safeDriveLink = driveLink.replace(/'/g, "\\'");
               return `<div style="position: relative; display: inline-block;">
-                <img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" onclick="window.open('${url.startsWith('data:') ? url : driveLink}', '_blank')" title="${fileName} (Клацніть для перегляду)">
-                <a href="${driveLink}" target="_blank" rel="noopener noreferrer" style="display: block; font-size: 11px; margin-top: 4px; color: var(--accent-blue); text-decoration: none;">🔗 Відкрити на Google Диску</a>
+                <img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" onclick="openInvoiceLightbox('${safeImgSrc}', '${safeDriveLink}', '${fileName}')" title="${fileName} (Натисніть для повноекранного перегляду)">
+                <a href="${driveLink}" target="_blank" rel="noopener noreferrer" style="display: block; font-size: 11px; margin-top: 4px; color: var(--accent-blue); text-decoration: none;">🔗 Відкрити оригінал на Google Диску</a>
               </div>`;
             } else {
               const fileHref = (url && url.startsWith('data:')) ? url : driveLink;
