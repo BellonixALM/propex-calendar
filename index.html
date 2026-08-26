@@ -5266,9 +5266,15 @@ body.light-theme .login-error {
                 <a href="${driveLink}" target="_blank" rel="noopener noreferrer" style="display: block; font-size: 11px; margin-top: 4px; color: var(--accent-blue); text-decoration: none;">🔗 Відкрити оригінал на Google Диску</a>
               </div>`;
             } else {
-              const fileHref = (driveLink && driveLink.startsWith('http')) ? driveLink : (url && url.startsWith('http') ? url : url);
-              const isDrive = driveLink && driveLink.includes('drive.google.com');
-              return `<a href="${fileHref}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;">📄 ${fileName} ${isDrive ? '(Google Drive)' : ''}</a>`;
+              let targetUrl = (driveLink && driveLink.startsWith('http')) ? driveLink : (url && url.startsWith('http') ? url : url);
+              if (targetUrl && targetUrl.includes('drive.google.com')) {
+                const driveIdMatch = targetUrl.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                if (driveIdMatch && driveIdMatch[1]) {
+                  targetUrl = `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
+                }
+              }
+              const safeUrl = targetUrl.replace(/'/g, "\\'");
+              return `<button type="button" onclick="if('${safeUrl}'.startsWith('http')) { window.open('${safeUrl}', '_blank'); } else { alert('Накладна доступна у форматі тексту/документа'); }" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer;">📄 ${fileName} (Google Drive)</button>`;
             }
           }).join('') + `</div>`;
         } else {
