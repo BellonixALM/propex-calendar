@@ -4086,6 +4086,8 @@ body.light-theme .login-error {
       selectedInvoiceFiles = [];
       const fileInput = document.getElementById('form-invoice-file');
       if (fileInput) fileInput.value = '';
+      const urlInput = document.getElementById('form-invoice-url');
+      if (urlInput) urlInput.value = existingInvoice || '';
       if (existingInvoice) {
         try {
           if (existingInvoice.startsWith('[')) {
