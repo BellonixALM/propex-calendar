@@ -5738,11 +5738,16 @@ body.light-theme .login-error {
       const parts = rawDate.split('-');
       const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
       const driverUserId = document.getElementById('form-driver-select') ? document.getElementById('form-driver-select').value.trim() : '';
-      let invoice_url = document.getElementById('form-invoice-url') ? document.getElementById('form-invoice-url').value.trim() : '';
+      let invoice_url = '';
       if (selectedInvoiceFiles && selectedInvoiceFiles.length > 0) {
-        invoice_url = JSON.stringify(selectedInvoiceFiles);
-      } else if (selectedInvoiceFiles && selectedInvoiceFiles.length === 0) {
-        invoice_url = '';
+        invoice_url = JSON.stringify(selectedInvoiceFiles.map(f => {
+          if (typeof f === 'object') {
+            return { name: f.name, drive_url: f.drive_url || f.data_uri, data_uri: f.drive_url || f.data_uri };
+          }
+          return f;
+        }));
+      } else {
+        invoice_url = document.getElementById('form-invoice-url') ? document.getElementById('form-invoice-url').value.trim() : '';
       }
       let cleanReceiverPhone = receiver_phone;
       if (cleanReceiverPhone.startsWith('=') || cleanReceiverPhone.startsWith('+')) {
