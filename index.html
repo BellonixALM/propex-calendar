@@ -5076,7 +5076,7 @@ body.light-theme .login-error {
           return `
             <div style="position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid #10b981; border-radius: 8px; background: rgba(16, 185, 129, 0.08);">
               ${isImg ? `<img src="${fileUrl}" style="max-height: 70px; max-width: 90px; border-radius: 4px; cursor: pointer;" onclick="window.open('${driveLink}', '_blank')" title="Натисніть для відкриття на Google Диску">` 
-                      : `<a href="${fileHref}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--accent-blue); font-weight: 600; text-decoration: none;">📄 ${fileName}</a>`}
+                      : `<a href="#" onclick="if('${driveLink}'.startsWith('http')) { window.open('${driveLink}', '_blank'); } else { alert('Зачекайте, файл ще завантажується на Google Диск...'); } return false;" style="font-size: 12px; color: var(--accent-blue); font-weight: 600; text-decoration: none;">📄 ${fileName}</a>`}
               <div style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #10b981; font-weight: bold;">✅ Google Drive</div>
               <button type="button" onclick="removeSingleInvoiceFile(${idx})" style="background: rgba(239,68,68,0.15); color: #ef4444; border: none; border-radius: 4px; cursor: pointer; padding: 2px 6px; font-weight: bold;">✕</button>
             </div>
