@@ -4992,6 +4992,8 @@ body.light-theme .login-error {
                   statusElem.style.color = '#10b981';
                   statusElem.innerHTML = '✅ Успішно збережено у папці Google Диску';
                 }
+                const urlInput = document.getElementById('form-invoice-url');
+                if (urlInput) urlInput.value = JSON.stringify(selectedInvoiceFiles);
               } else {
                 if (statusElem) {
                   statusElem.style.color = '#ef4444';
