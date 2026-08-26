@@ -4965,23 +4965,26 @@ body.light-theme .login-error {
         previewContainer.style.display = 'flex';
         previewContainer.style.flexDirection = 'column';
         previewContainer.style.gap = '8px';
-        previewContainer.innerHTML = files.map((f, i) => `
-          <div id="file-upload-item-${i}" style="display: flex; align-items: center; justify-space-between; gap: 10px; padding: 8px 12px; border: 1px dashed #3b82f6; border-radius: 8px; background: rgba(59,130,246,0.08); font-size: 13px;">
+        const existingCount = selectedInvoiceFiles.length;
+        const uploadStatusItems = files.map((f, i) => `
+          <div id="file-upload-item-${existingCount + i}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border: 1px dashed #3b82f6; border-radius: 8px; background: rgba(59,130,246,0.08); font-size: 13px;">
             <span>📄 ${f.name}</span>
-            <span id="file-upload-status-${i}" style="margin-left: auto; color: #3b82f6; font-weight: 600;">⏳ Завантаження на Google Диск...</span>
+            <span id="file-upload-status-${existingCount + i}" style="margin-left: auto; color: #3b82f6; font-weight: 600;">⏳ Завантаження на Google Диск...</span>
           </div>
         `).join('');
+        previewContainer.innerHTML += uploadStatusItems;
       }
 
-      selectedInvoiceFiles = []; // Reset old files to completely replace with newly selected ones
+      const startIndex = selectedInvoiceFiles.length;
       let readCount = 0;
       files.forEach((file, fIdx) => {
+        const currentItemIdx = startIndex + fIdx;
         const reader = new FileReader();
         reader.onload = function(e) {
           const fileDataUri = e.target.result;
           const mimeType = file.type || 'application/pdf';
           
-          const statusElem = document.getElementById(`file-upload-status-${fIdx}`);
+          const statusElem = document.getElementById(`file-upload-status-${currentItemIdx}`);
           
           if (typeof propexApi !== 'undefined' && propexApi.uploadInvoiceToDrive) {
             const cleanBase64 = fileDataUri.indexOf(',') > -1 ? fileDataUri.split(',')[1] : fileDataUri;
