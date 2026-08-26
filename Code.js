@@ -1,5 +1,6 @@
 // ВСТАНОВІТЬ ID ВАШОЇ ТАБЛИЦІ ТУТ, ЯКЩО СКРИПТ НЕ ПРИВ'ЯЗАНИЙ ДО ТАБЛИЦІ НАПРЯМУ
 // (Наприклад, скопіюйте з посилання вашої таблиці: '1EJvpjldQvx5-gtQnaBfs33VDEy4jxx9sgBayrteHMIWpeH-8l2a0bVqw')
+// Force Drive OAuth Manifest Sync v109
 var SPREADSHEET_ID = '198_7ofajvsBszwRDm5pnbIrGxHUMphqPumX9pNOPZ6w';
 
 // ТОКЕН ВАШОГО TELEGRAM БОТА ДЛЯ АВТОМАТИЧНИХ СПОВІЩЕНЬ
@@ -9,6 +10,41 @@ function authorizeGoogleDrive() {
   var folder = DriveApp.getRootFolder();
   Logger.log("Google Drive access authorized successfully! Root folder: " + folder.getName());
   return "SUCCESS";
+}
+
+function testFolderCreation() {
+  // Direct DriveApp invocation without try-catch to trigger Google OAuth modal:
+  var folderName = "Накладні Propex 1С";
+  var folders = DriveApp.getFoldersByName(folderName);
+  var targetFolder;
+  if (folders.hasNext()) {
+    targetFolder = folders.next();
+  } else {
+    targetFolder = DriveApp.createFolder(folderName);
+  }
+  var dummyBlob = Utilities.newBlob("Тестовий вміст накладної", "text/plain", "Тестова_Накладна.txt");
+  var testFile = targetFolder.createFile(dummyBlob);
+  testFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  Logger.log("SUCCESS! Test file created in folder '" + folderName + "': " + testFile.getUrl());
+  return testFile.getUrl();
+}
+
+function listFilesInDriveFolder() {
+  var folderName = "Накладні Propex 1С";
+  var folders = DriveApp.getFoldersByName(folderName);
+  if (!folders.hasNext()) {
+    Logger.log("Folder '" + folderName + "' DOES NOT EXIST YET on Google Drive.");
+    return "NO_FOLDER";
+  }
+  var folder = folders.next();
+  var files = folder.getFiles();
+  var fileList = [];
+  while (files.hasNext()) {
+    var f = files.next();
+    fileList.push(f.getName() + " | URL: " + f.getUrl());
+  }
+  Logger.log("Found " + fileList.length + " files in '" + folderName + "':\n" + fileList.join("\n"));
+  return fileList;
 }
 
 function getSpreadsheet() {
@@ -1916,7 +1952,7 @@ function saveInvoiceFileToDrive(fileName, fileBase64, mimeType) {
     createdFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     
     var fileId = createdFile.getId();
-    var directViewUrl = "https://drive.google.com/uc?export=view&id=" + fileId;
+    var directViewUrl = "https://drive.google.com/file/d/" + fileId + "/preview";
     return {
       status: 'success',
       fileUrl: directViewUrl,

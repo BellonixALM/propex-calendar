@@ -5262,8 +5262,8 @@ body.light-theme .login-error {
               const safeImgSrc = url.replace(/'/g, "\\'");
               const safeDriveLink = driveLink.replace(/'/g, "\\'");
               return `<div style="position: relative; display: inline-block;">
-                <img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" onclick="openInvoiceLightbox('${safeImgSrc}', '${safeDriveLink}', '${fileName}')" title="${fileName} (Натисніть для повноекранного перегляду)">
-                <a href="${driveLink}" target="_blank" rel="noopener noreferrer" style="display: block; font-size: 11px; margin-top: 4px; color: var(--accent-blue); text-decoration: none;">🔗 Відкрити оригінал на Google Диску</a>
+                <img src="${url}" style="max-height: 140px; max-width: 200px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s;" onclick="openInvoiceLightbox('${safeImgSrc}', '${safeDriveLink}', '${fileName}')" title="${fileName} (Натисніть для перегляду)">
+                <a href="#" onclick="window.open('${safeDriveLink}', '_blank'); return false;" style="display: block; font-size: 11px; margin-top: 4px; color: var(--accent-blue); text-decoration: none;">🔗 Відкрити на Google Диску</a>
               </div>`;
             } else {
               let targetUrl = (driveLink && driveLink.startsWith('http')) ? driveLink : (url || driveLink || '');
@@ -5274,7 +5274,7 @@ body.light-theme .login-error {
                 }
               }
               const safeUrl = targetUrl.replace(/'/g, "\\'");
-              return `<button type="button" onclick="if('${safeUrl}'.startsWith('http') || '${safeUrl}'.startsWith('data:')) { window.open('${safeUrl}', '_blank'); } else { window.open('${safeUrl}', '_blank'); }" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer;">📄 ${fileName} (Google Drive)</button>`;
+              return `<button type="button" onclick="window.open('${safeUrl}', '_blank');" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer;">📄 ${fileName} (Google Drive)</button>`;
             }
           }).join('') + `</div>`;
         } else {
