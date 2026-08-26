@@ -4978,12 +4978,13 @@ body.light-theme .login-error {
           const statusElem = document.getElementById(`file-upload-status-${fIdx}`);
           
           if (typeof propexApi !== 'undefined' && propexApi.uploadInvoiceToDrive) {
+            const cleanBase64 = fileDataUri.indexOf(',') > -1 ? fileDataUri.split(',')[1] : fileDataUri;
             propexApi.withSuccessHandler(function(res) {
               const driveUrl = (res && res.status === 'success' && res.fileUrl) ? res.fileUrl : fileDataUri;
               selectedInvoiceFiles.push({
                 name: file.name,
                 drive_url: driveUrl,
-                data_uri: fileDataUri,
+                data_uri: (fileDataUri.length < 500000) ? fileDataUri : driveUrl, // avoid huge local storage payload
                 success: true
               });
               if (statusElem) {
@@ -4996,9 +4997,10 @@ body.light-theme .login-error {
                   saveBtn.disabled = false;
                   saveBtn.textContent = "Зберегти доставку";
                 }
-                setTimeout(() => updateInvoicePreviewUI(), 600);
+                setTimeout(() => updateInvoicePreviewUI(), 400);
               }
-            }).withFailureHandler(function() {
+            }).withFailureHandler(function(err) {
+              console.warn('Drive upload error fallback:', err);
               selectedInvoiceFiles.push({
                 name: file.name,
                 drive_url: fileDataUri,
@@ -5015,9 +5017,9 @@ body.light-theme .login-error {
                   saveBtn.disabled = false;
                   saveBtn.textContent = "Зберегти доставку";
                 }
-                setTimeout(() => updateInvoicePreviewUI(), 600);
+                setTimeout(() => updateInvoicePreviewUI(), 400);
               }
-            }).uploadInvoiceToDrive(file.name, fileDataUri, mimeType);
+            }).uploadInvoiceToDrive(file.name, cleanBase64, mimeType);
           } else {
             selectedInvoiceFiles.push({
               name: file.name,
