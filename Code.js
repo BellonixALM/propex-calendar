@@ -6,10 +6,19 @@ var SPREADSHEET_ID = '198_7ofajvsBszwRDm5pnbIrGxHUMphqPumX9pNOPZ6w';
 // ТОКЕН ВАШОГО TELEGRAM БОТА ДЛЯ АВТОМАТИЧНИХ СПОВІЩЕНЬ
 var BOT_TOKEN = '8662663470:AAGl8KqJHrmxXVUO3d-j1Rakjgg4W60PTzg';
 
-function authorizeGoogleDrive() {
-  var folder = DriveApp.getRootFolder();
-  Logger.log("Google Drive access authorized successfully! Root folder: " + folder.getName());
-  return "SUCCESS";
+function ensureInvoiceHeaderExists() {
+  var ss = getSpreadsheet();
+  if (!ss) return;
+  var sheet = ss.getSheetByName('Доставки');
+  if (!sheet) return;
+  var headers = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0];
+  var invCol = headers.indexOf('Нкладна_URL');
+  if (invCol === -1) invCol = headers.indexOf('Накладна_URL');
+  if (invCol === -1) invCol = headers.indexOf('Накладна');
+  if (invCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Накладна_URL');
+    Logger.log("Created missing column 'Накладна_URL' at index " + (headers.length + 1));
+  }
 }
 
 function testFolderCreation() {
@@ -282,6 +291,7 @@ function doPost(e) {
 }
 
 function getDeliveries() {
+  ensureInvoiceHeaderExists();
   var ss = getSpreadsheet();
   if (!ss) {
     throw new Error("Не вдалося знайти зв'язок з Google Таблицею. Переконайтеся, що скрипт прикріплений до таблиці або вкажіть SPREADSHEET_ID в Code.gs.");
