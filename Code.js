@@ -125,6 +125,8 @@ function doGet(e) {
         result = updateDeliveryStatus(payload.deliveryId, payload.newStatus, payload.comment);
       } else if (action === 'updateDeliveryDetails') {
         result = updateDeliveryDetails(payload.deliveryId, payload.deliveryData, payload.userRole);
+      } else if (action === 'uploadInvoiceToDrive') {
+        result = saveInvoiceFileToDrive(payload.fileName, payload.fileBase64, payload.mimeType);
       } else if (action === 'updateDriverPhoto') {
         result = updateDriverPhoto(payload.carId, payload.imageBase64);
       } else if (action === 'getDailyCrews') {

@@ -3039,6 +3039,10 @@ body.light-theme .login-error {
         this._callAPI('addDelivery', deliveryData);
         return this;
       };
+      ScriptRunBridge.prototype.uploadInvoiceToDrive = function(fileName, fileBase64, mimeType) {
+        this._callAPI('uploadInvoiceToDrive', { fileName: fileName, fileBase64: fileBase64, mimeType: mimeType });
+        return this;
+      };
       ScriptRunBridge.prototype.updateDeliveryDetails = function(deliveryId, deliveryData, userRole) {
         this._callAPI('updateDeliveryDetails', { deliveryId: deliveryId, deliveryData: deliveryData, userRole: userRole });
         return this;
