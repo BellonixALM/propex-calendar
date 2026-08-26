@@ -5266,7 +5266,7 @@ body.light-theme .login-error {
                 <a href="${driveLink}" target="_blank" rel="noopener noreferrer" style="display: block; font-size: 11px; margin-top: 4px; color: var(--accent-blue); text-decoration: none;">🔗 Відкрити оригінал на Google Диску</a>
               </div>`;
             } else {
-              let targetUrl = (driveLink && driveLink.startsWith('http')) ? driveLink : (url && url.startsWith('http') ? url : url);
+              let targetUrl = (driveLink && driveLink.startsWith('http')) ? driveLink : (url || driveLink || '');
               if (targetUrl && targetUrl.includes('drive.google.com')) {
                 const driveIdMatch = targetUrl.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                 if (driveIdMatch && driveIdMatch[1]) {
@@ -5274,7 +5274,7 @@ body.light-theme .login-error {
                 }
               }
               const safeUrl = targetUrl.replace(/'/g, "\\'");
-              return `<button type="button" onclick="if('${safeUrl}'.startsWith('http')) { window.open('${safeUrl}', '_blank'); } else { alert('Накладна доступна у форматі тексту/документа'); }" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer;">📄 ${fileName} (Google Drive)</button>`;
+              return `<button type="button" onclick="if('${safeUrl}'.startsWith('http') || '${safeUrl}'.startsWith('data:')) { window.open('${safeUrl}', '_blank'); } else { window.open('${safeUrl}', '_blank'); }" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer;">📄 ${fileName} (Google Drive)</button>`;
             }
           }).join('') + `</div>`;
         } else {
