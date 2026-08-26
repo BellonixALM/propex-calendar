@@ -4980,16 +4980,23 @@ body.light-theme .login-error {
           if (typeof propexApi !== 'undefined' && propexApi.uploadInvoiceToDrive) {
             const cleanBase64 = fileDataUri.indexOf(',') > -1 ? fileDataUri.split(',')[1] : fileDataUri;
             propexApi.withSuccessHandler(function(res) {
-              const driveUrl = (res && res.status === 'success' && res.fileUrl) ? res.fileUrl : fileDataUri;
-              selectedInvoiceFiles.push({
-                name: file.name,
-                drive_url: driveUrl,
-                data_uri: (fileDataUri.length < 500000) ? fileDataUri : driveUrl, // avoid huge local storage payload
-                success: true
-              });
-              if (statusElem) {
-                statusElem.style.color = '#10b981';
-                statusElem.innerHTML = '✅ Успішно завантажено на Google Диск';
+              if (res && res.status === 'success' && res.fileUrl) {
+                const driveUrl = res.fileUrl;
+                selectedInvoiceFiles.push({
+                  name: file.name,
+                  drive_url: driveUrl,
+                  data_uri: driveUrl,
+                  success: true
+                });
+                if (statusElem) {
+                  statusElem.style.color = '#10b981';
+                  statusElem.innerHTML = '✅ Успішно збережено у папці Google Диску';
+                }
+              } else {
+                if (statusElem) {
+                  statusElem.style.color = '#ef4444';
+                  statusElem.innerHTML = '⚠️ Помилка завантаження на Диск. Спробуйте ще раз';
+                }
               }
               readCount++;
               if (readCount === files.length) {
@@ -4997,27 +5004,17 @@ body.light-theme .login-error {
                   saveBtn.disabled = false;
                   saveBtn.textContent = "Зберегти доставку";
                 }
-                setTimeout(() => updateInvoicePreviewUI(), 400);
+                setTimeout(() => updateInvoicePreviewUI(), 600);
               }
             }).withFailureHandler(function(err) {
-              console.warn('Drive upload error fallback:', err);
-              selectedInvoiceFiles.push({
-                name: file.name,
-                drive_url: fileDataUri,
-                data_uri: fileDataUri,
-                success: true
-              });
+              console.error('Drive upload backend error:', err);
               if (statusElem) {
-                statusElem.style.color = '#10b981';
-                statusElem.innerHTML = '✅ Готово до збереження';
+                statusElem.style.color = '#ef4444';
+                statusElem.innerHTML = '❌ Помилка зєднання з Google Диском';
               }
-              readCount++;
-              if (readCount === files.length) {
-                if (saveBtn) {
-                  saveBtn.disabled = false;
-                  saveBtn.textContent = "Зберегти доставку";
-                }
-                setTimeout(() => updateInvoicePreviewUI(), 400);
+              if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = "Зберегти доставку";
               }
             }).uploadInvoiceToDrive(file.name, cleanBase64, mimeType);
           } else {
