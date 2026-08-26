@@ -488,6 +488,7 @@ function addDelivery(deliveryData) {
     var hasGatherStatus = headers.indexOf('Статус_збору') !== -1;
     var hasCreatedCol = headers.indexOf('Дата_Створення') !== -1 || headers.indexOf('Created_At') !== -1;
     var hasHistoryCol = headers.indexOf('Історія_Операцій') !== -1 || headers.indexOf('Історія') !== -1;
+    var hasInvoiceCol = headers.indexOf('Накладна_URL') !== -1 || headers.indexOf('Накладна') !== -1 || headers.indexOf('Нкладна_URL') !== -1;
     
     if (!hasWorker) {
       sheet.getRange(1, headers.length + 1).setValue('ID_Комірника');
@@ -504,6 +505,10 @@ function addDelivery(deliveryData) {
     if (!hasHistoryCol) {
       sheet.getRange(1, headers.length + 1).setValue('Історія_Операцій');
       headers.push('Історія_Операцій');
+    }
+    if (!hasInvoiceCol) {
+      sheet.getRange(1, headers.length + 1).setValue('Накладна_URL');
+      headers.push('Накладна_URL');
     }
   }
   
@@ -532,12 +537,9 @@ function addDelivery(deliveryData) {
   var invCol = headers.indexOf('Нкладна_URL');
   if (invCol === -1) invCol = headers.indexOf('Накладна_URL');
   if (invCol === -1) invCol = headers.indexOf('Накладна');
-  if (invCol === -1) {
-    sheet.getRange(1, headers.length + 1).setValue('Накладна_URL');
-    invCol = headers.length;
-    headers.push('Накладна_URL');
+  if (invCol !== -1) {
+    newRow[invCol] = deliveryData.invoice_url || '';
   }
-  newRow[invCol] = deliveryData.invoice_url || '';
   var statusColFound = false;
   for (var k = 0; k < headers.length; k++) {
     var hStr = headers[k].toString().trim().toLowerCase();
