@@ -333,6 +333,10 @@ function getDeliveries() {
         obj['Телефон_одержувача'] = val;
       } else if (h === 'id_менеджера' || h === 'менеджер' || h === 'manager_chat_id' || h === 'manager_id') {
         obj['ID_Менеджера'] = val;
+      } else if (h === 'накладна_url' || h === 'накладна' || h === 'invoice_url' || h === 'нкладна_url') {
+        obj['Накладна_URL'] = val;
+        obj['Накладна'] = val;
+        obj['Invoice_URL'] = val;
       } else {
         obj[header] = val;
       }
@@ -524,6 +528,16 @@ function addDelivery(deliveryData) {
   setVal('ID_Менеджера', deliveryData.manager_chat_id || '');
   setVal('ID_Комірника', '');
   setVal('ID_Водія', deliveryData.driver_user_id || '');
+  
+  var invCol = headers.indexOf('Нкладна_URL');
+  if (invCol === -1) invCol = headers.indexOf('Накладна_URL');
+  if (invCol === -1) invCol = headers.indexOf('Накладна');
+  if (invCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Накладна_URL');
+    invCol = headers.length;
+    headers.push('Накладна_URL');
+  }
+  newRow[invCol] = deliveryData.invoice_url || '';
   var statusColFound = false;
   for (var k = 0; k < headers.length; k++) {
     var hStr = headers[k].toString().trim().toLowerCase();
