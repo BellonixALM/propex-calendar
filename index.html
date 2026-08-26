@@ -5753,7 +5753,9 @@ body.light-theme .login-error {
           return f;
         }));
       } else {
-        invoice_url = document.getElementById('form-invoice-url') ? document.getElementById('form-invoice-url').value.trim() : '';
+        const formInputVal = document.getElementById('form-invoice-url') ? document.getElementById('form-invoice-url').value.trim() : '';
+        const existingInvoiceVal = (currentDetailDelivery && isEditMode) ? (currentDetailDelivery['Накладна_URL'] || currentDetailDelivery['Накладна'] || '') : '';
+        invoice_url = formInputVal || existingInvoiceVal || '';
       }
       let cleanReceiverPhone = receiver_phone;
       if (cleanReceiverPhone.startsWith('=') || cleanReceiverPhone.startsWith('+')) {
