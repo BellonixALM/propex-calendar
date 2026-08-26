@@ -112,6 +112,9 @@ function doGet(e) {
     try {
       if (action === 'login') {
         result = authenticateUser(payload.login, payload.password);
+      } else if (action === 'ensureInvoiceHeaderExists') {
+        ensureInvoiceHeaderExists();
+        result = { status: 'success', message: 'Header verified' };
       } else if (action === 'getDeliveries') {
         result = { status: 'success', data: getDeliveries() };
       } else if (action === 'getDrivers') {
