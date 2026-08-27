@@ -123,6 +123,8 @@ function doGet(e) {
         result = addDelivery(payload);
       } else if (action === 'updateDeliveryStatus') {
         result = updateDeliveryStatus(payload.deliveryId, payload.newStatus, payload.comment);
+      } else if (action === 'logEvent') {
+        result = { status: 'success', recorded: appendHistoryEvent(payload.deliveryId, payload.eventTitle, payload.initiatorInfo) };
       } else if (action === 'updateDeliveryDetails') {
         result = updateDeliveryDetails(payload.deliveryId, payload.deliveryData, payload.userRole);
       } else if (action === 'uploadInvoiceToDrive') {
