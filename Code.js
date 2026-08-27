@@ -1940,8 +1940,8 @@ function deleteDelivery(deliveryId, userFullName, userRole) {
     var ss = getSpreadsheet();
     if (!ss) return { status: 'error', message: 'Відсутній зв’язок із таблицею' };
     
-    var sheet = ss.getSheetByName('Замовлення') || ss.getSheets()[0];
-    if (!sheet) return { status: 'error', message: 'Лист Замовлення не знайдено' };
+    var sheet = ss.getSheetByName('Доставки') || ss.getSheetByName('Замовлення') || ss.getSheets()[0];
+    if (!sheet) return { status: 'error', message: 'Лист Доставки не знайдено' };
     
     var data = sheet.getDataRange().getValues();
     if (data.length < 2) return { status: 'error', message: 'Таблиця порожня' };
