@@ -982,10 +982,10 @@ function updateWarehouseStatus(deliveryId, statusStr) {
         var dateCol = headers.indexOf('Дата');
         var delDateStr = dateCol !== -1 ? String(data[i][dateCol]).trim() : '';
         
-        var todayStr = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy");
-        var todayISO = Utilities.formatDate(new Date(), "GMT+3", "yyyy-MM-dd");
+        var todayStr = Utilities.formatDate(new Date(), "Europe/Kiev", "dd.MM.yyyy");
+        var todayISO = Utilities.formatDate(new Date(), "Europe/Kiev", "yyyy-MM-dd");
         var isToday = (delDateStr === todayStr || delDateStr === todayISO);
-        var currentHour = parseInt(Utilities.formatDate(new Date(), "GMT+3", "HH"), 10);
+        var currentHour = parseInt(Utilities.formatDate(new Date(), "Europe/Kiev", "HH"), 10);
 
         // Send to driver ONLY if delivery is for TODAY and current time is >= 08:00 AM
         // If created/assembled for future dates, it will automatically be sent by morning 08:00 AM trigger!
