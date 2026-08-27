@@ -846,7 +846,7 @@ function updateWarehouseStatus(deliveryId, statusStr) {
       var managerId = managerCol !== -1 ? String(data[i][managerCol]).trim() : "";
       
       // Log warehouse status event to Activity Timeline
-      appendHistoryEvent(orderNum, "Статус збору складом: " + statusStr, "Склад / Комірник Сергій");
+      appendHistoryEvent(deliveryId, "Статус збору складом: " + statusStr, "Склад / Комірник Сергій");
       
       // If it's a problem or refusal, notify Heads and Manager
       if (statusStr.indexOf('Проблема') === 0 || statusStr.indexOf('Відмова') === 0) {
@@ -1922,14 +1922,18 @@ function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
       headers.push('Дата_Створення');
     }
 
+    var orderCol = headers.indexOf('Номер_замовлення');
+    if (orderCol === -1) orderCol = headers.indexOf('Замовлення');
+
     var searchId = String(deliveryId).replace(/-/g, '').trim();
 
     for (var i = 1; i < data.length; i++) {
       var currentIdRaw = data[i][idCol];
       if (!currentIdRaw || currentIdRaw === 'undefined') currentIdRaw = String(i + 1);
       var currentId = String(currentIdRaw).replace(/-/g, '').trim();
+      var currentOrderNum = orderCol !== -1 ? String(data[i][orderCol]).trim() : '';
 
-      if (currentId === searchId || String(data[i][idCol]).trim() === String(deliveryId).trim()) {
+      if (currentId === searchId || String(data[i][idCol]).trim() === String(deliveryId).trim() || (searchId.length > 0 && currentOrderNum === searchId)) {
         var rowNum = i + 1;
         var nowFormatted = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy HH:mm");
         var existingHistory = data[i][historyCol] || '';
