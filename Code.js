@@ -270,6 +270,32 @@ function doPost(e) {
       var fromChatId = callbackQuery.from ? callbackQuery.from.id : null;
       var msgId = callbackQuery.message ? callbackQuery.message.message_id : null;
 
+      if (callbackData.startsWith('supply_took_')) {
+        var delId = callbackData.replace('supply_took_', '');
+        updateDeliveryStatus(delId, 'Забрано у постачальника', 'Водій забрав товар у постачальника');
+        appendHistoryEvent(delId, 'Водій забрав товар у постачальника', 'Водій у Telegram-боті');
+
+        // Automatically trigger Storekeeper checklist notification
+        var whData = getWarehouseWorkers();
+        var whMsg = "🏬 <b>Водій забрав товар у постачальника та прямує на склад!</b>\n\n" +
+                      "📦 <b>Замовлення №:</b> " + delId + "\n" +
+                      "📋 Будь ласка, приготуйтеся до приймання товару складом за чек-листом.";
+        var whKb = {
+          "inline_keyboard": [
+            [{"text": "📋 Прийняти товар складом (Чек-лист)", "callback_data": "wh_confirm_" + delId}]
+          ]
+        };
+        whData.heads.forEach(function(h) {
+          if (h.telegram_id) sendTelegramMessage(h.telegram_id, whMsg, whKb);
+        });
+
+        var ackMsg = "✅ Дякуємо! Статус оновлено: Товар прийнято від постачальника. Склад вже сповіщено про приймання!";
+        sendTelegramMessage(fromChatId, ackMsg);
+
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Supply took handled' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
       if (callbackData.startsWith('driver_start_') || callbackData.startsWith('driver_pickup_') || callbackData.startsWith('driver_arrived_')) {
         var orderNum = callbackData.split('_').pop();
         var statusLabel = 'В процесі';
