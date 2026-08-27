@@ -624,7 +624,71 @@ function addDelivery(deliveryData) {
     });
   }
   
+  // Smart Notification logic for Supply Deliveries (Ira Order)
+  var isSupplyManager = false;
+  var mgr = String(deliveryData.manager_chat_id || deliveryData.manager_name || '').trim();
+  if (mgr === '7797165411' || mgr.toLowerCase().indexOf('ira') > -1 || mgr.toLowerCase().indexOf('іра') > -1) {
+    isSupplyManager = true;
+  }
+  
+  if (isSupplyManager && deliveryData.driver_user_id) {
+    var todayStr = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy");
+    var todayISO = Utilities.formatDate(new Date(), "GMT+3", "yyyy-MM-dd");
+    var isToday = (deliveryData.date === todayStr || deliveryData.date === todayISO);
+    
+    var currentHour = parseInt(Utilities.formatDate(new Date(), "GMT+3", "HH"), 10);
+    
+    if (isToday && currentHour >= 8) {
+      // Created today after 08:00 AM -> Send immediately!
+      sendSingleSupplyDeliveryToDriver(id, deliveryData);
+    }
+  }
+
   return { status: 'success', id: id };
+}
+
+function sendSingleSupplyDeliveryToDriver(deliveryId, deliveryData) {
+  var driverTgId = deliveryData.driver_user_id || deliveryData.driver_id;
+  if (!driverTgId || String(driverTgId).length < 5) return;
+
+  var msg = "🚚 <b>Постачання (Закупівля товару)</b>\n\n" +
+            "⏰ <b>Час:</b> " + (deliveryData.time || 'Не вказано') + "\n" +
+            "📍 <b>Адреса постачальника:</b> " + deliveryData.address + "\n" +
+            "№ <b>Замовлення 1С:</b> №" + (deliveryData.order_num || 'Б/Н') + "\n" +
+            "👤 <b>Постачальник:</b> " + (deliveryData.receiver_name || 'Не вказано') + "\n";
+  if (deliveryData.comment) msg += "💬 <b>Примітка:</b> " + deliveryData.comment + "\n";
+
+  var kb = {
+    inline_keyboard: [
+      [{ text: "🚚 Виїхав до постачальника", callback_data: "supply_drive_" + deliveryId }],
+      [{ text: "📥 Забрав товар у постачальника", callback_data: "supply_took_" + deliveryId }]
+    ]
+  };
+  sendTelegramMessage(driverTgId, msg, kb);
+}
+
+function sendMorningSupplyDeliveries() {
+  var todayStr = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy");
+  var todayISO = Utilities.formatDate(new Date(), "GMT+3", "yyyy-MM-dd");
+  var deliveries = getDeliveries();
+  
+  deliveries.forEach(function(d) {
+    var isToday = (d['Дата'] === todayStr || d['Дата'] === todayISO);
+    var mgr = String(d['ID_Менеджера'] || '').trim();
+    var isSupply = (mgr === '7797165411' || mgr.toLowerCase().indexOf('ira') > -1 || mgr.toLowerCase().indexOf('іра') > -1);
+    var driverTgId = d['ID_Водія'] || d['Водій'];
+    
+    if (isToday && isSupply && driverTgId && String(driverTgId).length > 5 && d['Статус'] !== 'Виконано' && d['Статус'] !== 'Скасовано') {
+      sendSingleSupplyDeliveryToDriver(d['ID'], {
+        driver_user_id: driverTgId,
+        time: d['Час'],
+        address: d['Адреса'],
+        order_num: d['Номер_замовлення'],
+        receiver_name: d["Ім'я_одержувача"],
+        comment: d['Коментар']
+      });
+    }
+  });
 }
 
 function updateDeliveryStatus(deliveryId, newStatus, comment) {
