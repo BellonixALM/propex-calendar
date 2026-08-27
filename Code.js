@@ -1948,13 +1948,22 @@ function deleteDelivery(deliveryId, userFullName, userRole) {
     
     var headers = data[0];
     var idColIdx = -1;
-    headers.forEach(function(h, idx) {
-      var headerStr = h.toString().trim().toLowerCase();
-      if (headerStr === 'id' || headerStr === 'id_замовлення' || headerStr === 'номер_замовлення') {
-        idColIdx = idx;
+    for (var h = 0; h < headers.length; h++) {
+      var headerStr = headers[h].toString().trim().toLowerCase();
+      if (headerStr === 'id' || headerStr === 'код') {
+        idColIdx = h;
+        break;
       }
-    });
-    
+    }
+    if (idColIdx === -1) {
+      for (var h = 0; h < headers.length; h++) {
+        var headerStr = headers[h].toString().trim().toLowerCase();
+        if (headerStr === 'id_замовлення' || headerStr === 'номер_замовлення') {
+          idColIdx = h;
+          break;
+        }
+      }
+    }
     if (idColIdx === -1) idColIdx = 0;
     
     var targetRowIdx = -1;
