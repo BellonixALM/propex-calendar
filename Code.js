@@ -973,25 +973,35 @@ function updateWarehouseStatus(deliveryId, statusStr) {
         }
       }
       
-      // If order is completed/assembled by warehouse, notify assigned driver immediately if not pickup
+      // Smart Notification logic for Driver on Warehouse Assembly Completion
       if ((statusStr === 'Зібрано' || statusStr === 'Скомплектовано') && carId && carId.toLowerCase().indexOf('самовивіз') === -1) {
         var driverCol = headers.indexOf('ID_Водія');
         var driverTgId = driverCol !== -1 ? String(data[i][driverCol]).trim() : '';
         if (!driverTgId && carId) driverTgId = carId; // fallback
         
-        var addressCol = headers.indexOf('Адреса');
-        var timeCol = headers.indexOf('Час');
-        var recNameCol = headers.indexOf("Ім'я_одержувача");
-        var recPhoneCol = headers.indexOf('Телефон_одержувача');
-        var commentCol = headers.indexOf('Коментар');
+        var dateCol = headers.indexOf('Дата');
+        var delDateStr = dateCol !== -1 ? String(data[i][dateCol]).trim() : '';
+        
+        var todayStr = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy");
+        var todayISO = Utilities.formatDate(new Date(), "GMT+3", "yyyy-MM-dd");
+        var isToday = (delDateStr === todayStr || delDateStr === todayISO);
+        var currentHour = parseInt(Utilities.formatDate(new Date(), "GMT+3", "HH"), 10);
 
-        var delAddress = addressCol !== -1 ? data[i][addressCol] : '';
-        var delTime = timeCol !== -1 ? data[i][timeCol] : '';
-        var delRecName = recNameCol !== -1 ? data[i][recNameCol] : '';
-        var delRecPhone = recPhoneCol !== -1 ? data[i][recPhoneCol] : '';
-        var delComment = commentCol !== -1 ? data[i][commentCol] : '';
+        // Send to driver ONLY if delivery is for TODAY and current time is >= 08:00 AM
+        // If created/assembled for future dates, it will automatically be sent by morning 08:00 AM trigger!
+        if (driverTgId && driverTgId.length > 5 && isToday && currentHour >= 8) {
+          var addressCol = headers.indexOf('Адреса');
+          var timeCol = headers.indexOf('Час');
+          var recNameCol = headers.indexOf("Ім'я_одержувача");
+          var recPhoneCol = headers.indexOf('Телефон_одержувача');
+          var commentCol = headers.indexOf('Коментар');
 
-        if (driverTgId && driverTgId.length > 5) {
+          var delAddress = addressCol !== -1 ? data[i][addressCol] : '';
+          var delTime = timeCol !== -1 ? data[i][timeCol] : '';
+          var delRecName = recNameCol !== -1 ? data[i][recNameCol] : '';
+          var delRecPhone = recPhoneCol !== -1 ? data[i][recPhoneCol] : '';
+          var delComment = commentCol !== -1 ? data[i][commentCol] : '';
+
           var driverMsg = "📦 <b>Нова зібрана доставка!</b>\n\n" +
                           "⏰ <b>Час:</b> " + (delTime || 'Не вказано') + "\n" +
                           "📍 <b>Адреса:</b> " + delAddress + "\n" +
