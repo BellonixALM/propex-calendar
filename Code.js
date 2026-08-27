@@ -624,10 +624,11 @@ function addDelivery(deliveryData) {
     });
   }
   
-  // Smart Notification logic for Supply Deliveries (Ira Order)
+  // Smart Notification logic for Supply Deliveries (Ira Order / Highest Priority)
   var isSupplyManager = false;
   var mgr = String(deliveryData.manager_chat_id || deliveryData.manager_name || '').trim();
-  if (mgr === '7797165411' || mgr.toLowerCase().indexOf('ira') > -1 || mgr.toLowerCase().indexOf('іра') > -1) {
+  var commentStr = String(deliveryData.comment || '').toLowerCase();
+  if (mgr === '7797165411' || mgr.toLowerCase().indexOf('ira') > -1 || mgr.toLowerCase().indexOf('іра') > -1 || commentStr.indexOf('закупівля') > -1 || commentStr.indexOf('постачання') > -1) {
     isSupplyManager = true;
   }
   
