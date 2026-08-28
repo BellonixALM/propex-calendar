@@ -697,15 +697,15 @@ function addDelivery(deliveryData) {
 
   sheet.appendRow(newRow);
   
-  // Notify Head Warehouse Workers (Instant upon creation if created between 08:00 and 21:00 Europe/Kiev)
+  // Notify Head Warehouse Workers (Instant upon creation if created between 08:00 and 18:00 Europe/Kiev)
   var isSupplyMgr = (mgr === '7797165411' || mgr.toLowerCase().indexOf('ira') > -1 || mgr.toLowerCase().indexOf('іра') > -1);
   
   if (!isSupplyMgr) { // Regular Customer Deliveries
     var currentHour = parseInt(Utilities.formatDate(new Date(), "Europe/Kiev", "HH"), 10);
     
-    // Send to Warehouse immediately if created during working hours (08:00 - 21:00)
-    // If created overnight (21:00 - 08:00), it will safely trigger at 08:00 AM!
-    if ((currentHour >= 8 && currentHour < 21) && heads.length > 0) {
+    // Send to Warehouse immediately if created during working hours (08:00 - 18:00)
+    // If created after 18:00 or overnight, it will safely trigger at 08:00 AM next morning!
+    if ((currentHour >= 8 && currentHour < 18) && heads.length > 0) {
       var text = "📦 <b>Нове замовлення створено!</b>\n" +
                  "Замовлення №" + (deliveryData.order_num || "Б/Н") + "\n" +
                  "📅 " + deliveryData.date + " " + deliveryData.time + "\n" +
