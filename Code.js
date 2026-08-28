@@ -698,6 +698,7 @@ function sendSingleSupplyDeliveryToDriver(deliveryId, deliveryData) {
     ]
   };
   sendTelegramMessage(driverTgId, msg, kb);
+  appendHistoryEvent(deliveryId, "Надіслано сповіщення водію у Бот (Постачання)", "Система");
 }
 
 function sendMorningSupplyDeliveries() {
