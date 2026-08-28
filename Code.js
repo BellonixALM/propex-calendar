@@ -1250,6 +1250,23 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
         }
       }
       
+      // Trigger notification for Driver on Supply Delivery update if driver is assigned
+      var isSupplyMgr = (managerId === '7797165411' || String(managerId).toLowerCase().indexOf('ira') > -1);
+      var commentCheck = String(deliveryData.comment || '').toLowerCase();
+      if (isSupplyMgr || commentCheck.indexOf('закупівля') > -1 || commentCheck.indexOf('постачання') > -1) {
+        var assignedDriverId = deliveryData.driver_user_id || deliveryData.driver_id;
+        if (assignedDriverId && String(assignedDriverId).length > 5) {
+          var todayStr = Utilities.formatDate(new Date(), "Europe/Kiev", "dd.MM.yyyy");
+          var todayISO = Utilities.formatDate(new Date(), "Europe/Kiev", "yyyy-MM-dd");
+          var isToday = (deliveryData.date === todayStr || deliveryData.date === todayISO);
+          var currentHour = parseInt(Utilities.formatDate(new Date(), "Europe/Kiev", "HH"), 10);
+          
+          if (isToday && currentHour >= 8) {
+            sendSingleSupplyDeliveryToDriver(deliveryId, deliveryData);
+          }
+        }
+      }
+      
       return { status: 'success', id: deliveryId };
     }
   }
