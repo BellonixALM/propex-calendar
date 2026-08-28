@@ -655,6 +655,7 @@ function addDelivery(deliveryData) {
       heads.forEach(function(head) {
         sendTelegramMessage(head.telegram_id, text, kb);
       });
+      appendHistoryEvent(id, "Передано Старшому комірнику у Бот на збірку", "Система");
     }
   }
   
