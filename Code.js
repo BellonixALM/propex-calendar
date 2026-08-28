@@ -697,18 +697,15 @@ function addDelivery(deliveryData) {
 
   sheet.appendRow(newRow);
   
-  // Notify Head Warehouse Workers (Smart 8:00 AM Europe/Kiev rule for Deliveries)
+  // Notify Head Warehouse Workers (Instant upon creation if created between 08:00 and 21:00 Europe/Kiev)
   var isSupplyMgr = (mgr === '7797165411' || mgr.toLowerCase().indexOf('ira') > -1 || mgr.toLowerCase().indexOf('іра') > -1);
   
   if (!isSupplyMgr) { // Regular Customer Deliveries
-    var todayStr = Utilities.formatDate(new Date(), "Europe/Kiev", "dd.MM.yyyy");
-    var todayISO = Utilities.formatDate(new Date(), "Europe/Kiev", "yyyy-MM-dd");
-    var isToday = (deliveryData.date === todayStr || deliveryData.date === todayISO);
     var currentHour = parseInt(Utilities.formatDate(new Date(), "Europe/Kiev", "HH"), 10);
     
-    // Notify Warehouse ONLY if delivery is for TODAY and current time is >= 08:00 AM
-    // (If created for future dates, it will automatically be sent by morning 08:00 AM trigger!)
-    if (isToday && currentHour >= 8 && heads.length > 0) {
+    // Send to Warehouse immediately if created during working hours (08:00 - 21:00)
+    // If created overnight (21:00 - 08:00), it will safely trigger at 08:00 AM!
+    if ((currentHour >= 8 && currentHour < 21) && heads.length > 0) {
       var text = "📦 <b>Нове замовлення створено!</b>\n" +
                  "Замовлення №" + (deliveryData.order_num || "Б/Н") + "\n" +
                  "📅 " + deliveryData.date + " " + deliveryData.time + "\n" +
@@ -744,11 +741,11 @@ function addDelivery(deliveryData) {
   }
   
   if (isSupplyManager && deliveryData.driver_user_id) {
-    var todayStr = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy");
-    var todayISO = Utilities.formatDate(new Date(), "GMT+3", "yyyy-MM-dd");
+    var todayStr = Utilities.formatDate(new Date(), "Europe/Kiev", "dd.MM.yyyy");
+    var todayISO = Utilities.formatDate(new Date(), "Europe/Kiev", "yyyy-MM-dd");
     var isToday = (deliveryData.date === todayStr || deliveryData.date === todayISO);
     
-    var currentHour = parseInt(Utilities.formatDate(new Date(), "GMT+3", "HH"), 10);
+    var currentHour = parseInt(Utilities.formatDate(new Date(), "Europe/Kiev", "HH"), 10);
     
     if (isToday && currentHour >= 8) {
       // Created today after 08:00 AM -> Send immediately!
@@ -781,8 +778,8 @@ function sendSingleSupplyDeliveryToDriver(deliveryId, deliveryData) {
 }
 
 function sendMorningSupplyDeliveries() {
-  var todayStr = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy");
-  var todayISO = Utilities.formatDate(new Date(), "GMT+3", "yyyy-MM-dd");
+  var todayStr = Utilities.formatDate(new Date(), "Europe/Kiev", "dd.MM.yyyy");
+  var todayISO = Utilities.formatDate(new Date(), "Europe/Kiev", "yyyy-MM-dd");
   var deliveries = getDeliveries();
   
   deliveries.forEach(function(d) {
@@ -800,6 +797,52 @@ function sendMorningSupplyDeliveries() {
         receiver_name: d["Ім'я_одержувача"],
         comment: d['Коментар']
       });
+    }
+  });
+}
+
+function sendMorningWarehouseDeliveries() {
+  var todayStr = Utilities.formatDate(new Date(), "Europe/Kiev", "dd.MM.yyyy");
+  var todayISO = Utilities.formatDate(new Date(), "Europe/Kiev", "yyyy-MM-dd");
+  var deliveries = getDeliveries();
+  var whData = getWarehouseWorkers();
+  var heads = whData.heads;
+  var workers = whData.workers;
+  
+  deliveries.forEach(function(d) {
+    var isToday = (d['Дата'] === todayStr || d['Дата'] === todayISO);
+    var mgr = String(d['ID_Менеджера'] || '').trim();
+    var isSupply = (mgr === '7797165411' || mgr.toLowerCase().indexOf('ira') > -1 || mgr.toLowerCase().indexOf('іра') > -1);
+    
+    if (isToday && !isSupply && d['Статус'] !== 'Виконано' && d['Статус'] !== 'Скасовано') {
+      var whStatus = String(d['Статус_збору'] || '').trim();
+      var id = d['ID'];
+      var shortId = String(id).replace(/-/g, '');
+      
+      // If not yet assembled, notify warehouse heads if not notified
+      if (!whStatus || whStatus === 'Очікує') {
+        if (heads.length > 0) {
+          var text = "📦 <b>Ранкова збірка замовлення!</b>\n" +
+                     "Замовлення №" + (d['Номер_замовлення'] || "Б/Н") + "\n" +
+                     "📅 " + d['Дата'] + " " + d['Час'] + "\n" +
+                     "Кому: " + (d["Ім'я_одержувача"] || "Не вказано") + "\n\n" +
+                     "Будь ласка, призначте комірника на збірку:";
+                     
+          var kb = { "inline_keyboard": [] };
+          heads.forEach(function(h) {
+            kb.inline_keyboard.push([{"text": "🧑‍💼 На себе (" + h.name + ")", "callback_data": "awh_" + shortId + "_" + h.telegram_id}]);
+          });
+          workers.forEach(function(w) {
+            if (w.name && w.telegram_id) {
+              kb.inline_keyboard.push([{"text": "👷 Призначити: " + w.name, "callback_data": "awh_" + shortId + "_" + w.telegram_id}]);
+            }
+          });
+          heads.forEach(function(head) {
+            sendTelegramMessage(head.telegram_id, text, kb);
+          });
+          appendHistoryEvent(id, "Передано Старшому комірнику у Бот на збірку (08:00 ранку)", "Система");
+        }
+      }
     }
   });
 }
