@@ -300,18 +300,94 @@ function doPost(e) {
           .setMimeType(ContentService.MimeType.JSON);
       }
 
-      if (callbackData.startsWith('driver_start_') || callbackData.startsWith('driver_pickup_') || callbackData.startsWith('driver_arrived_')) {
-        var orderNum = callbackData.split('_').pop();
-        var statusLabel = 'В процесі';
-        if (callbackData.startsWith('driver_pickup_')) statusLabel = 'Забрано у постачальника';
-        if (callbackData.startsWith('driver_arrived_')) statusLabel = 'Прийнято на склад';
-
-        appendHistoryEvent(orderNum, 'Статус водія у Telegram: ' + statusLabel, 'Водій в Telegram-боті');
-
-        var ackMsg = "✅ Дякуємо! Статус замовлення № " + orderNum + " успішно оновлено на: " + statusLabel;
+      // 1. Assign storekeeper button callback (awh_{shortId}_{workerId})
+      if (callbackData.startsWith('awh_')) {
+        var parts = callbackData.split('_');
+        var delId = parts[1];
+        var workerId = parts[2];
+        assignWarehouseWorker(delId, workerId);
+        appendHistoryEvent(delId, "Призначено комірника на збірку (Бот)", "Старший комірник у Telegram-боті");
+        
+        var ackMsg = "✅ Комірника успішно призначено на збірку замовлення!";
         sendTelegramMessage(fromChatId, ackMsg);
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'awh handled' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
 
-        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Callback handled' }))
+      // 2. Warehouse assembled completion button callback (wh_confirm_{delId})
+      if (callbackData.startsWith('wh_confirm_')) {
+        var delId = callbackData.replace('wh_confirm_', '');
+        updateWarehouseStatus(delId, 'Зібрано');
+        
+        // Notify manager of completion if managerId is present
+        var deliveries = getDeliveries();
+        var targetDel = deliveries.find(function(d) { return String(d['ID']).replace(/-/g, '') === String(delId).replace(/-/g, ''); });
+        if (targetDel && targetDel['ID_Менеджера'] && String(targetDel['ID_Менеджера']).length > 5) {
+          var mgrMsg = "📦 <b>Замовлення №" + (targetDel['Номер_замовлення'] || delId) + " зібрано складом!</b>\n" +
+                       "Статус збору оновлено на: <b>Зібрано</b>.";
+          sendTelegramMessage(targetDel['ID_Менеджера'], mgrMsg);
+        }
+
+        var ackMsg = "✅ Збірку замовлення підтверджено! Статус оновлено на: Зібрано.";
+        sendTelegramMessage(fromChatId, ackMsg);
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'wh_confirm handled' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // 3. Driver en route to supplier (supply_drive_{delId})
+      if (callbackData.startsWith('supply_drive_')) {
+        var delId = callbackData.replace('supply_drive_', '');
+        updateDeliveryStatus(delId, 'В процесі', 'Водій виїхав до постачальника');
+        appendHistoryEvent(delId, 'Водій виїхав до постачальника', 'Водій у Telegram-боті');
+
+        var ackMsg = "🚚 Дякуємо! Статус оновлено: Виїхав до постачальника.";
+        sendTelegramMessage(fromChatId, ackMsg);
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Supply drive handled' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // 4. Driver arrived on site (onsite_{delId})
+      if (callbackData.startsWith('onsite_')) {
+        var delId = callbackData.replace('onsite_', '');
+        updateDeliveryStatus(delId, 'В процесі', 'Водій прибув на місце');
+        appendHistoryEvent(delId, '📍 Водій прибув на місце доставки', 'Водій у Telegram-боті');
+
+        var ackMsg = "📍 Дякуємо! Позначено: Ви на місці.";
+        sendTelegramMessage(fromChatId, ackMsg);
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Onsite handled' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // 5. Driver confirmed delivery completion (confirm_{delId})
+      if (callbackData.startsWith('confirm_')) {
+        var delId = callbackData.replace('confirm_', '');
+        updateDeliveryStatus(delId, 'Виконано', 'Доставку успішно підтверджено водієм');
+        appendHistoryEvent(delId, '✅ Замовлення успішно виконано та доставлено', 'Водій у Telegram-боті');
+
+        // Notify manager of delivery completion
+        var deliveries = getDeliveries();
+        var targetDel = deliveries.find(function(d) { return String(d['ID']).replace(/-/g, '') === String(delId).replace(/-/g, ''); });
+        if (targetDel && targetDel['ID_Менеджера'] && String(targetDel['ID_Менеджера']).length > 5) {
+          var mgrMsg = "🎉 <b>Замовлення №" + (targetDel['Номер_замовлення'] || delId) + " успішно доставлено!</b>\n" +
+                       "Водій підтвердив виконання доставки.";
+          sendTelegramMessage(targetDel['ID_Менеджера'], mgrMsg);
+        }
+
+        var ackMsg = "✅ Дякуємо! Доставку замовлення успішно підтверджено та закрито.";
+        sendTelegramMessage(fromChatId, ackMsg);
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Confirm handled' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // 6. Driver reported a problem (problem_ / wh_problem_)
+      if (callbackData.startsWith('problem_') || callbackData.startsWith('wh_problem_')) {
+        var delId = callbackData.replace('problem_', '').replace('wh_problem_', '');
+        updateDeliveryStatus(delId, 'Проблема', 'Повідомлено про проблему у Боті');
+        appendHistoryEvent(delId, '⚠️ Повідомлено про проблему у Telegram-боті', 'Користувач у Telegram-боті');
+
+        var ackMsg = "⚠️ Інформацію про проблему прийнято. Диспетчера та менеджера сповіщено!";
+        sendTelegramMessage(fromChatId, ackMsg);
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Problem handled' }))
           .setMimeType(ContentService.MimeType.JSON);
       }
     }
