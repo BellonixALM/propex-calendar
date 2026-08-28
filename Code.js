@@ -849,6 +849,11 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
       var address = addressCol !== -1 ? data[i][addressCol] : '';
       var carId = carCol !== -1 ? data[i][carCol] : '';
       
+      // Log status update to Activity Timeline
+      var historyMsg = "Змінено статус на: " + newStatus;
+      if (comment) historyMsg += " (" + comment + ")";
+      appendHistoryEvent(deliveryId, historyMsg, "Система / Бот");
+      
       // Send Telegram Notification to the Manager
       if (managerId) {
         var messageText = "";
