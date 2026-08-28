@@ -123,6 +123,8 @@ function doGet(e) {
         result = addDelivery(payload);
       } else if (action === 'updateDeliveryStatus') {
         result = updateDeliveryStatus(payload.deliveryId, payload.newStatus, payload.comment);
+      } else if (action === 'updateWarehouseStatus' || action === 'update_warehouse_status') {
+        result = updateWarehouseStatus(payload.deliveryId, payload.status);
       } else if (action === 'logEvent') {
         result = { status: 'success', recorded: appendHistoryEvent(payload.deliveryId, payload.eventTitle, payload.initiatorInfo) };
       } else if (action === 'updateDeliveryDetails') {
