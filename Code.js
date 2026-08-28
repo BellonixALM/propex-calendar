@@ -983,7 +983,11 @@ function updateWarehouseStatus(deliveryId, statusStr) {
       // Smart Notification logic for Driver on Warehouse Assembly Completion
       if ((statusStr === 'Зібрано' || statusStr === 'Скомплектовано') && carId && carId.toLowerCase().indexOf('самовивіз') === -1) {
         var driverCol = headers.indexOf('ID_Водія');
+        if (driverCol === -1) driverCol = headers.indexOf('Водій');
         var driverTgId = driverCol !== -1 ? String(data[i][driverCol]).trim() : '';
+        if ((!driverTgId || driverTgId.length < 5) && headers.indexOf('Водій') !== -1) {
+          driverTgId = String(data[i][headers.indexOf('Водій')]).trim();
+        }
         if (!driverTgId && carId) driverTgId = carId; // fallback
         
         var dateCol = headers.indexOf('Дата');
@@ -995,7 +999,6 @@ function updateWarehouseStatus(deliveryId, statusStr) {
         var currentHour = parseInt(Utilities.formatDate(new Date(), "Europe/Kiev", "HH"), 10);
 
         // Send to driver ONLY if delivery is for TODAY and current time is >= 08:00 AM
-        // If created/assembled for future dates, it will automatically be sent by morning 08:00 AM trigger!
         if (driverTgId && driverTgId.length > 5 && isToday && currentHour >= 8) {
           var addressCol = headers.indexOf('Адреса');
           var timeCol = headers.indexOf('Час');
@@ -1023,6 +1026,7 @@ function updateWarehouseStatus(deliveryId, statusStr) {
             ]
           };
           sendTelegramMessage(driverTgId, driverMsg, driverKb);
+          appendHistoryEvent(deliveryId, "Надіслано сповіщення водію у Бот (Зібране замовлення)", "Система");
         }
       }
 
