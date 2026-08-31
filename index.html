@@ -6248,7 +6248,9 @@ body.light-theme .login-error {
       const nowStr = `${dd}.${mm}.${yyyy} ${hh}:${min}`;
 
       const userRoleLabel = (user.role === 'logist' || user.role === 'логіст') ? 'Логіст: Юрій Бортовщук' : (user.name || user.login || 'Менеджер');
-      const moveEventTitle = `Змінено час/авто з ${oldTime} на ${targetTime}`;
+      const oldCarName = window.getCarName(oldCar);
+      const newCarName = window.getCarName(targetCar);
+      const moveEventTitle = `Змінено авто/час: ${oldCarName} (${oldTime}) ➔ ${newCarName} (${targetTime})`;
       
       if (!del['Історія_Операцій']) {
         del['Історія_Операцій'] = `${nowStr} — Замовлення створено; ${nowStr} — ${moveEventTitle} (${userRoleLabel});`;
