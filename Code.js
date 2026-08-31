@@ -1351,6 +1351,17 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
         sheet.getRange(rowNum, invoiceUrlCol + 1).setValue(deliveryData.invoice_url || '');
       }
 
+      // Write updated history if provided
+      var historyCol = headers.indexOf('Історія_Операцій');
+      if (historyCol === -1) {
+        sheet.getRange(1, headers.length + 1).setValue('Історія_Операцій');
+        historyCol = headers.length;
+        headers.push('Історія_Операцій');
+      }
+      if (historyCol !== -1 && deliveryData.history !== undefined) {
+        sheet.getRange(rowNum, historyCol + 1).setValue(deliveryData.history || '');
+      }
+
       // Check if changes are made by logist/director/admin and notify manager if critical fields shifted
       if (managerId && (userRole === 'logist' || userRole === 'director' || userRole === 'admin')) {
         var changed = false;
