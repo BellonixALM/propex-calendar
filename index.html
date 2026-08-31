@@ -5818,7 +5818,13 @@ body.light-theme .login-error {
       const min = String(now.getMinutes()).padStart(2, '0');
       const nowStr = `${dd}.${mm}.${yyyy} ${hh}:${min}`;
 
-      let initHistoryStr = `${nowStr} — Замовлення створено (Менеджер: ${managerName}); ${nowStr} — Передано на склад (Головний комірник: Сергій);`;
+      let initHistoryStr = `${nowStr} — Замовлення створено (Менеджер: ${managerName});`;
+      if (car && car !== 'unassigned' && car !== 'Самовивіз' && car !== 'Самовивіз Нова Пошта') {
+        const initialCarName = window.getCarName(car);
+        const initialDriverName = driverUserId ? getEmployeeFullName(driverUserId, 'Водій') : '';
+        const driverInfoStr = initialDriverName ? ` / Водій: ${initialDriverName}` : '';
+        initHistoryStr += ` ${nowStr} — Призначено авто та водія (Авто: ${initialCarName}${driverInfoStr}) (Менеджер: ${managerName});`;
+      }
       if (invoice_url) {
         initHistoryStr += ` ${nowStr} — Додано 1С прибуткову накладну (Менеджер: ${managerName});`;
       }
