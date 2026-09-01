@@ -818,8 +818,9 @@ function sendMorningWarehouseDeliveries() {
       var whStatus = String(d['Статус_збору'] || '').trim();
       var id = d['ID'];
       var shortId = String(id).replace(/-/g, '');
+      var carId = String(d['ID_Авто'] || '').trim();
       
-      // If not yet assembled, notify warehouse heads if not notified
+      // Option A: If not yet assembled, notify warehouse heads for assembly
       if (!whStatus || whStatus === 'Очікує') {
         if (heads.length > 0) {
           var text = "📦 <b>Ранкова збірка замовлення!</b>\n" +
@@ -840,7 +841,31 @@ function sendMorningWarehouseDeliveries() {
           heads.forEach(function(head) {
             sendTelegramMessage(head.telegram_id, text, kb);
           });
-          appendHistoryEvent(id, "Передано Старшому комірнику у Бот на збірку (08:00 ранку)", "Система");
+          appendHistoryEvent(id, "Передано Старшому комірнику у Бот на збірку (08:00 ранку)", "Автоматично");
+        }
+      } 
+      // Option B: If ALREADY assembled pre-morning and assigned to a driver, send to driver now!
+      else if ((whStatus === 'Зібрано' || whStatus === 'Скомплектовано') && carId && carId.toLowerCase().indexOf('самовивіз') === -1) {
+        var driverTgId = String(d['ID_Водія'] || d['Водій'] || '').trim();
+        if (driverTgId && driverTgId.length > 5) {
+          var historyStr = String(d['Історія_Операцій'] || '');
+          if (historyStr.indexOf('Надіслано сповіщення водію') === -1) {
+            var driverMsg = "📦 <b>Нова зібрана доставка!</b>\n\n" +
+                            "⏰ <b>Час:</b> " + (d['Час'] || 'Не вказано') + "\n" +
+                            "📍 <b>Адреса:</b> " + d['Адреса'] + "\n" +
+                            "№ <b>Замовлення:</b> №" + (d['Номер_замовлення'] || 'Б/Н') + "\n" +
+                            "👤 <b>Отримувач:</b> " + (d["Ім'я_одержувача"] || '') + "\n";
+            if (d['Коментар']) driverMsg += "💬 <b>Примітка:</b> " + d['Коментар'] + "\n";
+
+            var driverKb = {
+              inline_keyboard: [
+                [{ text: "📍 Я на місці", callback_data: "onsite_" + id }],
+                [{ text: "✅ Підтвердити доставку", callback_data: "confirm_" + id }, { text: "❌ Проблема", callback_data: "problem_" + id }]
+              ]
+            };
+            sendTelegramMessage(driverTgId, driverMsg, driverKb);
+            appendHistoryEvent(id, "Надіслано сповіщення водію у Бот (08:00 ранку)", "Автоматично");
+          }
         }
       }
     }
@@ -2211,7 +2236,7 @@ function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
 
       if (currentId === searchId || String(data[i][idCol]).trim() === String(deliveryId).trim() || (searchId.length > 0 && currentOrderNum === searchId)) {
         var rowNum = i + 1;
-        var nowFormatted = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy HH:mm");
+        var nowFormatted = Utilities.formatDate(new Date(), "Europe/Kiev", "dd.MM.yyyy HH:mm");
         var existingHistory = data[i][historyCol] || '';
 
         var existingCreated = data[i][createdCol];
