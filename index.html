@@ -5821,9 +5821,13 @@ body.light-theme .login-error {
       let initHistoryStr = `${nowStr} — Замовлення створено (Менеджер: ${managerName});`;
       if (car && car !== 'unassigned' && car !== 'Самовивіз' && car !== 'Самовивіз Нова Пошта') {
         const initialCarName = window.getCarName(car);
-        const initialDriverName = driverUserId ? getEmployeeFullName(driverUserId, 'Водій') : '';
-        const driverInfoStr = initialDriverName ? ` / Водій: ${initialDriverName}` : '';
-        initHistoryStr += ` ${nowStr} — Призначено авто та водія (Авто: ${initialCarName}${driverInfoStr}) (Менеджер: ${managerName});`;
+        initHistoryStr += ` ${nowStr} — Призначено авто: ${initialCarName} (Менеджер: ${managerName});`;
+      }
+      if (driverUserId) {
+        const initialDriverName = getEmployeeFullName(driverUserId, 'Водій');
+        if (initialDriverName && initialDriverName !== 'Не призначено') {
+          initHistoryStr += ` ${nowStr} — Призначено водія: ${initialDriverName} (Менеджер: ${managerName});`;
+        }
       }
       if (invoice_url) {
         initHistoryStr += ` ${nowStr} — Додано 1С прибуткову накладну (Менеджер: ${managerName});`;
