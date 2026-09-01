@@ -686,8 +686,8 @@ function addDelivery(deliveryData) {
 
   var formattedNow = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy HH:mm");
   var managerInfo = deliveryData.manager_name || deliveryData.manager_chat_id || 'Ira Order';
-  var initialHistory = formattedNow + " — Замовлення створено (Менеджер: " + managerInfo + ");";
-  if (deliveryData.invoice_url) {
+  var initialHistory = deliveryData.history || (formattedNow + " — Замовлення створено (Менеджер: " + managerInfo + ");");
+  if (deliveryData.invoice_url && initialHistory.indexOf('Додано 1С') === -1) {
     initialHistory += " " + formattedNow + " — Додано 1С прибуткову накладну (Менеджер: " + managerInfo + ");";
   }
 

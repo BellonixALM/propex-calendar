@@ -6000,6 +6000,7 @@ body.light-theme .login-error {
             localStorage.setItem('propex_invoice_overrides', JSON.stringify(overrides));
           } catch(e) {}
         }
+        deliveryData.history = initHistoryStr;
         state.deliveries.push(newDelObj);
         saveDeliveriesToLocalStorage();
         closeModal('delivery-modal');
