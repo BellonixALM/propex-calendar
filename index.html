@@ -4853,16 +4853,16 @@ body.light-theme .login-error {
         }
       } else {
         // Standard delivery status icon logic
-        if (statusClass === 'completed') {
-          whIcon = '<span class="wh-icon" title="Доставку успішно підтверджено водієм" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
+        if (statusClass === 'completed' || del['Статус'] === 'Виконано') {
+          whIcon = '<span class="wh-icon" title="Виконано та доставлено одержувачу" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
         } else if (smartOnRoute && statusClass !== 'problem') {
           whIcon = `<span class="wh-icon" title="Передано водію (в дорозі)" style="color:#3b82f6; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>`;
         } else if (whStatus === 'Очікує') {
           whIcon = '<span class="wh-icon" title="Очікує збірки" style="color:#9ca3af; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="clock" style="width:20px;height:20px;"></i></span>';
         } else if (whStatus === 'В процесі збору' || whStatus === 'Збирається') {
           whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
-        } else if (whStatus === 'Зібрано') {
-          whIcon = '<span class="wh-icon" title="Готово до видачі" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
+        } else if (whStatus === 'Зібрано' || whStatus === 'Скомплектовано') {
+          whIcon = '<span class="wh-icon" title="Зібрано складом (Готово)" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package-check" style="width:20px;height:20px;"></i></span>';
         } else if (isWhProblem) {
           whIcon = '<span class="wh-icon" title="Проблема зі збіркою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
         }
@@ -5822,11 +5822,13 @@ body.light-theme .login-error {
       const nowStr = `${dd}.${mm}.${yyyy} ${hh}:${min}`;
 
       let initHistoryStr = `${nowStr} — Замовлення створено (Менеджер: ${managerName});`;
-      if (car && car !== 'unassigned' && car !== 'Самовивіз' && car !== 'Самовивіз Нова Пошта') {
+      if (car === 'Самовивіз' || car === 'Самовивіз Нова Пошта') {
+        initHistoryStr += ` ${nowStr} — Спосіб доставки: ${car} (Не потребує автомобіля Propex);`;
+      } else if (car && car !== 'unassigned' && car !== 'Не призначено') {
         const initialCarName = window.getCarName(car);
         initHistoryStr += ` ${nowStr} — Призначено авто: ${initialCarName} (Менеджер: ${managerName});`;
       }
-      if (driverUserId) {
+      if (driverUserId && car !== 'Самовивіз' && car !== 'Самовивіз Нова Пошта') {
         const initialDriverName = getEmployeeFullName(driverUserId, 'Водій');
         if (initialDriverName && initialDriverName !== 'Не призначено') {
           initHistoryStr += ` ${nowStr} — Призначено водія: ${initialDriverName} (Менеджер: ${managerName});`;

@@ -1097,17 +1097,18 @@ function updateWarehouseStatus(deliveryId, statusStr) {
       var managerCol = headers.indexOf('ID_Менеджера');
       var managerId = managerCol !== -1 ? String(data[i][managerCol]).trim() : "";
       
+      var whData = getWarehouseWorkers();
+      var workerName = "Склад / Комірник";
+      var assignedWorker = null;
+      for (var j = 0; j < whData.heads.length; j++) { if (String(whData.heads[j].id) == String(workerId) || String(whData.heads[j].telegram_id) == String(workerId)) assignedWorker = whData.heads[j]; }
+      for (var k = 0; k < whData.workers.length; k++) { if (String(whData.workers[k].id) == String(workerId) || String(whData.workers[k].telegram_id) == String(workerId)) assignedWorker = whData.workers[k]; }
+      if (assignedWorker && assignedWorker.name) workerName = "Комірник: " + assignedWorker.name;
+      
       // Log warehouse status event to Activity Timeline
-      appendHistoryEvent(deliveryId, "Статус збору складом: " + statusStr, "Склад / Комірник Сергій");
+      appendHistoryEvent(deliveryId, "Статус збору складом: " + statusStr, workerName);
       
       // If it's a problem or refusal, notify Heads and Manager
       if (statusStr.indexOf('Проблема') === 0 || statusStr.indexOf('Відмова') === 0) {
-        var whData = getWarehouseWorkers();
-        var workerName = "Комірник";
-        
-        var assignedWorker = null;
-        for (var j = 0; j < whData.heads.length; j++) { if (whData.heads[j].id == workerId) assignedWorker = whData.heads[j]; }
-        for (var k = 0; k < whData.workers.length; k++) { if (whData.workers[k].id == workerId) assignedWorker = whData.workers[k]; }
         
         if (assignedWorker) workerName = assignedWorker.name;
         
