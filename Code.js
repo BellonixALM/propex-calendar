@@ -758,6 +758,8 @@ function addDelivery(deliveryData) {
 
 function sendSingleSupplyDeliveryToDriver(deliveryId, deliveryData) {
   var driverTgId = deliveryData.driver_user_id || deliveryData.driver_id;
+  var carId = String(deliveryData.driver_id || '').toLowerCase();
+  if (carId === 'не призначено' || carId === 'unassigned' || carId === 'самовивіз' || carId === 'самовивіз нова пошта') return;
   if (!driverTgId || String(driverTgId).length < 5) return;
 
   var msg = "🚚 <b>Постачання (Закупівля товару)</b>\n\n" +

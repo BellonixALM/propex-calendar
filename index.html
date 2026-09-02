@@ -5754,7 +5754,10 @@ body.light-theme .login-error {
       }
       const parts = rawDate.split('-');
       const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
-      const driverUserId = document.getElementById('form-driver-select') ? document.getElementById('form-driver-select').value.trim() : '';
+      let driverUserId = document.getElementById('form-driver-select') ? document.getElementById('form-driver-select').value.trim() : '';
+      if (!car || car === 'unassigned' || car === 'Не призначено' || car === 'Самовивіз' || car === 'Самовивіз Нова Пошта') {
+        driverUserId = '';
+      }
       let invoice_url = '';
       if (selectedInvoiceFiles && selectedInvoiceFiles.length > 0) {
         invoice_url = JSON.stringify(selectedInvoiceFiles.map(f => {
