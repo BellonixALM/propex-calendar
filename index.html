@@ -5757,13 +5757,6 @@ body.light-theme .login-error {
       let driverUserId = document.getElementById('form-driver-select') ? document.getElementById('form-driver-select').value.trim() : '';
       if (!car || car === 'unassigned' || car === 'Не призначено' || car === 'Самовивіз' || car === 'Самовивіз Нова Пошта') {
         driverUserId = '';
-      } else if (!driverUserId) {
-        // Automatically resolve assigned driver for chosen car (e.g. Car 3 -> POV / 5343248374)
-        const employees = state.employees || [];
-        const driverForCar = employees.find(e => String(e['Авто'] || '') === String(car) || String(e['car'] || '') === String(car));
-        if (driverForCar) {
-          driverUserId = driverForCar['Telegram_ID'] || driverForCar['Telegram'] || driverForCar['ID'] || '';
-        }
       }
       let invoice_url = '';
       if (selectedInvoiceFiles && selectedInvoiceFiles.length > 0) {
