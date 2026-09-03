@@ -4594,8 +4594,11 @@ body.light-theme .login-error {
           cell.addEventListener('dragover', handleDragOver);
           cell.addEventListener('dragleave', handleDragLeave);
           cell.addEventListener('drop', handleDrop);
-          const dayDels = weekDeliveries[dIndex].deliveries;
-          const matchingDeliveries = dayDels.filter(del => del['Час'] === hour);
+          const matchingDeliveries = dayDels.filter(del => {
+            let delTime = String(del['Час'] || '').trim();
+            if (delTime && delTime.length === 4 && delTime.includes(':')) delTime = '0' + delTime;
+            return delTime === hour;
+          });
           matchingDeliveries.forEach(delivery => {
             const card = createDeliveryCard(delivery, true);
             cell.appendChild(card);
