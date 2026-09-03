@@ -3427,22 +3427,6 @@ body.light-theme .login-error {
               if (overrideVal) {
                 d['Накладна_URL'] = overrideVal;
                 d['Накладна'] = overrideVal;
-              } else if (existingLocal && (existingLocal['Накладна_URL'] || existingLocal['Накладна'])) {
-                d['Накладна_URL'] = existingLocal['Накладна_URL'] || existingLocal['Накладна'];
-                d['Накладна'] = existingLocal['Накладна_URL'] || existingLocal['Накладна'];
-              }
-              if (existingLocal) {
-                if (existingLocal['Час']) d['Час'] = existingLocal['Час'];
-                if (existingLocal['Дата']) d['Дата'] = existingLocal['Дата'];
-                if (existingLocal['Адреса']) d['Адреса'] = existingLocal['Адреса'];
-                if (existingLocal['Історія_Операцій']) {
-                  const sheetHist = d['Історія_Операцій'] || d['Історія'] || '';
-                  const localHist = existingLocal['Історія_Операцій'] || '';
-                  if (localHist.length > sheetHist.length) {
-                    d['Історія_Операцій'] = localHist;
-                    d['Історія'] = localHist;
-                  }
-                }
               }
             });
 
