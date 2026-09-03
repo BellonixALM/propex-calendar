@@ -4772,8 +4772,10 @@ body.light-theme .login-error {
       const isDriverSet = driverAssigned !== '' && driverAssigned !== 'Не призначено';
 
       // Check manager Ira Order (Pickup to Propex)
-      const mgrName = String(del['Менеджер'] || del['ID_Менеджера'] || '').toLowerCase();
-      const isIraOrder = mgrName.includes('ira') || mgrName.includes('іра');
+      const rawMgr = del['ID_Менеджера'] || del['Менеджер'] || '';
+      const resolvedMgrName = getEmployeeFullName(rawMgr, '').toLowerCase();
+      const mgrName = (String(rawMgr) + ' ' + resolvedMgrName).toLowerCase();
+      const isIraOrder = mgrName.includes('ira') || mgrName.includes('іра') || mgrName.includes('7797165411');
 
       // Standard delivery: Today + Assembled + Driver assigned
       // Ira Order pickup: Today + Driver assigned (sent at 08:00 AM)
