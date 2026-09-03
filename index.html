@@ -4840,16 +4840,16 @@ body.light-theme .login-error {
         }
       } else {
         // Standard delivery status icon logic
-        if (statusClass === 'completed' || del['Статус'] === 'Виконано') {
+        if (statusClass === 'completed' || lowerStatus === 'виконано' || lowerStatus === 'виконана') {
           whIcon = '<span class="wh-icon" title="Виконано та доставлено одержувачу" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
         } else if (smartOnRoute && statusClass !== 'problem') {
           whIcon = `<span class="wh-icon" title="Передано водію (в дорозі)" style="color:#3b82f6; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>`;
-        } else if (whStatus === 'Очікує') {
-          whIcon = '<span class="wh-icon" title="Очікує збірки" style="color:#9ca3af; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="clock" style="width:20px;height:20px;"></i></span>';
-        } else if (whStatus === 'В процесі збору' || whStatus === 'Збирається') {
-          whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
         } else if (whStatus === 'Зібрано' || whStatus === 'Скомплектовано') {
           whIcon = '<span class="wh-icon" title="Зібрано складом (Готово)" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package-check" style="width:20px;height:20px;"></i></span>';
+        } else if (whStatus === 'В процесі збору' || whStatus === 'Збирається') {
+          whIcon = '<span class="wh-icon" title="В процесі збирання" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
+        } else if (whStatus === 'Очікує') {
+          whIcon = '<span class="wh-icon" title="Очікує збірки" style="color:#9ca3af; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="clock" style="width:20px;height:20px;"></i></span>';
         } else if (isWhProblem) {
           whIcon = '<span class="wh-icon" title="Проблема зі збіркою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
         }
