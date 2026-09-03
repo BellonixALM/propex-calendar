@@ -1860,30 +1860,65 @@ body.light-theme .login-error {
         </div>
       </div>
         
-        <div class="dash-cards-grid">
-          <div class="dash-card dash-purple">
-            <div class="dash-card-header">
-              <div class="dash-icon"><i data-lucide="package"></i></div>
-              <div class="dash-title">Всього доставок</div>
+        <div class="dash-cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+          <!-- 1. Створено замовлень -->
+          <div class="dash-card dash-purple" style="padding: 14px 16px; border-radius: 12px;">
+            <div class="dash-card-header" style="margin-bottom: 6px;">
+              <div class="dash-icon" style="width: 28px; height: 28px; font-size: 14px;"><i data-lucide="box" style="width:16px;height:16px;"></i></div>
+              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Створено замовлень</div>
             </div>
-            <div class="dash-value" id="dash-total">0</div>
-            <div class="dash-trend" id="dash-total-trend"><span class="trend-up">0% &uarr;</span> з минулого місяця</div>
+            <div class="dash-value" id="dash-total" style="font-size: 22px; font-weight: 800; line-height: 1.2;">0</div>
+            <div class="dash-trend" id="dash-total-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
           </div>
-          <div class="dash-card dash-green">
-            <div class="dash-card-header">
-              <div class="dash-icon"><i data-lucide="check-circle"></i></div>
-              <div class="dash-title">Доставлено</div>
+
+          <!-- 2. Передано на склад -->
+          <div class="dash-card" style="padding: 14px 16px; border-radius: 12px; background: rgba(234, 179, 8, 0.06); border: 1px solid rgba(234, 179, 8, 0.2);">
+            <div class="dash-card-header" style="margin-bottom: 6px;">
+              <div class="dash-icon" style="width: 28px; height: 28px; background: rgba(234, 179, 8, 0.15); color: #eab308;"><i data-lucide="clock" style="width:16px;height:16px;"></i></div>
+              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: #eab308;">Передано на склад</div>
             </div>
-            <div class="dash-value" id="dash-delivered">0</div>
-            <div class="dash-trend" id="dash-delivered-trend"><span class="trend-up">0% &uarr;</span> з минулого місяця</div>
+            <div class="dash-value" id="dash-sent-wh" style="font-size: 22px; font-weight: 800; line-height: 1.2; color: #eab308;">0</div>
+            <div class="dash-trend" id="dash-sent-wh-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
           </div>
-          <div class="dash-card dash-red">
-            <div class="dash-card-header">
-              <div class="dash-icon"><i data-lucide="alert-triangle"></i></div>
-              <div class="dash-title">Проблемні / Анульовані</div>
+
+          <!-- 3. Опрацьовано складом -->
+          <div class="dash-card" style="padding: 14px 16px; border-radius: 12px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2);">
+            <div class="dash-card-header" style="margin-bottom: 6px;">
+              <div class="dash-icon" style="width: 28px; height: 28px; background: rgba(16, 185, 129, 0.15); color: #10b981;"><i data-lucide="package-check" style="width:16px;height:16px;"></i></div>
+              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: #10b981;">Опрацьовано складом</div>
             </div>
-            <div class="dash-value" id="dash-issues">0</div>
-            <div class="dash-trend" id="dash-issues-trend"><span class="trend-down">0% &darr;</span> з минулого місяця</div>
+            <div class="dash-value" id="dash-processed-wh" style="font-size: 22px; font-weight: 800; line-height: 1.2; color: #10b981;">0</div>
+            <div class="dash-trend" id="dash-processed-wh-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+          </div>
+
+          <!-- 4. Передано водію -->
+          <div class="dash-card" style="padding: 14px 16px; border-radius: 12px; background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.2);">
+            <div class="dash-card-header" style="margin-bottom: 6px;">
+              <div class="dash-icon" style="width: 28px; height: 28px; background: rgba(59, 130, 246, 0.15); color: #3b82f6;"><i data-lucide="truck" style="width:16px;height:16px;"></i></div>
+              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: #3b82f6;">Передано водію</div>
+            </div>
+            <div class="dash-value" id="dash-sent-driver" style="font-size: 22px; font-weight: 800; line-height: 1.2; color: #3b82f6;">0</div>
+            <div class="dash-trend" id="dash-sent-driver-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+          </div>
+
+          <!-- 5. Доставлено -->
+          <div class="dash-card dash-green" style="padding: 14px 16px; border-radius: 12px;">
+            <div class="dash-card-header" style="margin-bottom: 6px;">
+              <div class="dash-icon" style="width: 28px; height: 28px; font-size: 14px;"><i data-lucide="check-circle" style="width:16px;height:16px;"></i></div>
+              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Доставлено</div>
+            </div>
+            <div class="dash-value" id="dash-delivered" style="font-size: 22px; font-weight: 800; line-height: 1.2;">0</div>
+            <div class="dash-trend" id="dash-delivered-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+          </div>
+
+          <!-- 6. Проблемні / Анульовані -->
+          <div class="dash-card dash-red" style="padding: 14px 16px; border-radius: 12px;">
+            <div class="dash-card-header" style="margin-bottom: 6px;">
+              <div class="dash-icon" style="width: 28px; height: 28px; font-size: 14px;"><i data-lucide="alert-triangle" style="width:16px;height:16px;"></i></div>
+              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Проблемні / Анульовані</div>
+            </div>
+            <div class="dash-value" id="dash-issues" style="font-size: 22px; font-weight: 800; line-height: 1.2;">0</div>
+            <div class="dash-trend" id="dash-issues-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-down">0% &darr;</span> з минулого періоду</div>
           </div>
         </div>
         
@@ -7008,21 +7043,56 @@ function renderDashboard() {
     const currDels = filterDeliveriesByDateRange(state.deliveries, ranges.curr.start, ranges.curr.end);
     const prevDels = filterDeliveriesByDateRange(state.deliveries, ranges.prev.start, ranges.prev.end);
     
-    // Totals
+    // Totals for all 6 micro-modules
     const totalCurr = currDels.length;
     const totalPrev = prevDels.length;
     
+    // 2. Передано на склад (В процесі / Збирається / Зібрано / Прийнято)
+    const isSentToWh = d => {
+      const s = String(d['Статус_збору'] || d['Статус_Склад'] || '').trim();
+      const h = String(d['Історія_Операцій'] || d['Історія'] || '');
+      return s !== '' || h.includes('Передано') || h.includes('сповіщення');
+    };
+    const sentWhCurr = currDels.filter(isSentToWh).length;
+    const sentWhPrev = prevDels.filter(isSentToWh).length;
+
+    // 3. Опрацьовано складом (Зібрано / Скомплектовано / Прийнято на склад)
+    const isProcessedByWh = d => {
+      const s = String(d['Статус_збору'] || d['Статус_Склад'] || '').trim();
+      return ['Зібрано', 'Скомплектовано', 'Прийнято на склад', 'Отримано'].includes(s);
+    };
+    const processedWhCurr = currDels.filter(isProcessedByWh).length;
+    const processedWhPrev = prevDels.filter(isProcessedByWh).length;
+
+    // 4. Передано водію (Призначено авто + Водія та маршрут активний)
+    const isSentToDriver = d => {
+      const car = String(d['ID_Авто'] || '').trim();
+      const drv = String(d['ID_Водія'] || d['Водій'] || '').trim();
+      const st = String(d['Статус'] || d['Status'] || '').toLowerCase();
+      return car !== '' && car !== 'Не призначено' && drv !== '' && drv !== 'Не призначено' && (['в процесі', 'завантажено', 'в дорозі', 'на маршруті', 'виконано'].includes(st) || st.includes('забрано'));
+    };
+    const sentDriverCurr = currDels.filter(isSentToDriver).length;
+    const sentDriverPrev = prevDels.filter(isSentToDriver).length;
+
+    // 5. Доставлено
     const deliveredCurr = currDels.filter(d => (d['Статус'] || d['Status']) === 'Виконано').length;
     const deliveredPrev = prevDels.filter(d => (d['Статус'] || d['Status']) === 'Виконано').length;
     
-    const issuesCurr = currDels.filter(d => ['Анульовано', 'Відмова', 'Проблема'].includes(d['Статус'] || d['Status'])).length;
-    const issuesPrev = prevDels.filter(d => ['Анульовано', 'Відмова', 'Проблема'].includes(d['Статус'] || d['Status'])).length;
+    // 6. Проблемні / Анульовані
+    const issuesCurr = currDels.filter(d => ['Анульовано', 'Відмова', 'Проблема', 'Скасовано', 'Аварія на дорозі'].includes(d['Статус'] || d['Status'])).length;
+    const issuesPrev = prevDels.filter(d => ['Анульовано', 'Відмова', 'Проблема', 'Скасовано', 'Аварія на дорозі'].includes(d['Статус'] || d['Status'])).length;
     
     document.getElementById('dash-total').innerText = totalCurr;
+    document.getElementById('dash-sent-wh').innerText = sentWhCurr;
+    document.getElementById('dash-processed-wh').innerText = processedWhCurr;
+    document.getElementById('dash-sent-driver').innerText = sentDriverCurr;
     document.getElementById('dash-delivered').innerText = deliveredCurr;
     document.getElementById('dash-issues').innerText = issuesCurr;
     
     setTrend('dash-total-trend', totalCurr, totalPrev);
+    setTrend('dash-sent-wh-trend', sentWhCurr, sentWhPrev);
+    setTrend('dash-processed-wh-trend', processedWhCurr, processedWhPrev);
+    setTrend('dash-sent-driver-trend', sentDriverCurr, sentDriverPrev);
     setTrend('dash-delivered-trend', deliveredCurr, deliveredPrev);
     setTrend('dash-issues-trend', issuesCurr, issuesPrev);
     
