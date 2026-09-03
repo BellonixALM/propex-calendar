@@ -719,8 +719,24 @@ function addDelivery(deliveryData) {
   }
 
   var formattedNow = Utilities.formatDate(new Date(), "GMT+3", "dd.MM.yyyy HH:mm");
-  var managerInfo = deliveryData.manager_name || deliveryData.manager_chat_id || 'Ira Order';
+  var managerInfo = deliveryData.manager_name || deliveryData.manager_chat_id || 'Менеджер';
   var initialHistory = deliveryData.history || (formattedNow + " — Замовлення створено (Менеджер: " + managerInfo + ");");
+  
+  // Guarantee auto & driver assignment events in initial history
+  if (deliveryData.driver_id && deliveryData.driver_id !== 'Не призначено' && deliveryData.driver_id !== 'unassigned') {
+    if (initialHistory.indexOf('Призначено авто:') === -1) {
+      var carName = getCarName(deliveryData.driver_id);
+      initialHistory += " " + formattedNow + " — Призначено авто: " + carName + " (Менеджер: " + managerInfo + ");";
+    }
+  }
+  if (deliveryData.driver_user_id && deliveryData.driver_user_id !== 'Не призначено') {
+    if (initialHistory.indexOf('Призначено водія:') === -1) {
+      var driverName = getEmployeeFullName(deliveryData.driver_user_id, 'Водій');
+      if (driverName && driverName !== 'Не призначено') {
+        initialHistory += " " + formattedNow + " — Призначено водія: " + driverName + " (Менеджер: " + managerInfo + ");";
+      }
+    }
+  }
   if (deliveryData.invoice_url && initialHistory.indexOf('Додано 1С') === -1) {
     initialHistory += " " + formattedNow + " — Додано 1С прибуткову накладну (Менеджер: " + managerInfo + ");";
   }
