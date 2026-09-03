@@ -276,8 +276,25 @@ function doPost(e) {
 
       if (callbackData.startsWith('supply_took_')) {
         var delId = callbackData.replace('supply_took_', '');
+        
+        // Resolve exact driver name for history log
+        var driverName = "Водій у Telegram-боті";
+        if (fromChatId) {
+          var employees = get_employees();
+          if (employees && employees.data) {
+            for (var e = 0; e < employees.data.length; e++) {
+              var emp = employees.data[e];
+              var tgId = emp['Telegram_ID'] || emp['Telegram'] || emp['ID'];
+              if (String(tgId).trim() === String(fromChatId).trim()) {
+                driverName = emp['ПІБ'] || emp["Ім'я"] || driverName;
+                break;
+              }
+            }
+          }
+        }
+
         updateDeliveryStatus(delId, 'Забрано у постачальника', 'Водій забрав товар у постачальника');
-        appendHistoryEvent(delId, 'Водій забрав товар у постачальника', 'Водій у Telegram-боті');
+        appendHistoryEvent(delId, 'Водій забрав товар у постачальника', 'Водій: ' + driverName);
 
         // Automatically trigger Storekeeper checklist notification
         var whData = getWarehouseWorkers();
@@ -361,8 +378,25 @@ function doPost(e) {
       // 5. Driver confirmed delivery completion (confirm_{delId})
       if (callbackData.startsWith('confirm_')) {
         var delId = callbackData.replace('confirm_', '');
+        
+        // Resolve driver full name
+        var driverName = "Водій у Telegram-боті";
+        if (fromChatId) {
+          var employees = get_employees();
+          if (employees && employees.data) {
+            for (var e = 0; e < employees.data.length; e++) {
+              var emp = employees.data[e];
+              var tgId = emp['Telegram_ID'] || emp['Telegram'] || emp['ID'];
+              if (String(tgId).trim() === String(fromChatId).trim()) {
+                driverName = emp['ПІБ'] || emp["Ім'я"] || driverName;
+                break;
+              }
+            }
+          }
+        }
+
         updateDeliveryStatus(delId, 'Виконано', 'Доставку успішно підтверджено водієм');
-        appendHistoryEvent(delId, '✅ Замовлення успішно виконано та доставлено', 'Водій у Telegram-боті');
+        appendHistoryEvent(delId, '✅ Замовлення успішно виконано та доставлено', 'Водій: ' + driverName);
 
         // Notify manager of delivery completion
         var deliveries = getDeliveries();

@@ -4766,7 +4766,7 @@ body.light-theme .login-error {
       let statusClass = 'planned';
       const rawStatus = (del['Статус'] || '').trim();
       const lowerStatus = rawStatus.toLowerCase();
-      if (['в процесі', 'завантажено', 'в дорозі', 'на маршруті'].includes(lowerStatus)) statusClass = 'in-progress';
+      if (['в процесі', 'завантажено', 'в дорозі', 'на маршруті'].includes(lowerStatus) || lowerStatus.includes('забрано')) statusClass = 'in-progress-supply';
       else if (['виконано', 'виконана'].includes(lowerStatus)) statusClass = 'completed';
       else if (lowerStatus.includes('аварія') || lowerStatus.includes('проблема')) statusClass = 'problem';
       else if (lowerStatus.includes('скасовано') || lowerStatus.includes('скасована')) statusClass = 'cancelled';
@@ -4842,7 +4842,7 @@ body.light-theme .login-error {
         } else if (whStatus === 'Прийомка в процесі' || whStatus === 'Приймається' || whStatus === 'В процесі збору' || whStatus === 'Збирається') {
           // Stage 2: Warehouse started receiving (checked 1st item) -> Amber Box Icon (який на скріншоті)
           whIcon = '<span class="wh-icon" title="Відбувається приймання товару на складі Propex" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
-        } else if (whStatus === 'В дорозі на склад' || del['Водій_Прийняв'] === 'Так' || whStatus === 'Товар забрано водієм') {
+        } else if (whStatus === 'В дорозі на склад' || del['Водій_Прийняв'] === 'Так' || whStatus === 'Товар забрано водієм' || del['Статус'] === 'Забрано у постачальника') {
           // Stage 1: Driver picked up goods & driving to Propex -> Green Truck Icon
           whIcon = '<span class="wh-icon" title="Товар забрано у постачальника (Водій везе на склад)" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
         } else if (smartOnRoute && statusClass !== 'problem') {
@@ -5828,8 +5828,13 @@ body.light-theme .login-error {
         const initialCarName = window.getCarName(car);
         initHistoryStr += ` ${nowStr} — Призначено авто: ${initialCarName} (Менеджер: ${managerName});`;
       }
-      if (driverUserId && car !== 'Самовивіз' && car !== 'Самовивіз Нова Пошта') {
-        const initialDriverName = getEmployeeFullName(driverUserId, 'Водій');
+      let resolvedDriverId = driverUserId;
+      if (!resolvedDriverId && car && car !== 'unassigned' && car !== 'Не призначено' && car !== 'Самовивіз' && car !== 'Самовивіз Нова Пошта') {
+        const emp = (state.employees || []).find(e => String(e['Авто'] || '') === String(car));
+        if (emp) resolvedDriverId = emp['Telegram_ID'] || emp['Telegram'] || emp['ID'];
+      }
+      if (resolvedDriverId && car !== 'Самовивіз' && car !== 'Самовивіз Нова Пошта') {
+        const initialDriverName = getEmployeeFullName(resolvedDriverId, 'Водій');
         if (initialDriverName && initialDriverName !== 'Не призначено') {
           initHistoryStr += ` ${nowStr} — Призначено водія: ${initialDriverName} (Менеджер: ${managerName});`;
         }
