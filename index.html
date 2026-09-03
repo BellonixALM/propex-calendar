@@ -3235,10 +3235,11 @@ body.light-theme .login-error {
     }
 
     function getMonday(d) {
-      d = new Date(d);
-      const day = d.getDay();
-      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-      return new Date(d.setDate(diff));
+      const dt = parseDateStr(d) || new Date();
+      const date = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 12, 0, 0);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(date.getFullYear(), date.getMonth(), diff, 12, 0, 0);
     }
     const monthNames = [
       "Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень",
