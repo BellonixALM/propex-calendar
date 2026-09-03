@@ -835,13 +835,15 @@ function sendMorningSupplyDeliveries() {
   var todayISO = Utilities.formatDate(new Date(), "Europe/Kiev", "yyyy-MM-dd");
   var deliveries = getDeliveries();
   
-  deliveries.forEach(function(d) {
+  deliveries.forEach(function(d, index) {
     var isToday = (d['Дата'] === todayStr || d['Дата'] === todayISO);
     var mgr = String(d['ID_Менеджера'] || '').trim();
     var isSupply = (mgr === '7797165411' || mgr.toLowerCase().indexOf('ira') > -1 || mgr.toLowerCase().indexOf('іра') > -1);
     var driverTgId = d['ID_Водія'] || d['Водій'];
     
     if (isToday && isSupply && driverTgId && String(driverTgId).length > 5 && d['Статус'] !== 'Виконано' && d['Статус'] !== 'Скасовано') {
+      // Stagger morning supply dispatches with 300ms delays to prevent API bottlenecking
+      if (index > 0) Utilities.sleep(300);
       sendSingleSupplyDeliveryToDriver(d['ID'], {
         driver_user_id: driverTgId,
         time: d['Час'],
@@ -862,7 +864,7 @@ function sendMorningWarehouseDeliveries() {
   var heads = whData.heads;
   var workers = whData.workers;
   
-  deliveries.forEach(function(d) {
+  deliveries.forEach(function(d, index) {
     var isToday = (d['Дата'] === todayStr || d['Дата'] === todayISO);
     var mgr = String(d['ID_Менеджера'] || '').trim();
     var isSupply = (mgr === '7797165411' || mgr.toLowerCase().indexOf('ira') > -1 || mgr.toLowerCase().indexOf('іра') > -1);
@@ -876,6 +878,8 @@ function sendMorningWarehouseDeliveries() {
       // Option A: If not yet assembled, notify warehouse heads for assembly
       if (!whStatus || whStatus === 'Очікує') {
         if (heads.length > 0) {
+          // Stagger warehouse dispatches with 250ms delays
+          if (index > 0) Utilities.sleep(250);
           var text = "📦 <b>Ранкова збірка замовлення!</b>\n" +
                      "Замовлення №" + (d['Номер_замовлення'] || "Б/Н") + "\n" +
                      "📅 " + d['Дата'] + " " + d['Час'] + "\n" +
