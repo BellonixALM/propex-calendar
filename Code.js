@@ -757,9 +757,23 @@ function addDelivery(deliveryData) {
 }
 
 function sendSingleSupplyDeliveryToDriver(deliveryId, deliveryData) {
-  var driverTgId = deliveryData.driver_user_id || deliveryData.driver_id;
   var carId = String(deliveryData.driver_id || '').toLowerCase();
   if (carId === 'не призначено' || carId === 'unassigned' || carId === 'самовивіз' || carId === 'самовивіз нова пошта') return;
+
+  var driverTgId = deliveryData.driver_user_id || deliveryData.driver_id;
+  if (!driverTgId || String(driverTgId).length < 5) {
+    // Resolve telegram_id from employee database for this car
+    var employees = get_employees();
+    if (employees && employees.data) {
+      for (var e = 0; e < employees.data.length; e++) {
+        var emp = employees.data[e];
+        if (String(emp['Авто'] || '') === String(deliveryData.driver_id) || String(emp['car'] || '') === String(deliveryData.driver_id)) {
+          driverTgId = emp['Telegram_ID'] || emp['Telegram'] || emp['ID'];
+          break;
+        }
+      }
+    }
+  }
   if (!driverTgId || String(driverTgId).length < 5) return;
 
   var msg = "🚚 <b>Постачання (Закупівля товару)</b>\n\n" +
