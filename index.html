@@ -3178,7 +3178,7 @@ body.light-theme .login-error {
     function parseDateStr(str) {
       if (!str) return null;
       if (str instanceof Date) return str;
-      const s = String(str).trim();
+      let s = String(str).replace(/^'/, '').trim();
       if (s.includes('-')) {
         const parts = s.split('-');
         if (parts.length >= 3) return new Date(parts[0], parts[1] - 1, parts[2].substring(0, 2));
@@ -3190,8 +3190,9 @@ body.light-theme .login-error {
     }
     function formatDateStr(date) {
       if (!date) return '';
-      const dObj = (date instanceof Date) ? date : parseDateStr(date);
-      if (!dObj || isNaN(dObj.getTime())) return String(date || '');
+      let raw = (date instanceof Date) ? date : String(date).replace(/^'/, '').trim();
+      const dObj = (raw instanceof Date) ? raw : parseDateStr(raw);
+      if (!dObj || isNaN(dObj.getTime())) return String(date || '').replace(/^'/, '').trim();
       const d = String(dObj.getDate()).padStart(2, '0');
       const m = String(dObj.getMonth() + 1).padStart(2, '0');
       const y = dObj.getFullYear();
