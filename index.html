@@ -3235,11 +3235,10 @@ body.light-theme .login-error {
     }
 
     function getMonday(d) {
-      const dt = parseDateStr(d) || new Date();
-      const date = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 12, 0, 0);
-      const day = date.getDay();
-      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-      return new Date(date.getFullYear(), date.getMonth(), diff, 12, 0, 0);
+      d = new Date(d);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(d.setDate(diff));
     }
     const monthNames = [
       "Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень",
@@ -4560,7 +4559,8 @@ body.light-theme .login-error {
       const monday = getMonday(state.currentDate);
       const weekDates = [];
       for (let i = 0; i < 7; i++) {
-        const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i, 12, 0, 0);
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
         weekDates.push(date);
       }
       weekDates.forEach((date, index) => {
