@@ -1963,6 +1963,37 @@ function ensureEmployeeHeaders(sheet) {
   return headers;
 }
 
+function getCarName(carId) {
+  if (!carId || carId === 'unassigned' || carId === 'Не призначено') return 'Не призначено';
+  if (carId === 'Самовивіз' || carId === 'Самовивіз Нова Пошта') return carId;
+  var carMap = {
+    '1': 'Renault Dokker',
+    '2': 'Peugeot Boxer',
+    '3': 'Volkswagen Crafter',
+    '4': 'MAN',
+    '5': 'Opel Movano',
+    '6': 'Mercedes-Benz Sprinter'
+  };
+  return carMap[String(carId)] || ('Авто ' + carId);
+}
+
+function getEmployeeFullName(empId, defaultRole) {
+  if (!empId || String(empId).trim() === '' || String(empId) === 'Не призначено') return defaultRole || 'Співробітник';
+  try {
+    var employees = get_employees();
+    if (employees && employees.data) {
+      for (var i = 0; i < employees.data.length; i++) {
+        var emp = employees.data[i];
+        var tgId = emp['Telegram_ID'] || emp['Telegram'] || emp['ID'];
+        if (String(tgId).trim() === String(empId).trim() || String(emp['ПІБ'] || '').trim() === String(empId).trim()) {
+          return emp['ПІБ'] || emp["Ім'я"] || defaultRole || 'Співробітник';
+        }
+      }
+    }
+  } catch(e) {}
+  return String(empId);
+}
+
 function get_employees() {
   var ss = getSpreadsheet();
   var sheet = ss.getSheetByName('Користувачі');
