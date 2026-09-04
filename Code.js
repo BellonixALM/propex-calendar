@@ -102,6 +102,25 @@ function sendTelegramMessage(chatId, text, replyMarkup) {
   }
 }
 
+function answerCallbackQuery(callbackQueryId, text) {
+  if (!BOT_TOKEN || !callbackQueryId) return;
+  try {
+    var url = "https://api.telegram.org/bot" + BOT_TOKEN + "/answerCallbackQuery";
+    var payload = {
+      "callback_query_id": callbackQueryId
+    };
+    if (text) payload.text = text;
+    UrlFetchApp.fetch(url, {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(payload),
+      "muteHttpExceptions": true
+    });
+  } catch (e) {
+    Logger.log("Помилка answerCallbackQuery: " + e.toString());
+  }
+}
+
 function doGet(e) {
   if (e && e.parameter && e.parameter.action) {
     var action = e.parameter.action;
@@ -270,9 +289,15 @@ function doPost(e) {
     // Handle incoming Telegram webhook updates (button clicks or commands)
     if (data.callback_query) {
       var callbackQuery = data.callback_query;
+      var callbackId = callbackQuery.id;
       var callbackData = callbackQuery.data || '';
       var fromChatId = callbackQuery.from ? callbackQuery.from.id : null;
       var msgId = callbackQuery.message ? callbackQuery.message.message_id : null;
+
+      // Acknowledge callback immediately to dismiss Telegram button loading spinner
+      if (callbackId) {
+        answerCallbackQuery(callbackId);
+      }
 
       if (callbackData.startsWith('supply_took_')) {
         var delId = callbackData.replace('supply_took_', '');
@@ -1444,6 +1469,7 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
       if (historyCol !== -1 && deliveryData.history !== undefined) {
         sheet.getRange(rowNum, historyCol + 1).setValue(deliveryData.history || '');
       }
+      SpreadsheetApp.flush();
 
       // Check if changes are made by logist/director/admin and notify manager if critical fields shifted
       if (managerId && (userRole === 'logist' || userRole === 'director' || userRole === 'admin')) {
@@ -2310,6 +2336,7 @@ function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
           : newEntry;
 
         sheet.getRange(rowNum, historyCol + 1).setValue(updatedHistory);
+        SpreadsheetApp.flush();
         return true;
       }
     }

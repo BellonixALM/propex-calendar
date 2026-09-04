@@ -6293,7 +6293,16 @@ body.light-theme .login-error {
       const userRoleLabel = (user.role === 'logist' || user.role === 'логіст') ? 'Логіст: Юрій Бортовщук' : (user.name || user.login || 'Менеджер');
       const oldCarName = window.getCarName(oldCar);
       const newCarName = window.getCarName(targetCar);
-      const moveEventTitle = `Змінено авто/час: ${oldCarName} (${oldTime}) ➔ ${newCarName} (${targetTime})`;
+      
+      let moveEventTitle = "";
+      if (oldDate && targetDate && oldDate !== targetDate) {
+        moveEventTitle = `📅 Перенесено дату: ${oldDate} (${oldTime}) ➔ ${targetDate} (${targetTime})`;
+        if (String(oldCar) !== String(targetCar)) {
+          moveEventTitle += ` (авто: ${oldCarName} ➔ ${newCarName})`;
+        }
+      } else {
+        moveEventTitle = `Змінено авто/час: ${oldCarName} (${oldTime}) ➔ ${newCarName} (${targetTime})`;
+      }
       
       if (!del['Історія_Операцій']) {
         del['Історія_Операцій'] = `${nowStr} — Замовлення створено; ${nowStr} — ${moveEventTitle} (${userRoleLabel});`;
@@ -6320,7 +6329,8 @@ body.light-theme .login-error {
         receiver_name: del['Ім\'я_одержувача'] || '',
         receiver_phone: del['Телефон_одержувача'] || '',
         comment: del['Коментар'] || '',
-        manager_chat_id: del['ID_Менеджера'] || ''
+        manager_chat_id: del['ID_Менеджера'] || '',
+        history: del['Історія_Операцій'] || ''
       };
       
         propexApi
