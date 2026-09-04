@@ -121,6 +121,26 @@ function answerCallbackQuery(callbackQueryId, text) {
   }
 }
 
+function editTelegramMessageReplyMarkup(chatId, messageId, replyMarkup) {
+  if (!BOT_TOKEN || !chatId || !messageId) return;
+  try {
+    var url = "https://api.telegram.org/bot" + BOT_TOKEN + "/editMessageReplyMarkup";
+    var payload = {
+      "chat_id": chatId,
+      "message_id": messageId,
+      "reply_markup": replyMarkup || { inline_keyboard: [] }
+    };
+    UrlFetchApp.fetch(url, {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(payload),
+      "muteHttpExceptions": true
+    });
+  } catch (e) {
+    Logger.log("Помилка editTelegramMessageReplyMarkup: " + e.toString());
+  }
+}
+
 function doGet(e) {
   if (e && e.parameter && e.parameter.action) {
     var action = e.parameter.action;
@@ -337,6 +357,11 @@ function doPost(e) {
 
         var ackMsg = "✅ Дякуємо! Статус оновлено: Товар прийнято від постачальника. Склад вже сповіщено про приймання!";
         sendTelegramMessage(fromChatId, ackMsg);
+        if (fromChatId && msgId) {
+          editTelegramMessageReplyMarkup(fromChatId, msgId, {
+            inline_keyboard: [[{ text: "✅ Товар прийнято від постачальника", callback_data: "none" }]]
+          });
+        }
 
         return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Supply took handled' }))
           .setMimeType(ContentService.MimeType.JSON);
@@ -384,6 +409,14 @@ function doPost(e) {
 
         var ackMsg = "🚚 Дякуємо! Статус оновлено: Виїхав до постачальника.";
         sendTelegramMessage(fromChatId, ackMsg);
+        if (fromChatId && msgId) {
+          editTelegramMessageReplyMarkup(fromChatId, msgId, {
+            inline_keyboard: [
+              [{ text: "✅ 🚚 Виїхав до постачальника", callback_data: "none" }],
+              [{ text: "📥 Забрав товар у постачальника", callback_data: "supply_took_" + delId }]
+            ]
+          });
+        }
         return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Supply drive handled' }))
           .setMimeType(ContentService.MimeType.JSON);
       }
@@ -434,6 +467,11 @@ function doPost(e) {
 
         var ackMsg = "✅ Дякуємо! Доставку замовлення успішно підтверджено та закрито.";
         sendTelegramMessage(fromChatId, ackMsg);
+        if (fromChatId && msgId) {
+          editTelegramMessageReplyMarkup(fromChatId, msgId, {
+            inline_keyboard: [[{ text: "✅ Доставку успішно виконано", callback_data: "none" }]]
+          });
+        }
         return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Confirm handled' }))
           .setMimeType(ContentService.MimeType.JSON);
       }
