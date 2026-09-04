@@ -1466,8 +1466,27 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
         historyCol = headers.length;
         headers.push('Історія_Операцій');
       }
-      if (historyCol !== -1 && deliveryData.history !== undefined) {
-        sheet.getRange(rowNum, historyCol + 1).setValue(deliveryData.history || '');
+      if (historyCol !== -1) {
+        var currentHist = String(deliveryData.history || data[i][historyCol] || '').trim();
+        var nowFormattedStr = Utilities.formatDate(new Date(), "Europe/Kiev", "dd.MM.yyyy HH:mm");
+        var managerInfoName = getEmployeeFullName(managerId, 'Менеджер');
+
+        if (deliveryData.driver_id && deliveryData.driver_id !== 'Не призначено' && deliveryData.driver_id !== 'unassigned') {
+          if (currentHist.indexOf('Призначено авто:') === -1) {
+            var carNameStr = getCarName(deliveryData.driver_id);
+            currentHist += " " + nowFormattedStr + " — Призначено авто: " + carNameStr + " (Менеджер: " + managerInfoName + ");";
+          }
+        }
+        var targetDriverId = deliveryData.driver_user_id || data[i][headers.indexOf('ID_Водія')] || data[i][headers.indexOf('Водій')];
+        if (targetDriverId && String(targetDriverId) !== 'Не призначено') {
+          if (currentHist.indexOf('Призначено водія:') === -1) {
+            var driverNameStr = getEmployeeFullName(targetDriverId, 'Водій');
+            if (driverNameStr && driverNameStr !== 'Не призначено') {
+              currentHist += " " + nowFormattedStr + " — Призначено водія: " + driverNameStr + " (Менеджер: " + managerInfoName + ");";
+            }
+          }
+        }
+        sheet.getRange(rowNum, historyCol + 1).setValue(currentHist);
       }
       SpreadsheetApp.flush();
 
