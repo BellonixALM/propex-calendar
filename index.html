@@ -1049,11 +1049,7 @@ body.light-theme .kanban-col-count { background: rgba(0,0,0,0.06); }
 
 .dash-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px; }
 .dash-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; position: relative; overflow: hidden; }
-.dash-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
-.dash-purple::before { background: linear-gradient(90deg, #112349, #b01c24); }
-.dash-green::before { background: linear-gradient(90deg, #112349, #b01c24); }
-.dash-red::before { background: linear-gradient(90deg, #112349, #b01c24); }
-.dash-dark::before { background: linear-gradient(90deg, #112349, #b01c24); }
+.dash-card::before { display: none; }
 .dash-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .dash-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; }
 .dash-purple .dash-icon { color: #112349; background: rgba(17, 35, 73, 0.1); }
@@ -1860,76 +1856,164 @@ body.light-theme .login-error {
         </div>
       </div>
         
-        <div class="dash-cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+        <div class="dash-cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 14px; margin-bottom: 20px; align-items: stretch;">
           <!-- 1. Створено замовлень -->
-          <div class="dash-card dash-purple" style="padding: 14px 16px; border-radius: 12px;">
-            <div class="dash-card-header" style="margin-bottom: 6px;">
-              <div class="dash-icon" style="width: 28px; height: 28px; font-size: 14px;"><i data-lucide="box" style="width:16px;height:16px;"></i></div>
-              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Створено замовлень</div>
+          <div class="dash-card dash-purple" style="padding: 14px 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="dash-card-header" style="margin-bottom: 6px;">
+                <div class="dash-icon" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); color: white; display: flex; align-items: center; justify-content: center;"><i data-lucide="box" style="width:16px;height:16px;"></i></div>
+                <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Створено замовлень</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div class="dash-value" id="dash-total" style="font-size: 22px; font-weight: 800; line-height: 1.2;">0</div>
+                <div class="dash-trend" id="dash-total-trend" style="font-size: 10px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+              </div>
             </div>
-            <div class="dash-value" id="dash-total" style="font-size: 22px; font-weight: 800; line-height: 1.2;">0</div>
-            <div class="dash-trend" id="dash-total-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 4px; font-size: 11px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85;">🚚 Відвантажень:</span>
+                <span id="dash-total-del" style="font-weight: 700; color: #a855f7;">0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85;">📦 Постачань:</span>
+                <span id="dash-total-sup" style="font-weight: 700; color: #eab308;">0</span>
+              </div>
+            </div>
           </div>
 
           <!-- 2. Передано на склад -->
-          <div class="dash-card" style="padding: 14px 16px; border-radius: 12px; background: rgba(234, 179, 8, 0.06); border: 1px solid rgba(234, 179, 8, 0.2);">
-            <div class="dash-card-header" style="margin-bottom: 6px;">
-              <div class="dash-icon" style="width: 28px; height: 28px; background: rgba(234, 179, 8, 0.15); color: #eab308;"><i data-lucide="clock" style="width:16px;height:16px;"></i></div>
-              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: #eab308;">Передано на склад</div>
+          <div class="dash-card" style="padding: 14px 16px; border-radius: 12px; background: rgba(234, 179, 8, 0.06); border: 1px solid rgba(234, 179, 8, 0.2); display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="dash-card-header" style="margin-bottom: 6px;">
+                <div class="dash-icon" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(234, 179, 8, 0.15); color: #eab308; display: flex; align-items: center; justify-content: center;"><i data-lucide="clock" style="width:16px;height:16px;"></i></div>
+                <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: #eab308;">Передано на склад</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div class="dash-value" id="dash-sent-wh" style="font-size: 22px; font-weight: 800; line-height: 1.2; color: #eab308;">0</div>
+                <div class="dash-trend" id="dash-sent-wh-trend" style="font-size: 10px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+              </div>
             </div>
-            <div class="dash-value" id="dash-sent-wh" style="font-size: 22px; font-weight: 800; line-height: 1.2; color: #eab308;">0</div>
-            <div class="dash-trend" id="dash-sent-wh-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(234, 179, 8, 0.15); display: flex; flex-direction: column; gap: 4px; font-size: 11px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85; color: var(--text-color);">🚚 Відвантажень:</span>
+                <span id="dash-sent-wh-del" style="font-weight: 700; color: #eab308;">0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85; color: var(--text-color);">📦 До постачальників:</span>
+                <span id="dash-sent-wh-sup" style="font-weight: 700; color: #d97706;">0</span>
+              </div>
+            </div>
           </div>
 
           <!-- 3. Опрацьовано складом -->
-          <div class="dash-card" style="padding: 14px 16px; border-radius: 12px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2);">
-            <div class="dash-card-header" style="margin-bottom: 6px;">
-              <div class="dash-icon" style="width: 28px; height: 28px; background: rgba(16, 185, 129, 0.15); color: #10b981;"><i data-lucide="package-check" style="width:16px;height:16px;"></i></div>
-              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: #10b981;">Опрацьовано складом</div>
+          <div class="dash-card" style="padding: 14px 16px; border-radius: 12px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="dash-card-header" style="margin-bottom: 6px;">
+                <div class="dash-icon" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center;"><i data-lucide="package-check" style="width:16px;height:16px;"></i></div>
+                <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: #10b981;">Опрацьовано складом</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div class="dash-value" id="dash-processed-wh" style="font-size: 22px; font-weight: 800; line-height: 1.2; color: #10b981;">0</div>
+                <div class="dash-trend" id="dash-processed-wh-trend" style="font-size: 10px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+              </div>
             </div>
-            <div class="dash-value" id="dash-processed-wh" style="font-size: 22px; font-weight: 800; line-height: 1.2; color: #10b981;">0</div>
-            <div class="dash-trend" id="dash-processed-wh-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(16, 185, 129, 0.15); display: flex; flex-direction: column; gap: 4px; font-size: 11px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85; color: var(--text-color);">📦 Зібрано склад:</span>
+                <span id="dash-processed-wh-del" style="font-weight: 700; color: #10b981;">0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85; color: var(--text-color);">🏬 Прийнято від постач.:</span>
+                <span id="dash-processed-wh-sup" style="font-weight: 700; color: #059669;">0</span>
+              </div>
+            </div>
           </div>
 
           <!-- 4. Передано водію -->
-          <div class="dash-card" style="padding: 14px 16px; border-radius: 12px; background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.2);">
-            <div class="dash-card-header" style="margin-bottom: 6px;">
-              <div class="dash-icon" style="width: 28px; height: 28px; background: rgba(59, 130, 246, 0.15); color: #3b82f6;"><i data-lucide="truck" style="width:16px;height:16px;"></i></div>
-              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: #3b82f6;">Передано водію</div>
+          <div class="dash-card" style="padding: 14px 16px; border-radius: 12px; background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.2); display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="dash-card-header" style="margin-bottom: 6px;">
+                <div class="dash-icon" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center;"><i data-lucide="truck" style="width:16px;height:16px;"></i></div>
+                <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: #3b82f6;">Передано водію</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div class="dash-value" id="dash-sent-driver" style="font-size: 22px; font-weight: 800; line-height: 1.2; color: #3b82f6;">0</div>
+                <div class="dash-trend" id="dash-sent-driver-trend" style="font-size: 10px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+              </div>
             </div>
-            <div class="dash-value" id="dash-sent-driver" style="font-size: 22px; font-weight: 800; line-height: 1.2; color: #3b82f6;">0</div>
-            <div class="dash-trend" id="dash-sent-driver-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(59, 130, 246, 0.15); display: flex; flex-direction: column; gap: 4px; font-size: 11px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85; color: var(--text-color);">🚚 Відвантаження:</span>
+                <span id="dash-sent-driver-del" style="font-weight: 700; color: #3b82f6;">0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85; color: var(--text-color);">📦 Забір у постач.:</span>
+                <span id="dash-sent-driver-sup" style="font-weight: 700; color: #2563eb;">0</span>
+              </div>
+            </div>
           </div>
 
-          <!-- 5. Доставлено -->
-          <div class="dash-card dash-green" style="padding: 14px 16px; border-radius: 12px;">
-            <div class="dash-card-header" style="margin-bottom: 6px;">
-              <div class="dash-icon" style="width: 28px; height: 28px; font-size: 14px;"><i data-lucide="check-circle" style="width:16px;height:16px;"></i></div>
-              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Доставлено</div>
+          <!-- 5. Доставлено / Виконано -->
+          <div class="dash-card dash-green" style="padding: 14px 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="dash-card-header" style="margin-bottom: 6px;">
+                <div class="dash-icon" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); color: white; display: flex; align-items: center; justify-content: center;"><i data-lucide="check-circle" style="width:16px;height:16px;"></i></div>
+                <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Доставлено / Виконано</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div class="dash-value" id="dash-delivered" style="font-size: 22px; font-weight: 800; line-height: 1.2;">0</div>
+                <div class="dash-trend" id="dash-delivered-trend" style="font-size: 10px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+              </div>
             </div>
-            <div class="dash-value" id="dash-delivered" style="font-size: 22px; font-weight: 800; line-height: 1.2;">0</div>
-            <div class="dash-trend" id="dash-delivered-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-up">0% &uarr;</span> з минулого періоду</div>
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 4px; font-size: 11px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85;">🚚 Доставлено клієнтам:</span>
+                <span id="dash-delivered-del" style="font-weight: 700; color: #10b981;">0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85;">📥 Отримано у постач.:</span>
+                <span id="dash-delivered-sup" style="font-weight: 700; color: #34d399;">0</span>
+              </div>
+            </div>
           </div>
 
           <!-- 6. Проблемні / Анульовані -->
-          <div class="dash-card dash-red" style="padding: 14px 16px; border-radius: 12px;">
-            <div class="dash-card-header" style="margin-bottom: 6px;">
-              <div class="dash-icon" style="width: 28px; height: 28px; font-size: 14px;"><i data-lucide="alert-triangle" style="width:16px;height:16px;"></i></div>
-              <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Проблемні / Анульовані</div>
+          <div class="dash-card dash-red" style="padding: 14px 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="dash-card-header" style="margin-bottom: 6px;">
+                <div class="dash-icon" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); color: white; display: flex; align-items: center; justify-content: center;"><i data-lucide="alert-triangle" style="width:16px;height:16px;"></i></div>
+                <div class="dash-title" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Проблемні / Анульовані</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div class="dash-value" id="dash-issues" style="font-size: 22px; font-weight: 800; line-height: 1.2;">0</div>
+                <div class="dash-trend" id="dash-issues-trend" style="font-size: 10px;"><span class="trend-down">0% &darr;</span> з минулого періоду</div>
+              </div>
             </div>
-            <div class="dash-value" id="dash-issues" style="font-size: 22px; font-weight: 800; line-height: 1.2;">0</div>
-            <div class="dash-trend" id="dash-issues-trend" style="font-size: 10px; margin-top: 4px;"><span class="trend-down">0% &darr;</span> з минулого періоду</div>
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 4px; font-size: 11px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85;">⚠️ Активні проблеми:</span>
+                <span id="dash-issues-prob" style="font-weight: 700; color: #ef4444;">0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="opacity: 0.85;">🛑 Анульовані:</span>
+                <span id="dash-issues-canc" style="font-weight: 700; color: #f87171;">0</span>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div class="dash-charts-row">
+        <div class="dash-charts-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
           <div class="dash-panel" style="flex: 1;">
-            <h3 class="panel-title">Топ водіїв (місяць)</h3>
+            <h3 class="panel-title">Завантаження авто</h3>
             <div class="top-list" id="dash-top-drivers"></div>
           </div>
           <div class="dash-panel" style="flex: 1;">
             <h3 class="panel-title">Топ менеджерів (місяць)</h3>
             <div class="top-list" id="dash-top-managers"></div>
+          </div>
+          <div class="dash-panel" style="flex: 1;">
+            <h3 class="panel-title">Оцінка роботи (KPI & Бот)</h3>
+            <div id="dash-bot-kpi" style="display: flex; flex-direction: column; gap: 14px;"></div>
           </div>
         </div>
         
@@ -4307,13 +4391,22 @@ body.light-theme .login-error {
             renderDayView();
           });
         } else {
+          const driverLabel = driver && driver["Ім'я"] ? driver["Ім'я"] : '';
+          const carTripCount = (state.deliveries || []).filter(d => {
+            const sameCar = String(d['ID_Авто']) === String(carId);
+            const dStr = String(d['Дата'] || '').replace(/^'/, '').trim();
+            return sameCar && dStr === currentDateStr;
+          }).length;
+
+          const avatarContent = `<span style="font-size:15px; font-weight:800; color:white;" title="Загальна кількість рейсів на день (відвантаження + поставки)">${carTripCount}</span>`;
+
           carHeader.innerHTML = `
             <div style="position:absolute;top:4px;right:4px;cursor:pointer;opacity:0.6;font-size:11px;padding:2px 4px;border-radius:4px;background:rgba(255,255,255,0.08);" class="collapse-btn" title="Згорнути стовпчик">◀▶</div>
-            <div class="driver-photo-container">
-              ${driver && driver['Фото'] ? `<img src="${driver['Фото']}" style="width:100%;height:100%;object-fit:cover;">` : initial}
+            <div class="driver-photo-container" style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center;">
+              ${avatarContent}
             </div>
             <div style="font-weight: 700;">${window.getCarName(carId)}</div>
-            ${driver && driver["Ім'я"] ? `<div class="driver-name">${driver["Ім'я"]}</div>` : ''}
+            ${driverLabel ? `<div class="driver-name">${driverLabel}</div>` : ''}
           `;
           const collapseBtn = carHeader.querySelector('.collapse-btn');
           if (collapseBtn) {
@@ -7053,9 +7146,16 @@ function renderDashboard() {
     const currDels = filterDeliveriesByDateRange(state.deliveries, ranges.curr.start, ranges.curr.end);
     const prevDels = filterDeliveriesByDateRange(state.deliveries, ranges.prev.start, ranges.prev.end);
     
+    const checkIsSupply = d => {
+      const mgr = String(d['ID_Менеджера'] || d['Менеджер'] || '').trim();
+      return (mgr === '7797165411' || mgr.toLowerCase().includes('ira') || mgr.toLowerCase().includes('іра'));
+    };
+
     // Totals for all 6 micro-modules
     const totalCurr = currDels.length;
     const totalPrev = prevDels.length;
+    const totalSupCurr = currDels.filter(checkIsSupply).length;
+    const totalDelCurr = totalCurr - totalSupCurr;
     
     // 2. Передано на склад (В процесі / Збирається / Зібрано / Прийнято)
     const isSentToWh = d => {
@@ -7063,16 +7163,22 @@ function renderDashboard() {
       const h = String(d['Історія_Операцій'] || d['Історія'] || '');
       return s !== '' || h.includes('Передано') || h.includes('сповіщення');
     };
-    const sentWhCurr = currDels.filter(isSentToWh).length;
+    const sentWhCurrDels = currDels.filter(isSentToWh);
+    const sentWhCurr = sentWhCurrDels.length;
     const sentWhPrev = prevDels.filter(isSentToWh).length;
+    const sentWhSupCurr = sentWhCurrDels.filter(checkIsSupply).length;
+    const sentWhDelCurr = sentWhCurr - sentWhSupCurr;
 
     // 3. Опрацьовано складом (Зібрано / Скомплектовано / Прийнято на склад)
     const isProcessedByWh = d => {
       const s = String(d['Статус_збору'] || d['Статус_Склад'] || '').trim();
       return ['Зібрано', 'Скомплектовано', 'Прийнято на склад', 'Отримано'].includes(s);
     };
-    const processedWhCurr = currDels.filter(isProcessedByWh).length;
+    const processedWhCurrDels = currDels.filter(isProcessedByWh);
+    const processedWhCurr = processedWhCurrDels.length;
     const processedWhPrev = prevDels.filter(isProcessedByWh).length;
+    const processedWhSupCurr = processedWhCurrDels.filter(checkIsSupply).length;
+    const processedWhDelCurr = processedWhCurr - processedWhSupCurr;
 
     // 4. Передано водію (Призначено авто + Водія та маршрут активний)
     const isSentToDriver = d => {
@@ -7081,16 +7187,27 @@ function renderDashboard() {
       const st = String(d['Статус'] || d['Status'] || '').toLowerCase();
       return car !== '' && car !== 'Не призначено' && drv !== '' && drv !== 'Не призначено' && (['в процесі', 'завантажено', 'в дорозі', 'на маршруті', 'виконано'].includes(st) || st.includes('забрано'));
     };
-    const sentDriverCurr = currDels.filter(isSentToDriver).length;
+    const sentDriverCurrDels = currDels.filter(isSentToDriver);
+    const sentDriverCurr = sentDriverCurrDels.length;
     const sentDriverPrev = prevDels.filter(isSentToDriver).length;
+    const sentDriverSupCurr = sentDriverCurrDels.filter(checkIsSupply).length;
+    const sentDriverDelCurr = sentDriverCurr - sentDriverSupCurr;
 
     // 5. Доставлено
-    const deliveredCurr = currDels.filter(d => (d['Статус'] || d['Status']) === 'Виконано').length;
+    const deliveredCurrDels = currDels.filter(d => (d['Статус'] || d['Status']) === 'Виконано');
+    const deliveredCurr = deliveredCurrDels.length;
     const deliveredPrev = prevDels.filter(d => (d['Статус'] || d['Status']) === 'Виконано').length;
+    const deliveredSupCurr = deliveredCurrDels.filter(checkIsSupply).length;
+    const deliveredDelCurr = deliveredCurr - deliveredSupCurr;
     
     // 6. Проблемні / Анульовані
-    const issuesCurr = currDels.filter(d => ['Анульовано', 'Відмова', 'Проблема', 'Скасовано', 'Аварія на дорозі'].includes(d['Статус'] || d['Status'])).length;
-    const issuesPrev = prevDels.filter(d => ['Анульовано', 'Відмова', 'Проблема', 'Скасовано', 'Аварія на дорозі'].includes(d['Статус'] || d['Status'])).length;
+    const isProblem = d => ['Проблема', 'Відмова', 'Аварія на дорозі'].includes(d['Статус'] || d['Status']);
+    const isCancelled = d => ['Анульовано', 'Скасовано'].includes(d['Статус'] || d['Status']);
+    const issuesCurrDels = currDels.filter(d => isProblem(d) || isCancelled(d));
+    const issuesCurr = issuesCurrDels.length;
+    const issuesPrev = prevDels.filter(d => isProblem(d) || isCancelled(d)).length;
+    const issuesProbCurr = currDels.filter(isProblem).length;
+    const issuesCancCurr = currDels.filter(isCancelled).length;
     
     document.getElementById('dash-total').innerText = totalCurr;
     document.getElementById('dash-sent-wh').innerText = sentWhCurr;
@@ -7099,6 +7216,25 @@ function renderDashboard() {
     document.getElementById('dash-delivered').innerText = deliveredCurr;
     document.getElementById('dash-issues').innerText = issuesCurr;
     
+    // Update DOM breakdowns
+    if (document.getElementById('dash-total-del')) document.getElementById('dash-total-del').innerText = totalDelCurr;
+    if (document.getElementById('dash-total-sup')) document.getElementById('dash-total-sup').innerText = totalSupCurr;
+    
+    if (document.getElementById('dash-sent-wh-del')) document.getElementById('dash-sent-wh-del').innerText = sentWhDelCurr;
+    if (document.getElementById('dash-sent-wh-sup')) document.getElementById('dash-sent-wh-sup').innerText = sentWhSupCurr;
+    
+    if (document.getElementById('dash-processed-wh-del')) document.getElementById('dash-processed-wh-del').innerText = processedWhDelCurr;
+    if (document.getElementById('dash-processed-wh-sup')) document.getElementById('dash-processed-wh-sup').innerText = processedWhSupCurr;
+
+    if (document.getElementById('dash-sent-driver-del')) document.getElementById('dash-sent-driver-del').innerText = sentDriverDelCurr;
+    if (document.getElementById('dash-sent-driver-sup')) document.getElementById('dash-sent-driver-sup').innerText = sentDriverSupCurr;
+
+    if (document.getElementById('dash-delivered-del')) document.getElementById('dash-delivered-del').innerText = deliveredDelCurr;
+    if (document.getElementById('dash-delivered-sup')) document.getElementById('dash-delivered-sup').innerText = deliveredSupCurr;
+
+    if (document.getElementById('dash-issues-prob')) document.getElementById('dash-issues-prob').innerText = issuesProbCurr;
+    if (document.getElementById('dash-issues-canc')) document.getElementById('dash-issues-canc').innerText = issuesCancCurr;
+    
     setTrend('dash-total-trend', totalCurr, totalPrev);
     setTrend('dash-sent-wh-trend', sentWhCurr, sentWhPrev);
     setTrend('dash-processed-wh-trend', processedWhCurr, processedWhPrev);
@@ -7106,28 +7242,183 @@ function renderDashboard() {
     setTrend('dash-delivered-trend', deliveredCurr, deliveredPrev);
     setTrend('dash-issues-trend', issuesCurr, issuesPrev);
     
-    // Top Drivers (by month)
-    const driversOnly = currDels.filter(d => !String(d['ID_Авто'] || '').toLowerCase().includes('самов'));
-    const pickupsOnly = currDels.filter(d => String(d['ID_Авто'] || '').toLowerCase().includes('самов'));
+    // Завантаження авто (обмежуємо до 3 фактичних авто вантажоперевезень)
+    const isPickup = d => {
+      const a = String(d['ID_Авто'] || '').toLowerCase();
+      const addr = String(d['Адреса'] || '').toLowerCase();
+      return a.includes('самов') || addr.includes('самовивіз');
+    };
     
-    renderTopList('dash-top-drivers', driversOnly, 'ID_Авто', function(val) { return window.getCarName(val); }, ' поїздок');
+    const isNovaPoshta = d => {
+      const a = String(d['ID_Авто'] || '').toLowerCase();
+      const addr = String(d['Адреса'] || '').toLowerCase();
+      return a.includes('нова пошта') || a.includes('нп') || addr.includes('нова пошта') || addr.includes('нп ');
+    };
+
+    const regularCarsDels = currDels.filter(d => !isPickup(d) && !isNovaPoshta(d));
+    const pickupDels = currDels.filter(isPickup);
+    const npDels = currDels.filter(isNovaPoshta);
     
-    const pickupCount = pickupsOnly.length;
-    document.getElementById('dash-top-drivers').innerHTML += `
-        <div style="margin-top: 16px; margin-bottom: 8px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
-            Самовивіз
+    // Рендеримо авто із деталізацією відвантажень та постачальників
+    const carStats = {};
+    regularCarsDels.forEach(d => {
+      const key = d['ID_Авто'] || 'Не визначено';
+      if (!carStats[key]) carStats[key] = { total: 0, del: 0, sup: 0 };
+      carStats[key].total += 1;
+      if (checkIsSupply(d)) {
+        carStats[key].sup += 1;
+      } else {
+        carStats[key].del += 1;
+      }
+    });
+    
+    const sortedCars = Object.keys(carStats).map(k => ({
+      id: k,
+      name: window.getCarName(k),
+      total: carStats[k].total,
+      del: carStats[k].del,
+      sup: carStats[k].sup
+    })).sort((a,b) => b.total - a.total).slice(0, 3);
+
+    let carsHtml = sortedCars.map(c => `
+      <div class="top-item" style="padding: 8px 0; border-bottom: 1px solid var(--border-color); flex-direction: column; align-items: flex-start; gap: 4px;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+          <div class="top-name" style="font-weight: 700; color: var(--text-color);">🚛 ${c.name}</div>
+          <div class="top-score" style="font-weight: 800; color: var(--accent-blue);">${c.total} рейсів</div>
         </div>
-        <div class="top-item" style="border: none;">
-            <div class="top-user">
-                <div class="top-avatar" style="background: var(--propex-red); color: white;">СА</div>
-                <div class="top-name" style="color: inherit;">Самовивіз</div>
-            </div>
-            <div class="top-score" style="color: var(--propex-red);">${pickupCount} замовлень</div>
+        <div style="display: flex; gap: 12px; font-size: 11px; opacity: 0.9;">
+          <span>🚚 Відвантажень: <strong style="color: #3b82f6;">${c.del}</strong></span>
+          <span>📦 Постачань: <strong style="color: #eab308;">${c.sup}</strong></span>
         </div>
+      </div>
+    `).join('');
+
+    if (!carsHtml) {
+      carsHtml = `<div style="color:var(--text-muted); padding: 8px 0;">Немає даних за цей період</div>`;
+    }
+
+    document.getElementById('dash-top-drivers').innerHTML = carsHtml + `
+      <div style="margin-top: 14px; margin-bottom: 6px; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+        Альтернативна доставка
+      </div>
+      <div class="top-item" style="padding: 6px 0; border-bottom: 1px solid var(--border-color);">
+        <div class="top-user">
+          <div class="top-name" style="font-weight: 600;">📦 Самовивіз</div>
+        </div>
+        <div class="top-score" style="font-weight: 700; color: var(--propex-red);">${pickupDels.length} замовлень</div>
+      </div>
+      <div class="top-item" style="padding: 6px 0; border: none;">
+        <div class="top-user">
+          <div class="top-name" style="font-weight: 600;">🚚 Нова Пошта</div>
+        </div>
+        <div class="top-score" style="font-weight: 700; color: #ef4444;">${npDels.length} відправок</div>
+      </div>
     `;
     
     // Top Managers (by month)
     renderTopList('dash-top-managers', currDels, 'ID_Менеджера', '', ' замовлень');
+
+    // Персоналізований KPI для Водіїв у боті
+    const driverStats = {};
+    currDels.forEach(d => {
+      const drvId = d['ID_Водія'] || d['Водій'];
+      if (!drvId || drvId === 'Не призначено' || String(drvId).toLowerCase().includes('самов')) return;
+      const drvName = getEmployeeFullName(drvId, drvId);
+      if (!driverStats[drvName]) driverStats[drvName] = { total: 0, doneInBot: 0 };
+      driverStats[drvName].total += 1;
+      
+      const historyStr = String(d['Історія_Операцій'] || d['Історія'] || '').toLowerCase();
+      const statusStr = String(d['Статус'] || d['Status'] || '');
+      
+      // Бот враховує виконання ТІЛЬКИ якщо була взаємодія з ботом у Telegram (а не просто зміна статусу у таблиці)
+      const confirmedViaBot = (statusStr === 'Виконано' || statusStr.includes('Забрано')) && 
+                             (historyStr.includes('bot') || historyStr.includes('бот') || historyStr.includes('телеграм') || historyStr.includes('telegram'));
+                             
+      if (confirmedViaBot) {
+        driverStats[drvName].doneInBot += 1;
+      }
+    });
+
+    // Персоналізований KPI для Складу
+    const whStats = {};
+    currDels.forEach(d => {
+      const statusWh = String(d['Статус_збору'] || d['Статус_Склад'] || '').trim();
+      const workerId = d['ID_Комірника'] || d['ID_Склад'] || d['Комірник'] || d['Зібрав'];
+      
+      // Беруться тільки картки, що передані на склад або оброблені складом
+      if (!statusWh && !isSentToWh(d)) return;
+      
+      // Якщо конкретний комірник не вибраний вручну менеджером, за замовчуванням замовлення надходить Головному комірнику (Сергій)
+      const workerName = workerId ? getEmployeeFullName(workerId, workerId) : 'Сергій (Головний комірник)';
+      if (!whStats[workerName]) whStats[workerName] = { total: 0, doneInBot: 0 };
+      whStats[workerName].total += 1;
+      
+      const isWhProcessed = ['Зібрано', 'Скомплектовано', 'Прийнято на склад', 'Отримано'].includes(statusWh);
+      if (isWhProcessed) {
+        whStats[workerName].doneInBot += 1;
+      }
+    });
+
+    const kpiContainer = document.getElementById('dash-bot-kpi');
+    if (kpiContainer) {
+      let driverItemsHtml = Object.keys(driverStats).map(name => {
+        const item = driverStats[name];
+        const pct = item.total > 0 ? Math.round((item.doneInBot / item.total) * 100) : 0;
+        return `
+          <div style="padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 11px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+              <span style="font-weight: 600; color: var(--text-color);">${name}</span>
+              <span style="font-weight: 700; color: #3b82f6;">${item.doneInBot}/${item.total} (${pct}%)</span>
+            </div>
+            <div style="width: 100%; height: 4px; background: rgba(59, 130, 246, 0.15); border-radius: 2px; overflow: hidden;">
+              <div style="width: ${pct}%; height: 100%; background: #3b82f6; border-radius: 2px;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (!driverItemsHtml) {
+        driverItemsHtml = `<div style="font-size: 11px; color: var(--text-muted); padding: 4px 0;">Немає активних призначень водіїв</div>`;
+      }
+
+      let whItemsHtml = Object.keys(whStats).map(name => {
+        const item = whStats[name];
+        const pct = item.total > 0 ? Math.round((item.doneInBot / item.total) * 100) : 0;
+        return `
+          <div style="padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 11px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+              <span style="font-weight: 600; color: var(--text-color);">${name}</span>
+              <span style="font-weight: 700; color: #10b981;">${item.doneInBot}/${item.total} (${pct}%)</span>
+            </div>
+            <div style="width: 100%; height: 4px; background: rgba(16, 185, 129, 0.15); border-radius: 2px; overflow: hidden;">
+              <div style="width: ${pct}%; height: 100%; background: #10b981; border-radius: 2px;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (!whItemsHtml) {
+        whItemsHtml = `<div style="font-size: 11px; color: var(--text-muted); padding: 4px 0;">Немає даних збірки складом</div>`;
+      }
+
+      kpiContainer.innerHTML = `
+        <!-- Водії -->
+        <div style="background: rgba(59, 130, 246, 0.04); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 10px; padding: 10px 12px;">
+          <div style="font-weight: 700; font-size: 12px; color: #3b82f6; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px;">
+            🚚 Ефективність водіїв у боті
+          </div>
+          ${driverItemsHtml}
+        </div>
+
+        <!-- Склад -->
+        <div style="background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 10px; padding: 10px 12px;">
+          <div style="font-weight: 700; font-size: 12px; color: #10b981; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px;">
+            🏢 Збірка та прийом складом
+          </div>
+          ${whItemsHtml}
+        </div>
+      `;
+    }
     
      // Recent Activities
      const sorted = [...state.deliveries].sort((a,b) => {
@@ -7157,7 +7448,10 @@ function renderDashboard() {
              </div>
          `;
      }).join('');
-     document.getElementById('dash-recent-activity').innerHTML = recentHtml || '<div style="color:#6b7280; padding:10px;">Немає активності</div>';
+     const recentContainer = document.getElementById('dash-recent-activity');
+     if (recentContainer) {
+       recentContainer.innerHTML = recentHtml || '<div style="color:#6b7280; padding:10px;">Немає активності</div>';
+     }
     
     // Chart
     renderStatusChart(currDels);
