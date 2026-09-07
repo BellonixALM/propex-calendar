@@ -938,31 +938,31 @@ function sendMorningWarehouseDeliveries() {
       var shortId = String(id).replace(/-/g, '');
       var carId = String(d['ID_Авто'] || '').trim();
       
-      // Option A: If not yet assembled, notify warehouse heads for assembly
-      if (!whStatus || whStatus === 'Очікує') {
-        if (heads.length > 0) {
-          // Stagger warehouse dispatches with 250ms delays
-          if (index > 0) Utilities.sleep(250);
-          var text = "📦 <b>Ранкова збірка замовлення!</b>\n" +
-                     "Замовлення №" + (d['Номер_замовлення'] || "Б/Н") + "\n" +
-                     "📅 " + d['Дата'] + " " + d['Час'] + "\n" +
-                     "Кому: " + (d["Ім'я_одержувача"] || "Не вказано") + "\n\n" +
-                     "Будь ласка, призначте комірника на збірку:";
-                     
-          var kb = { "inline_keyboard": [] };
-          heads.forEach(function(h) {
-            kb.inline_keyboard.push([{"text": "🧑‍💼 На себе (" + h.name + ")", "callback_data": "awh_" + shortId + "_" + h.telegram_id}]);
-          });
-          workers.forEach(function(w) {
-            if (w.name && w.telegram_id) {
-              kb.inline_keyboard.push([{"text": "👷 Призначити: " + w.name, "callback_data": "awh_" + shortId + "_" + w.telegram_id}]);
-            }
-          });
-          heads.forEach(function(head) {
-            sendTelegramMessage(head.telegram_id, text, kb);
-          });
-          appendHistoryEvent(id, "Передано Старшому комірнику у Бот на збірку (08:00 ранку)", "Автоматично");
-        }
+      // Option A: If not yet fully assembled/completed by warehouse, notify warehouse heads for assembly
+      if (whStatus !== 'Зібрано' && whStatus !== 'Скомплектовано') {
+        var targetHeads = (heads && heads.length > 0) ? heads : [{ telegram_id: '6670847663', name: 'Сергій' }];
+        
+        // Stagger warehouse dispatches with 250ms delays
+        if (index > 0) Utilities.sleep(250);
+        var text = "📦 <b>Ранкова збірка замовлення!</b>\n" +
+                   "Замовлення №" + (d['Номер_замовлення'] || "Б/Н") + "\n" +
+                   "📅 " + d['Дата'] + " " + d['Час'] + "\n" +
+                   "Кому: " + (d["Ім'я_одержувача"] || "Не вказано") + "\n\n" +
+                   "Будь ласка, призначте комірника на збірку:";
+                   
+        var kb = { "inline_keyboard": [] };
+        targetHeads.forEach(function(h) {
+          kb.inline_keyboard.push([{"text": "🧑‍💼 На себе (" + h.name + ")", "callback_data": "awh_" + shortId + "_" + h.telegram_id}]);
+        });
+        workers.forEach(function(w) {
+          if (w.name && w.telegram_id) {
+            kb.inline_keyboard.push([{"text": "👷 Призначити: " + w.name, "callback_data": "awh_" + shortId + "_" + w.telegram_id}]);
+          }
+        });
+        targetHeads.forEach(function(head) {
+          sendTelegramMessage(head.telegram_id, text, kb);
+        });
+        appendHistoryEvent(id, "Передано Старшому комірнику у Бот на збірку (08:00 ранку)", "Автоматично");
       } 
       // Option B: If ALREADY assembled pre-morning and assigned to a driver, send to driver now!
       else if ((whStatus === 'Зібрано' || whStatus === 'Скомплектовано') && carId && carId.toLowerCase().indexOf('самовивіз') === -1) {
