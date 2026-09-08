@@ -6004,8 +6004,12 @@ body.light-theme .login-error {
       }
       deliveryData.checklist_items = preParsedChecklist;
 
-      document.getElementById('save-btn').disabled = true;
-      document.getElementById('save-btn').textContent = "Збереження...";
+      const saveBtn = document.getElementById('save-btn');
+      if (saveBtn) {
+        if (saveBtn.disabled) return;
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Збереження... ⏳";
+      }
       
       if (isEditMode && editDeliveryId) {
         const targetDel = (state.deliveries || []).find(d => String(d['ID']) === String(editDeliveryId));

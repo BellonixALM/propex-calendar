@@ -729,6 +729,31 @@ function addDelivery(deliveryData) {
     throw new Error("Не вдалося знайти зв'язок з Google Таблицею. Переконайтеся, що скрипт прикріплений до таблиці або вкажіть SPREADSHEET_ID в Code.gs.");
   }
   var sheet = ss.getSheetByName('Доставки');
+
+  // Server-side duplicate prevention check (same order_num, address, date within last 2 minutes)
+  if (deliveryData && deliveryData.order_num && deliveryData.address) {
+    var dataVals = sheet.getDataRange().getValues();
+    var h = dataVals[0];
+    var orderIdx = h.indexOf('Номер_замовлення');
+    var addrIdx = h.indexOf('Адреса');
+    var dateIdx = h.indexOf('Дата');
+    var idIdx = h.indexOf('ID');
+    if (orderIdx !== -1 && addrIdx !== -1 && dateIdx !== -1) {
+      for (var r = dataVals.length - 1; r >= 1 && r >= dataVals.length - 15; r--) {
+        var existingOrder = String(dataVals[r][orderIdx] || '').trim();
+        var existingAddr = String(dataVals[r][addrIdx] || '').trim();
+        var existingDate = String(dataVals[r][dateIdx] || '').trim();
+        if (existingOrder === String(deliveryData.order_num).trim() && 
+            existingAddr === String(deliveryData.address).trim() && 
+            existingDate === String(deliveryData.date).trim()) {
+          var existingId = idIdx !== -1 ? dataVals[r][idIdx] : r;
+          Logger.log("Duplicate prevented in addDelivery for order: " + deliveryData.order_num);
+          return { status: 'success', id: existingId, duplicate_prevented: true };
+        }
+      }
+    }
+  }
+
   var id = sheet.getLastRow() > 1 ? sheet.getLastRow() : 1; // if empty, start from 1
   
   var headers = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0];
