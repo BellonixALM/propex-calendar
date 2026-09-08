@@ -2405,7 +2405,9 @@ function deleteDelivery(deliveryId, userFullName, userRole) {
 }
 
 function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
+  var lock = LockService.getScriptLock();
   try {
+    lock.waitLock(10000);
     var ss = getSpreadsheet();
     if (!ss) return false;
     var sheet = ss.getSheetByName('Доставки');
@@ -2448,7 +2450,7 @@ function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
       if (currentId === searchId || String(data[i][idCol]).trim() === String(deliveryId).trim() || (searchId.length > 0 && currentOrderNum === searchId)) {
         var rowNum = i + 1;
         var nowFormatted = Utilities.formatDate(new Date(), "Europe/Kiev", "dd.MM.yyyy HH:mm");
-        var existingHistory = data[i][historyCol] || '';
+        var existingHistory = String(sheet.getRange(rowNum, historyCol + 1).getValue() || '');
 
         var existingCreated = data[i][createdCol];
         if (!existingCreated) {
@@ -2469,6 +2471,8 @@ function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
     }
   } catch (err) {
     Logger.log("Error in appendHistoryEvent: " + err.toString());
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
   }
   return false;
 }
