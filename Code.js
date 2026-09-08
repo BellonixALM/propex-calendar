@@ -388,14 +388,43 @@ function doPost(e) {
         
         // Notify manager of completion if managerId is present
         var deliveries = getDeliveries();
-        var targetDel = deliveries.find(function(d) { return String(d['ID']).replace(/-/g, '') === String(delId).replace(/-/g, ''); });
-        if (targetDel && targetDel['ID_Менеджера'] && String(targetDel['ID_Менеджера']).length > 5) {
-          var mgrMsg = "📦 <b>Замовлення №" + (targetDel['Номер_замовлення'] || delId) + " зібрано складом!</b>\n" +
-                       "Статус збору оновлено на: <b>Зібрано</b>.";
-          sendTelegramMessage(targetDel['ID_Менеджера'], mgrMsg);
+        var targetDel = deliveries.find(function(d) { 
+          var cId = String(d['ID']).replace(/-/g, '').trim();
+          var oNum = String(d['Номер_замовлення'] || '').replace(/-/g, '').trim();
+          var sId = String(delId).replace(/-/g, '').trim();
+          return cId === sId || (sId.length > 0 && oNum === sId);
+        });
+
+        if (targetDel) {
+          if (targetDel['ID_Менеджера'] && String(targetDel['ID_Менеджера']).length > 5) {
+            var mgrMsg = "📦 <b>Замовлення №" + (targetDel['Номер_замовлення'] || delId) + " зібрано складом!</b>\n" +
+                         "Статус збору оновлено на: <b>Зібрано</b>.";
+            sendTelegramMessage(targetDel['ID_Менеджера'], mgrMsg);
+          }
+          
+          // Send to Driver ONLY NOW after warehouse confirmed assembly!
+          var driverTgId = String(targetDel['ID_Водія'] || targetDel['Водій'] || '').trim();
+          var carId = String(targetDel['ID_Авто'] || '').trim();
+          if (driverTgId && driverTgId.length > 5 && carId && carId.toLowerCase().indexOf('самовивіз') === -1) {
+            var driverMsg = "📦 <b>Нова зібрана доставка!</b>\n\n" +
+                            "⏰ <b>Час:</b> " + (targetDel['Час'] || 'Не вказано') + "\n" +
+                            "📍 <b>Адреса:</b> " + targetDel['Адреса'] + "\n" +
+                            "№ <b>Замовлення:</b> №" + (targetDel['Номер_замовлення'] || 'Б/Н') + "\n" +
+                            "👤 <b>Отримувач:</b> " + (targetDel["Ім'я_одержувача"] || '') + "\n";
+            if (targetDel['Коментар']) driverMsg += "💬 <b>Примітка:</b> " + targetDel['Коментар'] + "\n";
+
+            var driverKb = {
+              inline_keyboard: [
+                [{ text: "📍 Я на місці", callback_data: "onsite_" + delId }],
+                [{ text: "✅ Підтвердити доставку", callback_data: "confirm_" + delId }, { text: "❌ Проблема", callback_data: "problem_" + delId }]
+              ]
+            };
+            sendTelegramMessage(driverTgId, driverMsg, driverKb);
+            appendHistoryEvent(delId, "Передано водію у Бот (Після збірки складом)", "Склад / Бот");
+          }
         }
 
-        var ackMsg = "✅ Збірку замовлення підтверджено! Статус оновлено на: Зібрано.";
+        var ackMsg = "✅ Збірку замовлення підтверджено! Статус оновлено на: Зібрано. Водія сповіщено!";
         sendTelegramMessage(fromChatId, ackMsg);
         return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'wh_confirm handled' }))
           .setMimeType(ContentService.MimeType.JSON);
