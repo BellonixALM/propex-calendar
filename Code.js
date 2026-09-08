@@ -176,6 +176,12 @@ function doGet(e) {
         result = { status: 'success', data: getDailyCrews(payload.dateStr) };
       } else if (action === 'saveDailyCrew') {
         result = saveDailyCrew(payload.dateStr, payload.crews);
+      } else if (action === 'sendMorningWarehouseDeliveries') {
+        sendMorningWarehouseDeliveries();
+        result = { status: 'success', message: 'Warehouse dispatches completed' };
+      } else if (action === 'sendMorningSupplyDeliveries') {
+        sendMorningSupplyDeliveries();
+        result = { status: 'success', message: 'Supply dispatches completed' };
       } else if (action === 'get_clients') {
         result = get_clients();
       } else if (action === 'register_driver') {
