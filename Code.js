@@ -1018,9 +1018,11 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
   for (var i = 1; i < data.length; i++) {
     var currentIdRaw = data[i][idCol];
     if (!currentIdRaw || currentIdRaw === 'undefined') currentIdRaw = String(i + 1);
-    var currentId = String(currentIdRaw).replace(/-/g, '');
-    var searchId = String(deliveryId).replace(/-/g, '');
-    if (currentId === searchId) {
+    var currentId = String(currentIdRaw).replace(/-/g, '').trim();
+    var searchId = String(deliveryId).replace(/-/g, '').trim();
+    var currentOrderNum = orderCol !== -1 ? String(data[i][orderCol]).replace(/-/g, '').trim() : '';
+
+    if (currentId === searchId || (searchId.length > 0 && currentOrderNum === searchId)) {
       var rowNum = i + 1;
       
       // Update status
@@ -1133,9 +1135,11 @@ function assignWarehouseWorker(deliveryId, workerId) {
   for (var i = 1; i < data.length; i++) {
     var currentIdRaw = data[i][idCol];
     if (!currentIdRaw || currentIdRaw === 'undefined') currentIdRaw = String(i + 1);
-    var currentId = String(currentIdRaw).replace(/-/g, '');
-    var searchId = String(deliveryId).replace(/-/g, '');
-    if (currentId === searchId) {
+    var currentId = String(currentIdRaw).replace(/-/g, '').trim();
+    var searchId = String(deliveryId).replace(/-/g, '').trim();
+    var currentOrderNum = orderCol !== -1 ? String(data[i][orderCol]).replace(/-/g, '').trim() : '';
+
+    if (currentId === searchId || (searchId.length > 0 && currentOrderNum === searchId)) {
       sheet.getRange(i + 1, workerCol + 1).setValue(workerId);
       sheet.getRange(i + 1, gatherCol + 1).setValue('В процесі збору');
       if (orderCol !== -1) orderNum = data[i][orderCol];
