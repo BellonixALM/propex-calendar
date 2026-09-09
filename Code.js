@@ -409,6 +409,7 @@ function doPost(e) {
             var mgrMsg = "📦 <b>Замовлення №" + (targetDel['Номер_замовлення'] || delId) + " зібрано складом!</b>\n" +
                          "Статус збору оновлено на: <b>Зібрано</b>.";
             sendTelegramMessage(targetDel['ID_Менеджера'], mgrMsg);
+            appendHistoryEvent(delId, "Надіслано сповіщення менеджеру у Бот (Збірка складом)", "Система ➔ Менеджер");
           }
           
           // Send to Driver ONLY NOW after warehouse confirmed assembly!
@@ -1141,6 +1142,7 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
         
         if (messageText) {
           sendTelegramMessage(managerId, messageText);
+          appendHistoryEvent(targetId, "Надіслано сповіщення менеджеру у Бот", "Система ➔ Менеджер");
         }
       }
       
