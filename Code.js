@@ -310,6 +310,9 @@ function doPost(e) {
       }
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', deleted: deleted }))
         .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'handle_callback') {
+      var payload = data.data || data;
+      data.callback_query = payload.callback_query || payload;
     }
     
     // Handle incoming Telegram webhook updates (button clicks or commands)
