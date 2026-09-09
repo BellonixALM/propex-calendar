@@ -1102,10 +1102,11 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
       var address = addressCol !== -1 ? data[i][addressCol] : '';
       var carId = carCol !== -1 ? data[i][carCol] : '';
       
+      var targetId = data[i][idCol] || deliveryId;
       // Log status update to Activity Timeline
       var historyMsg = "Змінено статус на: " + newStatus;
       if (comment) historyMsg += " (" + comment + ")";
-      appendHistoryEvent(deliveryId, historyMsg, "Система / Бот");
+      appendHistoryEvent(targetId, historyMsg, "Система / Бот");
       
       // Send Telegram Notification to the Manager
       if (managerId) {
@@ -1130,6 +1131,12 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
                         "🚗 <b>Автомобіль:</b> Авто " + carId + "\n" +
                         "📍 <b>Адреса:</b> " + address + "\n\n" +
                         "Водій завантажився і виїхав за адресою.";
+        } else if (newStatus === "Забрано у постачальника") {
+          messageText = "📥 <b>Постачання забрано у постачальника!</b>\n\n" +
+                        "📦 <b>Замовлення 1С:</b> №" + orderNum + "\n" +
+                        "🏢 <b>Постачальник:</b> " + (data[i][headers.indexOf("Ім'я_одержувача")] || "Не вказано") + "\n" +
+                        "📍 <b>Адреса:</b> " + address + "\n\n" +
+                        "🚚 Водій забрав товар і прямує на склад Propex.";
         }
         
         if (messageText) {
