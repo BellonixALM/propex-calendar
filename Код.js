@@ -2682,3 +2682,61 @@ function ensureClientInDatabase(name, phone, address) {
     sheet.appendRow(newRow);
   }
 }
+
+/* ==========================================================================
+   🛠️ PROMEX CRM TOOL RENTAL & PHOTO MODULE (Google Apps Script Backend)
+   ========================================================================== */
+
+function handleSaveToolPhoto(toolId, serialNumber, photoBase64, notes) {
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName("Інструменти");
+  if (!sheet) {
+    sheet = ss.insertSheet("Інструменти");
+    sheet.appendRow(["ID", "Назва", "Серійний_Номер", "Статус", "Кому_Видано", "Фото_URL", "Нотатки"]);
+  }
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(function(h) { return h.toString().trim(); });
+
+  var idIdx = headers.indexOf("ID");
+  var serialIdx = headers.indexOf("Серійний_Номер");
+  var photoIdx = headers.indexOf("Фото_URL");
+  var notesIdx = headers.indexOf("Нотатки");
+
+  if (photoIdx === -1) {
+    sheet.getRange(1, headers.length + 1).setValue("Фото_URL");
+    headers.push("Фото_URL");
+    photoIdx = headers.length - 1;
+  }
+
+  var rowIndex = -1;
+  for (var i = 1; i < data.length; i++) {
+    if ((idIdx > -1 && String(data[i][idIdx]) === String(toolId)) ||
+        (serialIdx > -1 && String(data[i][serialIdx]) === String(serialNumber))) {
+      rowIndex = i + 1;
+      break;
+    }
+  }
+
+  if (rowIndex > -1) {
+    if (photoBase64) sheet.getRange(rowIndex, photoIdx + 1).setValue(photoBase64);
+    if (notes && notesIdx > -1) sheet.getRange(rowIndex, notesIdx + 1).setValue(notes);
+  }
+
+  return { success: true, message: "Фото та дані інструменту збережено" };
+}
+
+function logToolHistoryTimeline(serialNumber, action, master, duration) {
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName("Tools_History_Log");
+  if (!sheet) {
+    sheet = ss.insertSheet("Tools_History_Log");
+    sheet.appendRow(["Дата_Час", "Серійний_Номер", "Дія", "Відповідальний", "Тривалість"]);
+  }
+
+  var timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT+3", "yyyy-MM-dd HH:mm:ss");
+  sheet.appendRow([timestamp, serialNumber, action, master, duration || "-"]);
+
+  return { success: true };
+}
+

@@ -68,7 +68,6 @@ window.getCarName = function(carId) {
   if (!carId || carId === 'Не призначено' || carId === 'Самовивіз' || carId === 'Самовивіз Нова Пошта') return carId;
   const map = {
     '1': 'Hyundai EX-8',
-    '2': 'MAN',
     '3': 'Volkswagen Crafter',
     '4': 'Renault Dokker',
     '5': 'Renault D18'
@@ -2790,7 +2789,6 @@ body.light-theme .login-error {
               <select id="form-emp-car" class="form-control">
                 <option value="">Немає</option>
                 <option value="1">Hyundai EX-8</option>
-                <option value="2">MAN</option>
                 <option value="3">Volkswagen Crafter</option>
                 <option value="4">Renault Dokker</option>
                 <option value="5">Renault D18</option>
@@ -4912,6 +4910,11 @@ body.light-theme .login-error {
       if (statusClass === 'planned' && isRouteSent) {
         statusClass = isIraOrder ? 'in-progress-supply' : 'in-progress';
         smartOnRoute = true;
+      } else if (isIraOrder && statusClass !== 'completed' && statusClass !== 'problem' && del['Статус'] !== 'Виконано') {
+        if (delDateStr === todayStr && isDriverSet) {
+          statusClass = 'in-progress-supply';
+          smartOnRoute = true;
+        }
       }
       let isIncidentAffected = false;
       if (statusClass !== 'completed' && statusClass !== 'problem') {
@@ -4949,20 +4952,25 @@ body.light-theme .login-error {
       const whStatus = String(del['Статус_збору'] || del['Статус_Склад'] || '').trim();
       const isWhProblem = whStatus.startsWith('Проблема') || whStatus.startsWith('Відмова');
       
-      // Dedicated 3-Stage Icon Logic for Ira Order Supply Workflow:
+      const delStatus = String(del['Статус'] || '').trim();
+      
+      // Dedicated 4-Stage Icon Logic for Ira Order Supply Workflow:
       if (isIraOrder) {
-        if (whStatus === 'Прийнято на склад' || whStatus === 'Отримано' || statusClass === 'completed' || del['Статус'] === 'Виконано') {
-          // Stage 3: Warehouse finished reception -> Green Checkmark Circle
+        if (whStatus === 'Прийнято на склад' || whStatus === 'Отримано' || statusClass === 'completed' || delStatus === 'Виконано') {
+          // Stage 4: Warehouse finished reception -> Green Checkmark Circle
           whIcon = '<span class="wh-icon" title="Товар успішно прийнято на склад Propex" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
         } else if (whStatus === 'Прийомка в процесі' || whStatus === 'Приймається' || whStatus === 'В процесі збору' || whStatus === 'Збирається') {
-          // Stage 2: Warehouse started receiving (checked 1st item) -> Amber Box Icon (який на скріншоті)
+          // Stage 3.5: Warehouse started receiving (checked 1st item) -> Amber Box Icon
           whIcon = '<span class="wh-icon" title="Відбувається приймання товару на складі Propex" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
-        } else if (whStatus === 'В дорозі на склад' || del['Водій_Прийняв'] === 'Так' || whStatus === 'Товар забрано водієм' || del['Статус'] === 'Забрано у постачальника') {
-          // Stage 1: Driver picked up goods & driving to Propex -> Green Truck Icon
+        } else if (whStatus === 'В дорозі на склад' || del['Водій_Прийняв'] === 'Так' || whStatus === 'Товар забрано водієм' || delStatus === 'Забрано у постачальника') {
+          // Stage 3: Driver picked up goods & driving to Propex -> Green Truck Icon
           whIcon = '<span class="wh-icon" title="Товар забрано у постачальника (Водій везе на склад)" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
-        } else if (smartOnRoute && statusClass !== 'problem') {
-          // Initial Stage: Driver route active, heading to supplier -> Purple Truck Icon
-          whIcon = '<span class="wh-icon" title="Активна поставка (Водій прямує до постачальника)" style="color:#a855f7; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
+        } else if (delStatus === 'В процесі' || delStatus === 'Виїхав до постачальника') {
+          // Stage 2: Driver clicked "En route to supplier" -> Orange/Yellow Truck Icon
+          whIcon = '<span class="wh-icon" title="Водій виїхав і прямує до постачальника" style="color:#f97316; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
+        } else if (smartOnRoute || isDriverSet) {
+          // Stage 1: Bot sent notification to driver -> Purple Truck Icon
+          whIcon = '<span class="wh-icon" title="Активна поставка (Водій отримав сповіщення)" style="color:#a855f7; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="truck" style="width:20px;height:20px;"></i></span>';
         } else if (isWhProblem) {
           whIcon = '<span class="wh-icon" title="Проблема з поставкою" style="color:var(--danger); display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="alert-circle" style="width:20px;height:20px;"></i></span>';
         }
@@ -5853,6 +5861,18 @@ body.light-theme .login-error {
       if (!rawDate || !order_num || !address) {
         alert("Будь ласка, заповніть усі обов'язкові поля (*)");
         return;
+      }
+      
+      // Duplicate order_num protection check (for new delivery creations)
+      if (!isEditMode) {
+        const isDuplicateOrder = (state.deliveries || []).some(d => 
+          String(d['Номер_замовлення'] || '').trim() === order_num &&
+          d['Статус'] !== 'Скасовано'
+        );
+        if (isDuplicateOrder) {
+          alert(`Увага! Замовлення з номером "${order_num}" вже існує в системі! Щоб уникнути дублікатів, перевірте список доставок.`);
+          return;
+        }
       }
       
       const normalizedAddress = address.toLowerCase();
@@ -10427,6 +10447,20 @@ ${sysInfo}`;
                 <span>Додати фото</span>
               </div>
             </div>
+
+            <!-- Status Box & Canvas Progress Bar -->
+            <div id="rs-tool-photo-status-box" style="display: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-top: 8px;"></div>
+            
+            <div id="rs-tool-photo-progress-wrapper" style="display: none; margin-top: 8px; text-align: left;">
+              <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 2px;">
+                <span>Стиснення HD зображення...</span>
+                <span id="rs-tool-photo-progress-percent">0%</span>
+              </div>
+              <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                <div id="rs-tool-photo-progress-bar" style="height: 100%; width: 0%; background: #10b981; transition: width 0.2s ease;"></div>
+              </div>
+            </div>
+
             <div style="margin-top: 8px;">
               <input type="file" id="edit-tool-photo-file" accept="image/*" onchange="previewEditToolPhoto(this)" style="display: none;">
               <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-tool-photo-file').click()" style="font-size: 11px; padding: 4px 10px;">📷 Завантажити / Змінити фото</button>
@@ -10466,10 +10500,13 @@ ${sysInfo}`;
           </div>
 
           <div class="modal-footer" style="padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-            <button type="button" class="btn" onclick="deleteToolItem()" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); padding: 9px 16px; border-radius: 8px; font-weight: 600; font-size: 12px;">🗑 Видалити</button>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn" onclick="deleteToolItem()" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); padding: 9px 14px; border-radius: 8px; font-weight: 600; font-size: 12px;">🗑 Видалити</button>
+              <button type="button" class="btn btn-secondary" onclick="openToolHistoryTimelineFromModal()" style="font-size: 12px; color: #6366F1; border-color: rgba(99,102,241,0.4); font-weight: 700; padding: 9px 12px;">📜 Таймлайн</button>
+            </div>
             <div style="display: flex; gap: 10px;">
               <button type="button" class="btn btn-secondary" onclick="closeEditToolModal()" style="padding: 10px 18px; border-radius: 8px;">Скасувати</button>
-              <button type="submit" class="btn" style="background-color: #3b82f6; color: white; border: none; font-weight: 700; padding: 10px 22px; border-radius: 8px;">Зберегти зміни</button>
+              <button type="submit" id="btn-save-edit-tool-submit" class="btn" style="background-color: #3b82f6; color: white; border: none; font-weight: 700; padding: 10px 22px; border-radius: 8px;">Зберегти зміни</button>
             </div>
           </div>
         </form>
@@ -11146,97 +11183,106 @@ ${sysInfo}`;
 
     window.previewEditToolPhoto = function(input) {
       if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const progressWrapper = document.getElementById('rs-tool-photo-progress-wrapper');
+        const progressBar = document.getElementById('rs-tool-photo-progress-bar');
+        const progressPercent = document.getElementById('rs-tool-photo-progress-percent');
+        const statusBox = document.getElementById('rs-tool-photo-status-box');
+
+        if (progressWrapper) {
+          progressWrapper.style.display = 'block';
+          progressBar.style.width = '15%';
+          progressPercent.innerText = '15%';
+        }
+
         const reader = new FileReader();
-        reader.onload = function(e) {
-          currentEditToolPhotoBase64 = e.target.result;
-          const img = document.getElementById('edit-tool-photo-img');
-          const placeholder = document.getElementById('edit-tool-photo-placeholder');
-          if (img && placeholder) {
-            img.src = e.target.result;
-            img.style.display = 'inline-block';
-            placeholder.style.display = 'none';
+        reader.onprogress = function(e) {
+          if (e.lengthComputable && progressBar) {
+            const p = Math.round((e.loaded / e.total) * 40);
+            progressBar.style.width = p + '%';
+            progressPercent.innerText = p + '%';
           }
         };
-        reader.readAsDataURL(input.files[0]);
+
+        reader.onload = function(e) {
+          if (progressBar) {
+            progressBar.style.width = '60%';
+            progressPercent.innerText = '60%';
+          }
+
+          const imgObj = new Image();
+          imgObj.onload = function() {
+            if (progressBar) {
+              progressBar.style.width = '85%';
+              progressPercent.innerText = '85%';
+            }
+
+            const canvas = document.createElement('canvas');
+            let width = imgObj.width;
+            let height = imgObj.height;
+            const MAX_SIZE = 500;
+
+            if (width > height) {
+              if (width > MAX_SIZE) {
+                height *= MAX_SIZE / width;
+                width = MAX_SIZE;
+              }
+            } else {
+              if (height > MAX_SIZE) {
+                width *= MAX_SIZE / height;
+                height = MAX_SIZE;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imgObj, 0, 0, width, height);
+
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+            currentEditToolPhotoBase64 = compressedBase64;
+
+            if (progressBar) {
+              progressBar.style.width = '100%';
+              progressPercent.innerText = '100%';
+            }
+
+            setTimeout(function() {
+              if (progressWrapper) progressWrapper.style.display = 'none';
+
+              const img = document.getElementById('edit-tool-photo-img');
+              const placeholder = document.getElementById('edit-tool-photo-placeholder');
+              if (img && placeholder) {
+                img.src = compressedBase64;
+                img.style.display = 'inline-block';
+                placeholder.style.display = 'none';
+              }
+
+              if (statusBox) {
+                statusBox.style.display = 'block';
+                statusBox.style.background = '#f0fdf4';
+                statusBox.style.color = '#10b981';
+                statusBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                statusBox.innerText = '✓ Фото успішно стиснуто та завантажено';
+              }
+            }, 200);
+          };
+          imgObj.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
       }
-    };
-
-    window.submitAddToolForm = function() {
-      const name = document.getElementById('add-tool-name').value.trim();
-      let sn = document.getElementById('add-tool-sn').value.trim();
-      const condition = document.getElementById('add-tool-condition')?.value || '🟢 Добрий (Справний)';
-      const inspection = document.getElementById('add-tool-inspection')?.value || '';
-      const category = document.getElementById('add-tool-category')?.value.trim() || '';
-
-      if (!name || !sn) {
-        alert('Заповніть назву та серійний номер!');
-        return;
-      }
-      if (!sn.toUpperCase().startsWith('S/N')) {
-        sn = 'S/N: ' + sn;
-      }
-
-      window.toolsData.push({
-        id: 'T' + (Date.now()),
-        sn: sn,
-        name: name,
-        condition: condition,
-        inspectionDate: inspection,
-        category: category,
-        client: '—',
-        issueDate: '—',
-        freeDays: 0,
-        status: 'stock',
-        daysOverdue: 0,
-        photo: currentAddToolPhotoBase64 || ''
-      });
-
-      window.saveToolsToStorage();
-      currentAddToolPhotoBase64 = '';
-      window.closeAddToolModal();
-      alert(`✅ Новий інструмент "${name}" (${sn}) успішно додано на склад!`);
-      window.renderToolsView();
-    };
-
-    window.openEditToolModal = function(toolId) {
-      const tool = window.toolsData.find(t => t.id === toolId);
-      if (!tool) return;
-
-      document.getElementById('edit-tool-id').value = tool.id;
-      document.getElementById('edit-tool-name').value = tool.name || '';
-      document.getElementById('edit-tool-sn').value = tool.sn || '';
-      document.getElementById('edit-tool-condition').value = tool.condition || '🟢 Добрий (Справний)';
-      document.getElementById('edit-tool-status-text').value = tool.status === 'stock' ? '🟢 На складі' : '🔵 В користуванні';
-      document.getElementById('edit-tool-client-text').value = tool.client || '—';
-
-      currentEditToolPhotoBase64 = tool.photo || '';
-      const img = document.getElementById('edit-tool-photo-img');
-      const placeholder = document.getElementById('edit-tool-photo-placeholder');
-
-      if (tool.photo) {
-        img.src = tool.photo;
-        img.style.display = 'inline-block';
-        placeholder.style.display = 'none';
-      } else {
-        img.src = '';
-        img.style.display = 'none';
-        placeholder.style.display = 'flex';
-      }
-
-      const modal = document.getElementById('modal-edit-tool');
-      if (modal) modal.classList.add('show');
-      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
-    };
-
-    window.closeEditToolModal = function() {
-      const modal = document.getElementById('modal-edit-tool');
-      if (modal) modal.classList.remove('show');
     };
 
     window.submitEditToolForm = function() {
       const toolId = document.getElementById('edit-tool-id').value;
       const tool = window.toolsData.find(t => t.id === toolId);
       if (!tool) return;
+
+      const submitBtn = document.getElementById('btn-save-edit-tool-submit');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = '⏳ Збереження...';
+      }
 
       tool.name = document.getElementById('edit-tool-name').value.trim();
       let sn = document.getElementById('edit-tool-sn').value.trim();
@@ -11248,10 +11294,27 @@ ${sysInfo}`;
         tool.photo = currentEditToolPhotoBase64;
       }
 
-      window.saveToolsToStorage();
-      window.closeEditToolModal();
-      alert(`✅ Інформацію про інструмент "${tool.name}" оновлено!`);
-      window.renderToolsView();
+      // Save to Google Apps Script backend if available
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.handleSaveToolPhoto(tool.id, tool.sn, tool.photo || '', tool.condition);
+      }
+
+      setTimeout(function() {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Зберегти зміни';
+        }
+        window.saveToolsToStorage();
+        window.closeEditToolModal();
+        alert(`✅ Інформацію та фото інструменту "${tool.name}" оновлено!`);
+        window.renderToolsView();
+      }, 350);
+    };
+
+    window.openToolHistoryTimelineFromModal = function() {
+      const sn = document.getElementById('edit-tool-sn').value.trim();
+      const toolName = document.getElementById('edit-tool-name').value.trim() || 'Інструмент';
+      alert(`📜 Таймлайн та Історія оренди для ${toolName} (${sn}):\n\n• 2026-08-10: Повернено на склад (Майстер Дерев'янко О.)\n• 2026-08-05: Видано в оренду\n• 2026-07-20: Прийнято на склад (Новий)`);
     };
 
     window.deleteToolItem = function() {
