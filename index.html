@@ -11181,6 +11181,41 @@ ${sysInfo}`;
       }
     };
 
+    window.openEditToolModal = function(toolId) {
+      const tool = window.toolsData.find(t => t.id === toolId);
+      if (!tool) return;
+
+      document.getElementById('edit-tool-id').value = tool.id;
+      document.getElementById('edit-tool-name').value = tool.name || '';
+      document.getElementById('edit-tool-sn').value = tool.sn || '';
+      document.getElementById('edit-tool-condition').value = tool.condition || '🟢 Добрий (Справний)';
+      document.getElementById('edit-tool-status-text').value = tool.status === 'stock' ? '🟢 На складі' : '🔵 В користуванні';
+      document.getElementById('edit-tool-client-text').value = tool.client || '—';
+
+      currentEditToolPhotoBase64 = tool.photo || '';
+      const img = document.getElementById('edit-tool-photo-img');
+      const placeholder = document.getElementById('edit-tool-photo-placeholder');
+
+      if (tool.photo) {
+        img.src = tool.photo;
+        img.style.display = 'inline-block';
+        placeholder.style.display = 'none';
+      } else {
+        img.src = '';
+        img.style.display = 'none';
+        placeholder.style.display = 'flex';
+      }
+
+      const modal = document.getElementById('modal-edit-tool');
+      if (modal) modal.classList.add('show');
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+    };
+
+    window.closeEditToolModal = function() {
+      const modal = document.getElementById('modal-edit-tool');
+      if (modal) modal.classList.remove('show');
+    };
+
     window.previewEditToolPhoto = function(input) {
       if (input.files && input.files[0]) {
         const file = input.files[0];
