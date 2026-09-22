@@ -10441,7 +10441,7 @@ ${sysInfo}`;
           
           <div style="text-align: center; margin-bottom: 16px;">
             <div id="edit-tool-photo-container" style="position: relative; display: inline-block;">
-              <img id="edit-tool-photo-img" src="" style="width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border-color); background: rgba(255,255,255,0.05); display: none;">
+              <img id="edit-tool-photo-img" src="" style="width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border-color); background: rgba(255,255,255,0.05); display: none; cursor: zoom-in;" onclick="openImageLightbox(this.src, document.getElementById('edit-tool-name').value)" title="Клікніть для збільшення фото">
               <div id="edit-tool-photo-placeholder" style="width: 120px; height: 120px; border-radius: 12px; border: 2px dashed var(--border-color); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px; cursor: pointer; background: rgba(255,255,255,0.02);" onclick="document.getElementById('edit-tool-photo-file').click()">
                 <span style="font-size: 28px; margin-bottom: 4px;">📸</span>
                 <span>Додати фото</span>
@@ -10461,9 +10461,10 @@ ${sysInfo}`;
               </div>
             </div>
 
-            <div style="margin-top: 8px;">
+            <div style="margin-top: 8px; display: flex; gap: 8px; justify-content: center;">
               <input type="file" id="edit-tool-photo-file" accept="image/*" onchange="previewEditToolPhoto(this)" style="display: none;">
-              <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-tool-photo-file').click()" style="font-size: 11px; padding: 4px 10px;">📷 Завантажити / Змінити фото</button>
+              <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-tool-photo-file').click()" style="font-size: 11px; padding: 4px 10px;">📷 Завантажити / Змінити</button>
+              <button type="button" class="btn btn-secondary" id="btn-zoom-tool-photo" onclick="const img=document.getElementById('edit-tool-photo-img'); if(img && img.src) openImageLightbox(img.src, document.getElementById('edit-tool-name').value);" style="font-size: 11px; padding: 4px 10px; display: none;">🔍 Збільшити</button>
             </div>
           </div>
 
@@ -10510,6 +10511,20 @@ ${sysInfo}`;
             </div>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔍 FULLSCREEN IMAGE LIGHTBOX MODAL -->
+  <div class="modal" id="modal-image-lightbox" onclick="if(event.target===this) closeImageLightbox()" style="z-index: 9999; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px);">
+    <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: auto;">
+      <div style="position: absolute; top: -45px; right: 0; display: flex; align-items: center; gap: 15px;">
+        <span id="lightbox-image-title" style="color: white; font-weight: 700; font-size: 14px;"></span>
+        <button onclick="closeImageLightbox()" style="background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center;">✕</button>
+      </div>
+      <img id="lightbox-image-src" src="" alt="Збільшене фото" style="max-width: 90vw; max-height: 82vh; object-fit: contain; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2);">
+    </div>
+  </div>
       </div>
     </div>
   </div>
@@ -11181,6 +11196,23 @@ ${sysInfo}`;
       }
     };
 
+    window.openImageLightbox = function(imageSrc, title) {
+      if (!imageSrc) return;
+      const modal = document.getElementById('modal-image-lightbox');
+      const imgEl = document.getElementById('lightbox-image-src');
+      const titleEl = document.getElementById('lightbox-image-title');
+      if (modal && imgEl) {
+        imgEl.src = imageSrc;
+        if (titleEl) titleEl.innerText = title ? `🔍 ${title}` : '🔍 Перегляд фото';
+        modal.classList.add('show');
+      }
+    };
+
+    window.closeImageLightbox = function() {
+      const modal = document.getElementById('modal-image-lightbox');
+      if (modal) modal.classList.remove('show');
+    };
+
     window.openEditToolModal = function(toolId) {
       const tool = window.toolsData.find(t => t.id === toolId);
       if (!tool) return;
@@ -11195,15 +11227,18 @@ ${sysInfo}`;
       currentEditToolPhotoBase64 = tool.photo || '';
       const img = document.getElementById('edit-tool-photo-img');
       const placeholder = document.getElementById('edit-tool-photo-placeholder');
+      const zoomBtn = document.getElementById('btn-zoom-tool-photo');
 
       if (tool.photo) {
         img.src = tool.photo;
         img.style.display = 'inline-block';
         placeholder.style.display = 'none';
+        if (zoomBtn) zoomBtn.style.display = 'inline-block';
       } else {
         img.src = '';
         img.style.display = 'none';
         placeholder.style.display = 'flex';
+        if (zoomBtn) zoomBtn.style.display = 'none';
       }
 
       const modal = document.getElementById('modal-edit-tool');
