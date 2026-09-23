@@ -11182,18 +11182,104 @@ ${sysInfo}`;
 
     window.previewAddToolPhoto = function(input) {
       if (input.files && input.files[0]) {
+        const file = input.files[0];
         const reader = new FileReader();
         reader.onload = function(e) {
-          currentAddToolPhotoBase64 = e.target.result;
-          const img = document.getElementById('add-tool-photo-img');
-          const container = document.getElementById('add-tool-photo-preview');
-          if (img && container) {
-            img.src = e.target.result;
-            container.style.display = 'block';
-          }
+          const imgObj = new Image();
+          imgObj.onload = function() {
+            const canvas = document.createElement('canvas');
+            let width = imgObj.width;
+            let height = imgObj.height;
+            const MAX_SIZE = 500;
+
+            if (width > height) {
+              if (width > MAX_SIZE) {
+                height *= MAX_SIZE / width;
+                width = MAX_SIZE;
+              }
+            } else {
+              if (height > MAX_SIZE) {
+                width *= MAX_SIZE / height;
+                height = MAX_SIZE;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imgObj, 0, 0, width, height);
+
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+            currentAddToolPhotoBase64 = compressedBase64;
+
+            const img = document.getElementById('add-tool-photo-img');
+            const container = document.getElementById('add-tool-photo-preview');
+            if (img && container) {
+              img.src = compressedBase64;
+              container.style.display = 'block';
+            }
+          };
+          imgObj.src = e.target.result;
         };
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(file);
       }
+    };
+
+    window.submitAddToolForm = function() {
+      const nameEl = document.getElementById('add-tool-name');
+      const snEl = document.getElementById('add-tool-sn');
+      const conditionEl = document.getElementById('add-tool-condition');
+      const inspectionEl = document.getElementById('add-tool-inspection');
+      const categoryEl = document.getElementById('add-tool-category');
+
+      const name = nameEl ? nameEl.value.trim() : '';
+      let sn = snEl ? snEl.value.trim() : '';
+      const condition = conditionEl ? conditionEl.value : '🟢 Добрий (Справний)';
+      const inspection = inspectionEl ? inspectionEl.value : '';
+      const category = categoryEl ? categoryEl.value : '';
+
+      if (!name || !sn) {
+        alert('Заповніть назву та серійний номер!');
+        return;
+      }
+      if (!sn.toUpperCase().startsWith('S/N')) {
+        sn = 'S/N: ' + sn;
+      }
+
+      const newTool = {
+        id: 'T' + Date.now(),
+        sn: sn,
+        name: name,
+        condition: condition,
+        inspectionDate: inspection,
+        category: category,
+        client: '—',
+        issueDate: '—',
+        freeDays: 0,
+        status: 'stock',
+        daysOverdue: 0,
+        photo: currentAddToolPhotoBase64 || ''
+      };
+
+      window.toolsData.unshift(newTool);
+      window.saveToolsToStorage();
+
+      // Save to Google Apps Script backend if available
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.handleSaveToolPhoto(newTool.id, newTool.sn, newTool.photo, newTool.condition);
+      }
+
+      currentAddToolPhotoBase64 = '';
+      const previewContainer = document.getElementById('add-tool-photo-preview');
+      if (previewContainer) previewContainer.style.display = 'none';
+      const fileInput = document.getElementById('add-tool-photo-file');
+      if (fileInput) fileInput.value = '';
+      if (nameEl) nameEl.value = '';
+      if (snEl) snEl.value = '';
+
+      window.closeAddToolModal();
+      alert(`✅ Новий інструмент "${name}" (${sn}) успішно додано в каталог склада!`);
+      window.renderToolsView();
     };
 
     window.openImageLightbox = function(imageSrc, title) {
