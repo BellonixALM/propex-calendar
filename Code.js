@@ -764,25 +764,25 @@ function addDelivery(deliveryData) {
   }
   var sheet = ss.getSheetByName('Доставки');
 
-  // Server-side duplicate prevention check (same order_num, address, date within last 2 minutes)
-  if (deliveryData && deliveryData.order_num && deliveryData.address) {
+  // Server-side duplicate prevention check (same order_num & date within recent rows)
+  if (deliveryData && deliveryData.order_num) {
     var dataVals = sheet.getDataRange().getValues();
     var h = dataVals[0];
     var orderIdx = h.indexOf('Номер_замовлення');
-    var addrIdx = h.indexOf('Адреса');
     var dateIdx = h.indexOf('Дата');
     var idIdx = h.indexOf('ID');
-    if (orderIdx !== -1 && addrIdx !== -1 && dateIdx !== -1) {
-      for (var r = dataVals.length - 1; r >= 1 && r >= dataVals.length - 15; r--) {
-        var existingOrder = String(dataVals[r][orderIdx] || '').trim();
-        var existingAddr = String(dataVals[r][addrIdx] || '').trim();
-        var existingDate = String(dataVals[r][dateIdx] || '').trim();
-        if (existingOrder === String(deliveryData.order_num).trim() && 
-            existingAddr === String(deliveryData.address).trim() && 
-            existingDate === String(deliveryData.date).trim()) {
+    if (orderIdx !== -1) {
+      var searchOrder = String(deliveryData.order_num).replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim();
+      for (var r = dataVals.length - 1; r >= 1 && r >= dataVals.length - 30; r--) {
+        var existingOrderRaw = String(dataVals[r][orderIdx] || '');
+        var existingOrderNorm = existingOrderRaw.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim();
+        var existingDate = dateIdx !== -1 ? String(dataVals[r][dateIdx] || '').trim() : '';
+        var inputDate = String(deliveryData.date || '').trim();
+
+        if (searchOrder.length > 0 && existingOrderNorm === searchOrder && (inputDate === '' || existingDate === inputDate)) {
           var existingId = idIdx !== -1 ? dataVals[r][idIdx] : r;
           Logger.log("Duplicate prevented in addDelivery for order: " + deliveryData.order_num);
-          return { status: 'success', id: existingId, duplicate_prevented: true };
+          return { status: 'success', id: existingId, duplicate_prevented: true, message: 'Замовлення з таким номером вже існує' };
         }
       }
     }
