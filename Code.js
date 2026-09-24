@@ -1176,8 +1176,12 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
         }
         
         if (messageText) {
-          sendTelegramMessage(managerId, messageText);
-          appendHistoryEvent(targetId, "Надіслано сповіщення менеджеру у Бот", "Система ➔ Менеджер");
+          var historyStr = String(data[i][headers.indexOf('Історія_Операцій')] || '');
+          var dedupeKeyword = "Надіслано сповіщення менеджеру у Бот (" + newStatus + ")";
+          if (historyStr.indexOf(dedupeKeyword) === -1) {
+            sendTelegramMessage(managerId, messageText);
+            appendHistoryEvent(targetId, "Надіслано сповіщення менеджеру у Бот (" + newStatus + ")", "Система ➔ Менеджер");
+          }
         }
       }
       
