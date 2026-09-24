@@ -435,6 +435,8 @@ function doPost(e) {
         });
 
         if (targetDel) {
+          /* 
+          // Disabled manager Telegram notifications by request
           if (targetDel['ID_Менеджера'] && String(targetDel['ID_Менеджера']).length > 5) {
             var historyStr = String(targetDel['Історія_Операцій'] || '');
             if (historyStr.indexOf('Збірка складом') === -1 && historyStr.indexOf('зібрано складом') === -1) {
@@ -444,6 +446,7 @@ function doPost(e) {
               appendHistoryEvent(delId, "Надіслано сповіщення менеджеру у Бот (Збірка складом)", "Система ➔ Менеджер");
             }
           }
+          */
           
           // Send to Driver ONLY NOW after warehouse confirmed assembly!
           var driverTgId = String(targetDel['ID_Водія'] || targetDel['Водій'] || '').trim();
@@ -1181,6 +1184,8 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
                         "🚚 Водій забрав товар і прямує на склад Propex.";
         }
         
+        /*
+        // Disabled manager Telegram notifications by request
         if (messageText) {
           var historyStr = String(data[i][headers.indexOf('Історія_Операцій')] || '');
           var dedupeKeyword = "Надіслано сповіщення менеджеру у Бот (" + newStatus + ")";
@@ -1189,6 +1194,7 @@ function updateDeliveryStatus(deliveryId, newStatus, comment) {
             appendHistoryEvent(targetId, "Надіслано сповіщення менеджеру у Бот (" + newStatus + ")", "Система ➔ Менеджер");
           }
         }
+        */
       }
       
       var payCol = headers.indexOf('Статус_оплати');
