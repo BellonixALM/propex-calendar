@@ -2580,6 +2580,16 @@ function appendHistoryEvent(deliveryId, eventTitle, initiatorInfo) {
         }
 
         var initiatorStr = initiatorInfo ? (" (" + initiatorInfo + ")") : "";
+        
+        // Deduplicate exact consecutive or identical events
+        if (existingHistory && existingHistory.indexOf(eventTitle) !== -1) {
+          var lastEntries = existingHistory.split(';').slice(-5).join(';');
+          if (lastEntries.indexOf(eventTitle) !== -1) {
+            Logger.log("Duplicate history event suppressed: " + eventTitle);
+            return true;
+          }
+        }
+
         var newEntry = nowFormatted + " — " + eventTitle + initiatorStr + ";";
 
         var updatedHistory = existingHistory
