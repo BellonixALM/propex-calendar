@@ -1382,9 +1382,12 @@ function updateWarehouseStatus(deliveryId, statusStr) {
           sendTelegramMessage(h.telegram_id, alertText);
         });
         
+        /*
+        // Disabled manager Telegram notifications by request
         if (managerId) {
           sendTelegramMessage(managerId, alertText);
         }
+        */
       }
       
       // Smart Notification logic for Driver on Warehouse Assembly Completion
@@ -1687,6 +1690,8 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
           changed = true;
         }
         
+        /*
+        // Disabled manager Telegram notifications by request
         if (changed) {
           var notificationText = "🔄 <b>Коригування доставки логістом!</b>\n\n" +
                                  "📦 <b>Замовлення №:</b> " + (deliveryData.order_num || oldOrderNum) + "\n\n" +
@@ -1694,6 +1699,7 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
                                  "ℹ️ Будь ласка, врахуйте ці зміни у вашій роботі.";
           sendTelegramMessage(managerId, notificationText);
         }
+        */
       }
       
       // Trigger notification for Driver on Supply Delivery update if driver is assigned
