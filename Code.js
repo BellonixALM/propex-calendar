@@ -1401,33 +1401,36 @@ function updateWarehouseStatus(deliveryId, statusStr) {
 
         // Send to driver ONLY if delivery is for TODAY and current time is >= 08:00 AM
         if (driverTgId && driverTgId.length > 5 && isToday && currentHour >= 8) {
-          var addressCol = headers.indexOf('Адреса');
-          var timeCol = headers.indexOf('Час');
-          var recNameCol = headers.indexOf("Ім'я_одержувача");
-          var recPhoneCol = headers.indexOf('Телефон_одержувача');
-          var commentCol = headers.indexOf('Коментар');
+          var historyStr = String(data[i][headers.indexOf('Історія_Операцій')] || '');
+          if (historyStr.indexOf('Надіслано сповіщення водію у Бот') === -1 && historyStr.indexOf('Передано водію у Бот') === -1) {
+            var addressCol = headers.indexOf('Адреса');
+            var timeCol = headers.indexOf('Час');
+            var recNameCol = headers.indexOf("Ім'я_одержувача");
+            var recPhoneCol = headers.indexOf('Телефон_одержувача');
+            var commentCol = headers.indexOf('Коментар');
 
-          var delAddress = addressCol !== -1 ? data[i][addressCol] : '';
-          var delTime = timeCol !== -1 ? data[i][timeCol] : '';
-          var delRecName = recNameCol !== -1 ? data[i][recNameCol] : '';
-          var delRecPhone = recPhoneCol !== -1 ? data[i][recPhoneCol] : '';
-          var delComment = commentCol !== -1 ? data[i][commentCol] : '';
+            var delAddress = addressCol !== -1 ? data[i][addressCol] : '';
+            var delTime = timeCol !== -1 ? data[i][timeCol] : '';
+            var delRecName = recNameCol !== -1 ? data[i][recNameCol] : '';
+            var delRecPhone = recPhoneCol !== -1 ? data[i][recPhoneCol] : '';
+            var delComment = commentCol !== -1 ? data[i][commentCol] : '';
 
-          var driverMsg = "📦 <b>Нова зібрана доставка!</b>\n\n" +
-                          "⏰ <b>Час:</b> " + (delTime || 'Не вказано') + "\n" +
-                          "📍 <b>Адреса:</b> " + delAddress + "\n" +
-                          "№ <b>Замовлення:</b> №" + orderNum + "\n" +
-                          "👤 <b>Отримувач:</b> " + delRecName + " (" + delRecPhone + ")\n";
-          if (delComment) driverMsg += "💬 <b>Примітка:</b> " + delComment + "\n";
+            var driverMsg = "📦 <b>Нова зібрана доставка!</b>\n\n" +
+                            "⏰ <b>Час:</b> " + (delTime || 'Не вказано') + "\n" +
+                            "📍 <b>Адреса:</b> " + delAddress + "\n" +
+                            "№ <b>Замовлення:</b> №" + orderNum + "\n" +
+                            "👤 <b>Отримувач:</b> " + delRecName + " (" + delRecPhone + ")\n";
+            if (delComment) driverMsg += "💬 <b>Примітка:</b> " + delComment + "\n";
 
-          var driverKb = {
-            inline_keyboard: [
-              [{ text: "📍 Я на місці", callback_data: "onsite_" + deliveryId }],
-              [{ text: "✅ Підтвердити доставку", callback_data: "confirm_" + deliveryId }, { text: "❌ Проблема", callback_data: "problem_" + deliveryId }]
-            ]
-          };
-          sendTelegramMessage(driverTgId, driverMsg, driverKb);
-          appendHistoryEvent(deliveryId, "Надіслано сповіщення водію у Бот (Зібране замовлення)", "Система");
+            var driverKb = {
+              inline_keyboard: [
+                [{ text: "📍 Я на місці", callback_data: "onsite_" + deliveryId }],
+                [{ text: "✅ Підтвердити доставку", callback_data: "confirm_" + deliveryId }, { text: "❌ Проблема", callback_data: "problem_" + deliveryId }]
+              ]
+            };
+            sendTelegramMessage(driverTgId, driverMsg, driverKb);
+            appendHistoryEvent(deliveryId, "Надіслано сповіщення водію у Бот (Зібране замовлення)", "Система");
+          }
         }
       }
 
