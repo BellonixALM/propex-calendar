@@ -436,10 +436,13 @@ function doPost(e) {
 
         if (targetDel) {
           if (targetDel['ID_Менеджера'] && String(targetDel['ID_Менеджера']).length > 5) {
-            var mgrMsg = "📦 <b>Замовлення №" + (targetDel['Номер_замовлення'] || delId) + " зібрано складом!</b>\n" +
-                         "Статус збору оновлено на: <b>Зібрано</b>.";
-            sendTelegramMessage(targetDel['ID_Менеджера'], mgrMsg);
-            appendHistoryEvent(delId, "Надіслано сповіщення менеджеру у Бот (Збірка складом)", "Система ➔ Менеджер");
+            var historyStr = String(targetDel['Історія_Операцій'] || '');
+            if (historyStr.indexOf('Збірка складом') === -1 && historyStr.indexOf('зібрано складом') === -1) {
+              var mgrMsg = "📦 <b>Замовлення №" + (targetDel['Номер_замовлення'] || delId) + " зібрано складом!</b>\n" +
+                           "Статус збору оновлено на: <b>Зібрано</b>.";
+              sendTelegramMessage(targetDel['ID_Менеджера'], mgrMsg);
+              appendHistoryEvent(delId, "Надіслано сповіщення менеджеру у Бот (Збірка складом)", "Система ➔ Менеджер");
+            }
           }
           
           // Send to Driver ONLY NOW after warehouse confirmed assembly!
