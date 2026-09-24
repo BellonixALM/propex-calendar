@@ -449,21 +449,24 @@ function doPost(e) {
           var driverTgId = String(targetDel['ID_Водія'] || targetDel['Водій'] || '').trim();
           var carId = String(targetDel['ID_Авто'] || '').trim();
           if (driverTgId && driverTgId.length > 5 && carId && carId.toLowerCase().indexOf('самовивіз') === -1) {
-            var driverMsg = "📦 <b>Нова зібрана доставка!</b>\n\n" +
-                            "⏰ <b>Час:</b> " + (targetDel['Час'] || 'Не вказано') + "\n" +
-                            "📍 <b>Адреса:</b> " + targetDel['Адреса'] + "\n" +
-                            "№ <b>Замовлення:</b> №" + (targetDel['Номер_замовлення'] || 'Б/Н') + "\n" +
-                            "👤 <b>Отримувач:</b> " + (targetDel["Ім'я_одержувача"] || '') + "\n";
-            if (targetDel['Коментар']) driverMsg += "💬 <b>Примітка:</b> " + targetDel['Коментар'] + "\n";
+            var historyStr = String(targetDel['Історія_Операцій'] || '');
+            if (historyStr.indexOf('Передано водію у Бот') === -1) {
+              var driverMsg = "📦 <b>Нова зібрана доставка!</b>\n\n" +
+                              "⏰ <b>Час:</b> " + (targetDel['Час'] || 'Не вказано') + "\n" +
+                              "📍 <b>Адреса:</b> " + targetDel['Адреса'] + "\n" +
+                              "№ <b>Замовлення:</b> №" + (targetDel['Номер_замовлення'] || 'Б/Н') + "\n" +
+                              "👤 <b>Отримувач:</b> " + (targetDel["Ім'я_одержувача"] || '') + "\n";
+              if (targetDel['Коментар']) driverMsg += "💬 <b>Примітка:</b> " + targetDel['Коментар'] + "\n";
 
-            var driverKb = {
-              inline_keyboard: [
-                [{ text: "📍 Я на місці", callback_data: "onsite_" + delId }],
-                [{ text: "✅ Підтвердити доставку", callback_data: "confirm_" + delId }, { text: "❌ Проблема", callback_data: "problem_" + delId }]
-              ]
-            };
-            sendTelegramMessage(driverTgId, driverMsg, driverKb);
-            appendHistoryEvent(delId, "Передано водію у Бот (Після збірки складом)", "Склад / Бот");
+              var driverKb = {
+                inline_keyboard: [
+                  [{ text: "📍 Я на місці", callback_data: "onsite_" + delId }],
+                  [{ text: "✅ Підтвердити доставку", callback_data: "confirm_" + delId }, { text: "❌ Проблема", callback_data: "problem_" + delId }]
+                ]
+              };
+              sendTelegramMessage(driverTgId, driverMsg, driverKb);
+              appendHistoryEvent(delId, "Передано водію у Бот (Після збірки складом)", "Склад / Бот");
+            }
           }
         }
 
