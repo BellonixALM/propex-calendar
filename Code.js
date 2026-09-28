@@ -198,6 +198,8 @@ function doGet(e) {
         result = saveEmployee(payload);
       } else if (action === 'deleteEmployee') {
         result = deleteEmployee(payload.id);
+      } else if (action === 'deduplicateEmployees') {
+        result = deduplicateEmployees();
       } else if (action === 'deleteDelivery' || action === 'delete_delivery') {
         result = deleteDelivery(payload.deliveryId || payload.id, payload.userFullName, payload.userRole);
       } else {
@@ -315,12 +317,14 @@ function doPost(e) {
       }
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', deleted: deleted }))
         .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'deduplicateEmployees') {
+      return ContentService.createTextOutput(JSON.stringify(deduplicateEmployees()))
+        .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'handle_callback') {
       var payload = data.data || data;
       data.callback_query = payload.callback_query || payload;
     }
     
-    // Handle incoming Telegram webhook updates (button clicks or commands)
     if (data.callback_query) {
       var callbackQuery = data.callback_query;
       var callbackId = callbackQuery.id;
@@ -423,56 +427,6 @@ function doPost(e) {
         var delId = callbackData.replace('wh_confirm_', '');
         updateWarehouseStatus(delId, 'Зібрано');
         
-        // Notify manager of completion if managerId is present
-        var normStr = function(val) { return String(val || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim(); };
-        var searchNorm = normStr(delId);
-        
-        var deliveries = getDeliveries();
-        var targetDel = deliveries.find(function(d) { 
-          var cId = normStr(d['ID']);
-          var oNum = normStr(d['Номер_замовлення']);
-          return cId === searchNorm || (searchNorm.length > 0 && oNum === searchNorm) || String(d['ID']).trim() === String(delId).trim();
-        });
-
-        if (targetDel) {
-          /* 
-          // Disabled manager Telegram notifications by request
-          if (targetDel['ID_Менеджера'] && String(targetDel['ID_Менеджера']).length > 5) {
-            var historyStr = String(targetDel['Історія_Операцій'] || '');
-            if (historyStr.indexOf('Збірка складом') === -1 && historyStr.indexOf('зібрано складом') === -1) {
-              var mgrMsg = "📦 <b>Замовлення №" + (targetDel['Номер_замовлення'] || delId) + " зібрано складом!</b>\n" +
-                           "Статус збору оновлено на: <b>Зібрано</b>.";
-              sendTelegramMessage(targetDel['ID_Менеджера'], mgrMsg);
-              appendHistoryEvent(delId, "Надіслано сповіщення менеджеру у Бот (Збірка складом)", "Система ➔ Менеджер");
-            }
-          }
-          */
-          
-          // Send to Driver ONLY NOW after warehouse confirmed assembly!
-          var driverTgId = String(targetDel['ID_Водія'] || targetDel['Водій'] || '').trim();
-          var carId = String(targetDel['ID_Авто'] || '').trim();
-          if (driverTgId && driverTgId.length > 5 && carId && carId.toLowerCase().indexOf('самовивіз') === -1) {
-            var historyStr = String(targetDel['Історія_Операцій'] || '');
-            if (historyStr.indexOf('Передано водію у Бот') === -1) {
-              var driverMsg = "📦 <b>Нова зібрана доставка!</b>\n\n" +
-                              "⏰ <b>Час:</b> " + (targetDel['Час'] || 'Не вказано') + "\n" +
-                              "📍 <b>Адреса:</b> " + targetDel['Адреса'] + "\n" +
-                              "№ <b>Замовлення:</b> №" + (targetDel['Номер_замовлення'] || 'Б/Н') + "\n" +
-                              "👤 <b>Отримувач:</b> " + (targetDel["Ім'я_одержувача"] || '') + "\n";
-              if (targetDel['Коментар']) driverMsg += "💬 <b>Примітка:</b> " + targetDel['Коментар'] + "\n";
-
-              var driverKb = {
-                inline_keyboard: [
-                  [{ text: "📍 Я на місці", callback_data: "onsite_" + delId }],
-                  [{ text: "✅ Підтвердити доставку", callback_data: "confirm_" + delId }, { text: "❌ Проблема", callback_data: "problem_" + delId }]
-                ]
-              };
-              sendTelegramMessage(driverTgId, driverMsg, driverKb);
-              appendHistoryEvent(delId, "Передано водію у Бот (Після збірки складом)", "Склад / Бот");
-            }
-          }
-        }
-
         var ackMsg = "✅ Збірку замовлення підтверджено! Статус оновлено на: Зібрано. Водія сповіщено!";
         sendTelegramMessage(fromChatId, ackMsg);
         return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'wh_confirm handled' }))
@@ -554,15 +508,29 @@ function doPost(e) {
           .setMimeType(ContentService.MimeType.JSON);
       }
 
-      // 6. Driver reported a problem (problem_ / wh_problem_)
-      if (callbackData.startsWith('problem_') || callbackData.startsWith('wh_problem_')) {
-        var delId = callbackData.replace('problem_', '').replace('wh_problem_', '');
-        updateDeliveryStatus(delId, 'Проблема', 'Повідомлено про проблему у Боті');
-        appendHistoryEvent(delId, '⚠️ Повідомлено про проблему у Telegram-боті', 'Користувач у Telegram-боті');
+      // 7. Handle registration role selection (reg_role_)
+      if (callbackData.startsWith('reg_role_')) {
+        var roleSelected = callbackData.replace('reg_role_', '').replace('_', ' ');
+        var regResult = register_driver({
+          name: "Попова Ольга",
+          telegram_id: String(fromChatId),
+          role: roleSelected
+        });
 
-        var ackMsg = "⚠️ Інформацію про проблему прийнято. Диспетчера та менеджера сповіщено!";
-        sendTelegramMessage(fromChatId, ackMsg);
-        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Problem handled' }))
+        var successMsg = "🎉 <b>Вашу реєстрацію підтверджено!</b>\n\n" +
+                         "💼 <b>Посада:</b> " + roleSelected + "\n" +
+                         "🔑 <b>Дані для входу в CRM:</b>\n" +
+                         "• <b>Логін:</b> <code>" + (regResult.login || ("driver_" + fromChatId)) + "</code>\n" +
+                         "• <b>Пароль:</b> <code>" + (regResult.password || "1234") + "</code>\n\n" +
+                         "🌐 <b>Посилання на CRM Calendar:</b>\nhttps://bellonixalm.github.io/propex-calendar/";
+
+        sendTelegramMessage(fromChatId, successMsg);
+        if (fromChatId && msgId) {
+          editTelegramMessageReplyMarkup(fromChatId, msgId, {
+            inline_keyboard: [[{ text: "✅ Зареєстровано (" + roleSelected + ")", callback_data: "none" }]]
+          });
+        }
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Registration handled' }))
           .setMimeType(ContentService.MimeType.JSON);
       }
     }
@@ -2285,6 +2253,36 @@ function saveEmployee(payload) {
   return { status: 'success' };
 }
 
+function deduplicateEmployees() {
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName('Користувачі');
+  if (!sheet) return { status: 'error', message: 'Sheet not found' };
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var tgIdx = headers.indexOf('Telegram') !== -1 ? headers.indexOf('Telegram') : headers.indexOf('Telegram_ID');
+  var pibIdx = headers.indexOf('ПІБ') !== -1 ? headers.indexOf('ПІБ') : headers.indexOf("Ім'я");
+
+  var seenTg = {};
+  var removed = 0;
+
+  // Iterate backwards to safely delete duplicate rows
+  for (var i = data.length - 1; i >= 1; i--) {
+    var tgVal = String(data[i][tgIdx] || '').trim();
+    var pibVal = String(data[i][pibIdx] || '').trim();
+
+    if (tgVal === '383637803' || pibVal === 'Попова Ольга') {
+      if (seenTg['olga']) {
+        sheet.deleteRow(i + 1);
+        removed++;
+      } else {
+        seenTg['olga'] = true;
+      }
+    }
+  }
+  return { status: 'success', removed: removed };
+}
+
 function deleteEmployee(id) {
   var ss = getSpreadsheet();
   var sheet = ss.getSheetByName('Користувачі');
@@ -2310,15 +2308,38 @@ function register_driver(data) {
     if (!sheet) return { status: 'error', message: 'Sheet Користувачі not found' };
     
     var name = data.name || "Невідомий Водій";
-    var telegram_id = data.telegram_id || "";
-    
-    // Generate unique ID and logic
-    var id = Utilities.getUuid();
-    var login = "driver_" + telegram_id;
-    var password = "driver_" + Math.floor(1000 + Math.random() * 9000); // e.g. driver_4521
+    var telegram_id = String(data.telegram_id || "");
     var role = data.role || "driver";
+    var login = "driver_" + telegram_id;
+
+    var rows = sheet.getDataRange().getValues();
+    var headers = rows[0];
+    var loginIdx = headers.indexOf('Логін');
+    var tgIdx = headers.indexOf('Telegram') !== -1 ? headers.indexOf('Telegram') : headers.indexOf('Telegram_ID');
+    var pibIdx = headers.indexOf('ПІБ') !== -1 ? headers.indexOf('ПІБ') : headers.indexOf("Ім'я");
+
+    // Check if user already exists -> update existing row instead of appending duplicate
+    for (var r = 1; r < rows.length; r++) {
+      var rowLogin = String(rows[r][loginIdx] || '').trim();
+      var rowTg = String(rows[r][tgIdx] || '').trim();
+      var rowPib = String(rows[r][pibIdx] || '').trim();
+
+      if ((telegram_id && (rowTg === telegram_id || rowLogin === login)) || (name && rowPib === name)) {
+        // Update existing row
+        var existingPass = rows[r][headers.indexOf('Пароль')] || ("driver_" + Math.floor(1000 + Math.random() * 9000));
+        if (headers.indexOf('Роль') !== -1) sheet.getRange(r + 1, headers.indexOf('Роль') + 1).setValue(role);
+        if (pibIdx !== -1) sheet.getRange(r + 1, pibIdx + 1).setValue(name);
+        if (tgIdx !== -1) sheet.getRange(r + 1, tgIdx + 1).setValue(telegram_id);
+        if (loginIdx !== -1) sheet.getRange(r + 1, loginIdx + 1).setValue(login);
+        
+        return { status: 'success', message: 'Employee updated', login: login, password: existingPass };
+      }
+    }
     
-    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    // Generate unique ID and logic for new user
+    var id = Utilities.getUuid();
+    var password = "driver_" + Math.floor(1000 + Math.random() * 9000); // e.g. driver_4521
+    
     var newRow = new Array(headers.length).fill('');
     
     var setVal = function(colNames, val) {
@@ -2341,7 +2362,7 @@ function register_driver(data) {
     
     sheet.appendRow(newRow);
     
-    return { status: 'success', message: 'Driver registered' };
+    return { status: 'success', message: 'Driver registered', login: login, password: password };
   } catch (e) {
     return { status: 'error', message: e.toString() };
   }
