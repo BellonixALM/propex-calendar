@@ -6153,6 +6153,11 @@ body.light-theme .login-error {
             localStorage.setItem('propex_invoice_overrides', JSON.stringify(overrides));
           } catch(e) {}
         }
+        const saveBtn = document.getElementById('save-btn');
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = "Збереження...";
+        }
         deliveryData.history = initHistoryStr;
         state.deliveries.push(newDelObj);
         saveDeliveriesToLocalStorage();

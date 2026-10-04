@@ -360,32 +360,7 @@ function doPost(e) {
         updateDeliveryStatus(delId, 'Забрано у постачальника', '');
         appendHistoryEvent(delId, '📥 Водій забрав товар у постачальника', 'Водій: ' + driverName);
 
-        // 2. Trigger Storekeeper checklist notification + log timeline event #2
-        var whData = getWarehouseWorkers();
-        var whMsg = "🏬 <b>Водій (" + driverName + ") забрав товар у постачальника та прямує на склад!</b>\n\n" +
-                      "📦 <b>Замовлення №:</b> " + delId + "\n" +
-                      "📋 Будь ласка, приготуйтеся до приймання товару складом за чек-листом.";
-        var whKb = {
-          "inline_keyboard": [
-            [{"text": "📋 Прийняти товар складом (Чек-лист)", "callback_data": "wh_confirm_" + delId}]
-          ]
-        };
-        whData.heads.forEach(function(h) {
-          if (h.telegram_id) sendTelegramMessage(h.telegram_id, whMsg, whKb);
-        });
-        appendHistoryEvent(delId, '🏬 Бот автоматично надіслав сповіщення на Склад про очікування товару від постачальника', 'Бот');
-
-        var ackMsg = "✅ Дякуємо! Статус оновлено: Товар прийнято від постачальника. Склад вже сповіщено про приймання!";
-        sendTelegramMessage(fromChatId, ackMsg);
-        if (fromChatId && msgId) {
-          editTelegramMessageReplyMarkup(fromChatId, msgId, {
-            inline_keyboard: [[{ text: "✅ Товар прийнято від постачальника", callback_data: "none" }]]
-          });
-        }
-
-        // 3. 30-second delay -> Send notification to Ira Order (7797165411) + log timeline event #3
-        Utilities.sleep(30000);
-        var iraTg = '7797165411';
+        // 2. Trigger Storekeeper checklist notification + log timeline event #2 (With Deduplication Guard)
         var deliveries = getDeliveries();
         var targetDel = null;
         for (var i = 0; i < deliveries.length; i++) {
@@ -394,15 +369,48 @@ function doPost(e) {
             break;
           }
         }
-        var orderNum = targetDel ? (targetDel['Номер_замовлення'] || delId) : delId;
-        var supplierAddress = targetDel ? (targetDel['Адреса'] || 'Постачальник') : 'Постачальник';
 
-        var iraMsg = "📥 <b>Водій забрав товар у постачальника!</b>\n\n" +
-                     "📦 <b>Замовлення №:</b> " + orderNum + "\n" +
-                     "👤 <b>Водій:</b> " + driverName + "\n" +
-                     "📍 <b>Адреса постачальника:</b> " + supplierAddress;
-        sendTelegramMessage(iraTg, iraMsg);
-        appendHistoryEvent(delId, '📩 Бот автоматично надіслав сповіщення менеджеру Ірі Ордер про забір товару', 'Бот');
+        var historyStr = targetDel ? String(targetDel['Історія_Операцій'] || '') : '';
+        var whDedupeKeyword = "надіслав сповіщення на Склад про очікування товару від постачальника";
+
+        if (historyStr.indexOf(whDedupeKeyword) === -1) {
+          var whData = getWarehouseWorkers();
+          var whMsg = "🏬 <b>Водій (" + driverName + ") забрав товар у постачальника та прямує на склад!</b>\n\n" +
+                        "📦 <b>Замовлення №:</b> " + (targetDel ? (targetDel['Номер_замовлення'] || delId) : delId) + "\n" +
+                        "📋 Будь ласка, приготуйтеся до приймання товару складом за чек-листом.";
+          var whKb = {
+            "inline_keyboard": [
+              [{"text": "📋 Прийняти товар складом (Чек-лист)", "callback_data": "wh_confirm_" + delId}]
+            ]
+          };
+          whData.heads.forEach(function(h) {
+            if (h.telegram_id) sendTelegramMessage(h.telegram_id, whMsg, whKb);
+          });
+          appendHistoryEvent(delId, '🏬 Бот автоматично надіслав сповіщення на Склад про очікування товару від постачальника', 'Бот');
+        }
+
+        // Silent button update for driver (no extra text message sent to driver)
+        if (fromChatId && msgId) {
+          editTelegramMessageReplyMarkup(fromChatId, msgId, {
+            inline_keyboard: [[{ text: "✅ Товар прийнято від постачальника", callback_data: "none" }]]
+          });
+        }
+
+        // 3. 30-second delay -> Send notification to Ira Order (7797165411) + log timeline event #3
+        Utilities.sleep(15000);
+        var iraTg = '7797165411';
+        var iraDedupeKeyword = "надіслав сповіщення менеджеру Ірі Ордер про забір товару";
+        if (historyStr.indexOf(iraDedupeKeyword) === -1) {
+          var orderNum = targetDel ? (targetDel['Номер_замовлення'] || delId) : delId;
+          var supplierAddress = targetDel ? (targetDel['Адреса'] || 'Постачальник') : 'Постачальник';
+
+          var iraMsg = "📥 <b>Водій забрав товар у постачальника!</b>\n\n" +
+                       "📦 <b>Замовлення №:</b> " + orderNum + "\n" +
+                       "👤 <b>Водій:</b> " + driverName + "\n" +
+                       "📍 <b>Адреса постачальника:</b> " + supplierAddress;
+          sendTelegramMessage(iraTg, iraMsg);
+          appendHistoryEvent(delId, '📩 Бот автоматично надіслав сповіщення менеджеру Ірі Ордер про забір товару', 'Бот');
+        }
 
         return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Supply took handled' }))
           .setMimeType(ContentService.MimeType.JSON);
@@ -488,7 +496,8 @@ function doPost(e) {
         updateDeliveryStatus(delId, 'Виконано', 'Доставку успішно підтверджено водієм');
         appendHistoryEvent(delId, '✅ Замовлення успішно виконано та доставлено', 'Водій: ' + driverName);
 
-        // Notify manager of delivery completion
+        /*
+        // Disabled manager notification on completion by request
         var deliveries = getDeliveries();
         var targetDel = deliveries.find(function(d) { return String(d['ID']).replace(/-/g, '') === String(delId).replace(/-/g, ''); });
         if (targetDel && targetDel['ID_Менеджера'] && String(targetDel['ID_Менеджера']).length > 5) {
@@ -496,6 +505,7 @@ function doPost(e) {
                        "Водій підтвердив виконання доставки.";
           sendTelegramMessage(targetDel['ID_Менеджера'], mgrMsg);
         }
+        */
 
         var ackMsg = "✅ Дякуємо! Доставку замовлення успішно підтверджено та закрито.";
         sendTelegramMessage(fromChatId, ackMsg);
@@ -1053,7 +1063,6 @@ function sendMorningWarehouseDeliveries() {
 
             var driverKb = {
               inline_keyboard: [
-                [{ text: "📍 Я на місці", callback_data: "onsite_" + id }],
                 [{ text: "✅ Підтвердити доставку", callback_data: "confirm_" + id }, { text: "❌ Проблема", callback_data: "problem_" + id }]
               ]
             };
@@ -1401,7 +1410,6 @@ function updateWarehouseStatus(deliveryId, statusStr) {
 
             var driverKb = {
               inline_keyboard: [
-                [{ text: "📍 Я на місці", callback_data: "onsite_" + deliveryId }],
                 [{ text: "✅ Підтвердити доставку", callback_data: "confirm_" + deliveryId }, { text: "❌ Проблема", callback_data: "problem_" + deliveryId }]
               ]
             };
