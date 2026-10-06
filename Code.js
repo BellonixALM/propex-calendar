@@ -433,6 +433,14 @@ function doPost(e) {
       // 2. Warehouse assembled completion button callback (wh_confirm_{delId})
       if (callbackData.startsWith('wh_confirm_')) {
         var delId = callbackData.replace('wh_confirm_', '');
+
+        // Instant visual button disable to prevent multi-clicks
+        if (fromChatId && msgId) {
+          editTelegramMessageReplyMarkup(fromChatId, msgId, {
+            inline_keyboard: [[{ text: "✅ Збірку підтверджено (Зібрано)", callback_data: "none" }]]
+          });
+        }
+
         updateWarehouseStatus(delId, 'Зібрано');
         
         var ackMsg = "✅ Збірку замовлення підтверджено! Статус оновлено на: Зібрано. Водія сповіщено!";
