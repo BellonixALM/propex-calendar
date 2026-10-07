@@ -293,6 +293,10 @@ function doPost(e) {
     } else if (action === 'getDailyCrews') {
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: getDailyCrews() }))
         .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'sendMorningWarehouseDeliveries') {
+      sendMorningWarehouseDeliveries();
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Warehouse dispatches completed' }))
+        .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'delete_deliveries_bulk') {
       var payload = data.data || data;
       var ids = payload.ids || [];
