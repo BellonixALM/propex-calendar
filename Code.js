@@ -756,6 +756,20 @@ function getDrivers() {
   });
 }
 
+function parseDateFromStr(str) {
+  if (!str) return null;
+  if (str instanceof Date) return str;
+  var s = String(str).replace(/^'/, '').trim();
+  if (s.indexOf('-') !== -1) {
+    var parts = s.split('-');
+    if (parts.length >= 3) return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2].substring(0, 2), 10));
+  } else if (s.indexOf('.') !== -1) {
+    var parts = s.split('.');
+    if (parts.length === 3) return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+  }
+  return null;
+}
+
 function addDelivery(deliveryData) {
   var ss = getSpreadsheet();
   if (!ss) {
@@ -763,34 +777,91 @@ function addDelivery(deliveryData) {
   }
   var sheet = ss.getSheetByName('Доставки');
 
-  // Server-side duplicate prevention check (same order_num & date within recent rows)
+  // 1. Server-side duplicate prevention check (checks ALL active rows for same order_num on the target date)
   if (deliveryData && (deliveryData.order_num || deliveryData.order_number)) {
-    var rawOrderNum = deliveryData.order_num || deliveryData.order_number || '';
-    var searchOrder = String(rawOrderNum || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim();
+    var rawOrderNum = String(deliveryData.order_num || deliveryData.order_number || '').trim();
+    var searchOrder = rawOrderNum.replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ]/g, '').toLowerCase().trim();
+    var inputDate = String(deliveryData.date || '').trim();
+    
     if (searchOrder.length > 0) {
       var dataVals = sheet.getDataRange().getValues();
-      var h = dataVals[0];
-      var orderIdx = h.indexOf('Номер_замовлення');
-      var dateIdx = h.indexOf('Дата');
-      var idIdx = h.indexOf('ID');
-      if (orderIdx !== -1) {
-        for (var r = dataVals.length - 1; r >= 1 && r >= dataVals.length - 30; r--) {
-          var existingOrderRaw = String(dataVals[r][orderIdx] || '');
-          var existingOrderNorm = existingOrderRaw.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim();
-          var existingDate = dateIdx !== -1 ? String(dataVals[r][dateIdx] || '').trim() : '';
-          var inputDate = String(deliveryData.date || '').trim();
+      if (dataVals.length > 1) {
+        var h = dataVals[0];
+        var orderIdx = h.indexOf('Номер_замовлення');
+        var dateIdx = h.indexOf('Дата');
+        var statusIdx = h.indexOf('Статус');
+        var idIdx = h.indexOf('ID');
 
-          if (existingOrderNorm === searchOrder && (inputDate === '' || existingDate === inputDate)) {
-            var existingId = idIdx !== -1 ? dataVals[r][idIdx] : r;
-            Logger.log("Duplicate prevented in addDelivery for order: " + rawOrderNum);
-            return { status: 'success', id: existingId, duplicate_prevented: true, message: 'Замовлення з таким номером вже існує' };
+        if (orderIdx !== -1) {
+          for (var r = 1; r < dataVals.length; r++) {
+            var rowStatus = statusIdx !== -1 ? String(dataVals[r][statusIdx] || '').trim() : '';
+            if (rowStatus === 'Скасовано') continue;
+
+            var existingOrderRaw = String(dataVals[r][orderIdx] || '').trim();
+            var existingOrderNorm = existingOrderRaw.replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ]/g, '').toLowerCase().trim();
+            var existingDate = dateIdx !== -1 ? String(dataVals[r][dateIdx] || '').trim() : '';
+
+            if (existingOrderNorm === searchOrder && (inputDate === '' || existingDate === inputDate)) {
+              var existingId = idIdx !== -1 ? dataVals[r][idIdx] : r;
+              Logger.log("Duplicate prevented in addDelivery for order: " + rawOrderNum + " on date: " + inputDate);
+              return { 
+                status: 'error', 
+                duplicate_prevented: true, 
+                existingId: existingId,
+                message: 'Замовлення №"' + rawOrderNum + '" на дату ' + (inputDate || 'обрану') + ' вже існує в системі (ID: ' + existingId + ')! Створення дубліката заблоковано.' 
+              };
+            }
           }
         }
       }
     }
   }
 
-  var id = sheet.getLastRow() > 1 ? sheet.getLastRow() : 1; // if empty, start from 1
+  // 2. Atomic Unique ID Generator (strictly monotonic Max(ID) + 1 with ScriptLock)
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+  } catch (e) {
+    Logger.log("Lock acquisition failed: " + e.toString());
+  }
+
+  var id = 1;
+  try {
+    var range = sheet.getDataRange();
+    var values = range.getValues();
+    var headers = values[0];
+    var idCol = headers.indexOf('ID');
+    if (idCol === -1) idCol = headers.indexOf('Код');
+    
+    var maxId = 0;
+    if (idCol !== -1 && values.length > 1) {
+      for (var r = 1; r < values.length; r++) {
+        var valStr = String(values[r][idCol] || '').trim();
+        if (valStr && valStr !== 'undefined' && valStr !== 'NaN' && valStr !== '-') {
+          var num = parseInt(valStr, 10);
+          if (!isNaN(num) && num > maxId) {
+            maxId = num;
+          }
+        }
+      }
+    }
+    
+    var propService = PropertiesService.getScriptProperties();
+    var storedLastId = parseInt(propService.getProperty('LAST_DELIVERY_ID') || '0', 10);
+    if (storedLastId > maxId) {
+      maxId = storedLastId;
+    }
+    
+    id = maxId + 1;
+    propService.setProperty('LAST_DELIVERY_ID', String(id));
+  } catch (errId) {
+    Logger.log("Error determining next ID: " + errId.toString());
+    id = (sheet.getLastRow() > 1 ? sheet.getLastRow() : 1) + 1000;
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch(e) {}
+  }
   
   var headers = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0];
   if (headers.length === 1 && headers[0] === "") {
@@ -1579,10 +1650,8 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
     
     var matchId = idCol !== -1 && String(currentIdRaw).trim() === String(deliveryId).trim();
     var matchOrder = orderCol !== -1 && String(data[i][orderCol]).trim() === String(deliveryId).trim();
-    var matchFallback = idCol !== -1 && String(currentIdRaw).trim() === String(deliveryData.order_num).trim();
-    var matchOrderFallback = orderCol !== -1 && String(data[i][orderCol]).trim() === String(deliveryData.order_num).trim();
     
-    if (matchId || matchOrder || matchFallback || matchOrderFallback) {
+    if (matchId || matchOrder) {
       var rowNum = i + 1;
       
       // Store old values for comparison
@@ -1592,6 +1661,27 @@ function updateDeliveryDetails(deliveryId, deliveryData, userRole) {
       var oldAddress = addressCol !== -1 ? data[i][addressCol] : '';
       var oldOrderNum = orderCol !== -1 ? data[i][orderCol] : '';
       var managerId = managerCol !== -1 ? data[i][managerCol] : '';
+      var statusCol = headers.indexOf('Статус');
+      var oldStatus = statusCol !== -1 ? data[i][statusCol] : '';
+
+      // Block recycling expired old orders (> 7 days) or completed orders to a new date
+      if (dateCol !== -1 && deliveryData.date !== undefined && String(deliveryData.date).trim() !== String(oldDate).trim()) {
+        if (oldStatus === 'Виконано') {
+          return { status: 'error', message: 'Заборонено змінювати дату вже виконаної доставки!' };
+        }
+        var oldDateParsed = parseDateFromStr(oldDate);
+        if (oldDateParsed) {
+          var now = new Date();
+          var diffMs = now.getTime() - oldDateParsed.getTime();
+          var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          if (diffDays > 7) {
+            return { 
+              status: 'error', 
+              message: 'Заборонено переносити замовлення минулих періодів (' + oldDate + ', понад 7 днів тому) на нову дату! Будь ласка, створіть нову картку доставки.' 
+            };
+          }
+        }
+      }
       
       // Update spreadsheet cells safely (only if field is explicitly passed)
       if (carCol !== -1 && deliveryData.driver_id !== undefined) sheet.getRange(rowNum, carCol + 1).setValue(deliveryData.driver_id);

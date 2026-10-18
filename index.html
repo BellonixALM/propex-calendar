@@ -3292,6 +3292,17 @@ body.light-theme .login-error {
     let isEditMode = false;
     let editDeliveryId = null;
     let selectedValidAddress = "";
+    let isSavingDelivery = false;
+    function resetSaveButton() {
+      isSavingDelivery = false;
+      const btn = document.getElementById('save-btn');
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        btn.textContent = "Зберегти доставку";
+      }
+    }
     function parseDateStr(str) {
       if (!str) return null;
       if (str instanceof Date) return str;
@@ -4136,10 +4147,29 @@ body.light-theme .login-error {
       editDeliveryId = currentDetailDelivery['ID'];
       document.getElementById('modal-title').textContent = "Редагувати доставку";
       document.getElementById('delivery-form').reset();
-      const parts = currentDetailDelivery['Дата'].split('.');
+      const parts = (currentDetailDelivery['Дата'] || '').split('.');
       if (parts.length === 3) {
         document.getElementById('form-date').value = `${parts[2]}-${parts[1]}-${parts[0]}`;
       }
+      const oldDateParsed = parseDateStr(currentDetailDelivery['Дата']);
+      let isExpiredOrder = false;
+      if (oldDateParsed) {
+        const diffDays = Math.floor((new Date().getTime() - oldDateParsed.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays > 7) isExpiredOrder = true;
+      }
+      const isCompletedOrder = currentDetailDelivery['Статус'] === 'Виконано';
+      const formDateInput = document.getElementById('form-date');
+      if (formDateInput) {
+        formDateInput.disabled = isExpiredOrder || isCompletedOrder;
+        if (isExpiredOrder) {
+          formDateInput.title = "Заборонено переносити замовлення старше 7 днів на нову дату. Для нової дати створіть нове замовлення.";
+        } else if (isCompletedOrder) {
+          formDateInput.title = "Заборонено змінювати дату виконаного замовлення.";
+        } else {
+          formDateInput.title = "";
+        }
+      }
+      resetSaveButton();
       const timeSelect = document.getElementById('form-time');
       timeSelect.innerHTML = '';
       hours.forEach(h => {
@@ -5071,6 +5101,9 @@ body.light-theme .login-error {
     }
     function closeModal(id) {
       document.getElementById(id).classList.remove('show');
+      if (id === 'delivery-modal' && typeof resetSaveButton === 'function') {
+        resetSaveButton();
+      }
     }
     let selectedInvoiceFiles = []; // Store multiple base64/URL items
 
@@ -5298,6 +5331,12 @@ body.light-theme .login-error {
         timeSelect.appendChild(opt);
       });
       document.getElementById('form-date').value = formatDateISO(state.currentDate);
+      const formDateInput = document.getElementById('form-date');
+      if (formDateInput) {
+        formDateInput.disabled = false;
+        formDateInput.title = "";
+      }
+      resetSaveButton();
       populateDriversDropdown('');
       const driverSelect = document.getElementById('form-driver-select');
       const isManager = user && (user.role === 'manager' || user.role === 'менеджер' || user.role === 'офіс-менеджер' || user.role === 'office_manager');
@@ -5849,6 +5888,17 @@ body.light-theme .login-error {
           .updateDeliveryStatus(deliveryId, newStatus, comment);
     }
     function saveDelivery() {
+      if (isSavingDelivery) return;
+      const saveBtn = document.getElementById('save-btn');
+      if (saveBtn) {
+        if (saveBtn.disabled) return;
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.5';
+        saveBtn.style.pointerEvents = 'none';
+        saveBtn.textContent = "Збереження... ⏳";
+      }
+      isSavingDelivery = true;
+
       const car = document.getElementById('form-car').value;
       const rawDate = document.getElementById('form-date').value;
       const time = document.getElementById('form-time').value;
@@ -5860,18 +5910,64 @@ body.light-theme .login-error {
       const comment = document.getElementById('form-comment').value.trim();
       if (!rawDate || !order_num || !address) {
         alert("Будь ласка, заповніть усі обов'язкові поля (*)");
+        resetSaveButton();
         return;
       }
       
-      // Duplicate order_num protection check (for new delivery creations)
+      const parts = rawDate.split('-');
+      const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
+      const cleanOrder = order_num.replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ]/g, '').toLowerCase().trim();
+
+      // Duplicate order_num protection check (for new delivery creations & edits on the same date)
       if (!isEditMode) {
-        const isDuplicateOrder = (state.deliveries || []).some(d => 
-          String(d['Номер_замовлення'] || '').trim() === order_num &&
-          d['Статус'] !== 'Скасовано'
-        );
+        const isDuplicateOrder = (state.deliveries || []).some(d => {
+          if (d['Статус'] === 'Скасовано') return false;
+          const existingOrder = String(d['Номер_замовлення'] || '').replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ]/g, '').toLowerCase().trim();
+          const existingDate = String(d['Дата'] || '').trim();
+          return cleanOrder.length > 0 && existingOrder === cleanOrder && existingDate === formattedDate;
+        });
         if (isDuplicateOrder) {
-          alert(`Увага! Замовлення з номером "${order_num}" вже існує в системі! Щоб уникнути дублікатів, перевірте список доставок.`);
+          alert(`❌ Помилка: Замовлення з номером "${order_num}" на обрану дату (${formattedDate}) вже існує в системі!\nСтворення дубліката заблоковано.`);
+          resetSaveButton();
           return;
+        }
+      } else if (isEditMode && editDeliveryId) {
+        const isDuplicateOrder = (state.deliveries || []).some(d => {
+          if (String(d['ID']) === String(editDeliveryId)) return false;
+          if (d['Статус'] === 'Скасовано') return false;
+          const existingOrder = String(d['Номер_замовлення'] || '').replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ]/g, '').toLowerCase().trim();
+          const existingDate = String(d['Дата'] || '').trim();
+          return cleanOrder.length > 0 && existingOrder === cleanOrder && existingDate === formattedDate;
+        });
+        if (isDuplicateOrder) {
+          alert(`❌ Помилка: Інше замовлення з номером "${order_num}" на дату ${formattedDate} вже існує в системі!\nЗбереження дубліката заблоковано.`);
+          resetSaveButton();
+          return;
+        }
+      }
+
+      // Blocking recycling of old expired cards (> 7 days) and completed cards in edit mode
+      if (isEditMode && editDeliveryId) {
+        const targetDel = (state.deliveries || []).find(d => String(d['ID']) === String(editDeliveryId));
+        if (targetDel) {
+          const oldDateStr = targetDel['Дата'];
+          if (oldDateStr && oldDateStr !== formattedDate) {
+            const oldDateObj = parseDateStr(oldDateStr);
+            if (oldDateObj) {
+              const now = new Date();
+              const diffDays = Math.floor((now.getTime() - oldDateObj.getTime()) / (1000 * 60 * 60 * 24));
+              if (diffDays > 7) {
+                alert(`⛔ Дія заблокована: заборонено переносити протерміновані замовлення минулих періодів (${oldDateStr}, понад 7 днів тому) на нову дату!\nБудь ласка, створіть нову картку доставки для поточної дати.`);
+                resetSaveButton();
+                return;
+              }
+            }
+            if (targetDel['Статус'] === 'Виконано') {
+              alert("⛔ Дія заблокована: заборонено змінювати дату вже виконаної доставки!");
+              resetSaveButton();
+              return;
+            }
+          }
         }
       }
       
@@ -5885,10 +5981,9 @@ body.light-theme .login-error {
       
       if (!isAllowedException && (!selectedValidAddress || address !== selectedValidAddress)) {
         alert("Будь ласка, почніть вводити адресу та обов'язково оберіть її зі списку підказок (автозаповнення), щоб вона відображалась на карті.");
+        resetSaveButton();
         return;
       }
-      const parts = rawDate.split('-');
-      const formattedDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
       let driverUserId = document.getElementById('form-driver-select') ? document.getElementById('form-driver-select').value.trim() : '';
       if (!car || car === 'unassigned' || car === 'Не призначено' || car === 'Самовивіз' || car === 'Самовивіз Нова Пошта') {
         driverUserId = '';
@@ -5937,6 +6032,7 @@ body.light-theme .login-error {
         );
         if (isOccupied) {
           alert(`Помилка! Цей часовий слот (${time}) для ${window.getCarName(car)} вже зайнятий іншою доставкою за іншою адресою!`);
+          resetSaveButton();
           return;
         }
       }
@@ -6023,13 +6119,6 @@ body.light-theme .login-error {
         });
       }
       deliveryData.checklist_items = preParsedChecklist;
-
-      const saveBtn = document.getElementById('save-btn');
-      if (saveBtn) {
-        if (saveBtn.disabled) return;
-        saveBtn.disabled = true;
-        saveBtn.textContent = "Збереження... ⏳";
-      }
       
       if (isEditMode && editDeliveryId) {
         const targetDel = (state.deliveries || []).find(d => String(d['ID']) === String(editDeliveryId));
@@ -6111,14 +6200,17 @@ body.light-theme .login-error {
         if (targetDel) showDetails(targetDel);
         renderCalendar();
         propexApi.withSuccessHandler(function(response) {
-          document.getElementById('save-btn').disabled = false;
-          document.getElementById('save-btn').textContent = "Зберегти доставку";
+          resetSaveButton();
+          if (response && response.status === 'error') {
+            alert("Помилка: " + (response.message || 'Не вдалося оновити доставку'));
+            return;
+          }
           saveDeliveriesToLocalStorage();
           closeModal('delivery-modal');
           renderCalendar();
         }).withFailureHandler(function(err) {
-          document.getElementById('save-btn').disabled = false;
-          document.getElementById('save-btn').textContent = "Зберегти доставку";
+          resetSaveButton();
+          alert("Помилка збереження: " + (err.message || err));
           saveDeliveriesToLocalStorage();
           closeModal('delivery-modal');
           renderCalendar();
@@ -6153,11 +6245,6 @@ body.light-theme .login-error {
             localStorage.setItem('propex_invoice_overrides', JSON.stringify(overrides));
           } catch(e) {}
         }
-        const saveBtn = document.getElementById('save-btn');
-        if (saveBtn) {
-          saveBtn.disabled = true;
-          saveBtn.textContent = "Збереження...";
-        }
         deliveryData.history = initHistoryStr;
         state.deliveries.push(newDelObj);
         saveDeliveriesToLocalStorage();
@@ -6165,8 +6252,15 @@ body.light-theme .login-error {
         renderCalendar();
 
         propexApi.withSuccessHandler(function(response) {
-          document.getElementById('save-btn').disabled = false;
-          document.getElementById('save-btn').textContent = "Зберегти доставку";
+          resetSaveButton();
+          if (response && response.status === 'error') {
+            alert("Помилка створення доставки: " + (response.message || 'Не вдалося зберегти замовлення'));
+            const idx = state.deliveries.findIndex(d => String(d['ID']) === String(tempId));
+            if (idx !== -1) state.deliveries.splice(idx, 1);
+            saveDeliveriesToLocalStorage();
+            renderCalendar();
+            return;
+          }
           if (response && response.id) {
             newDelObj['ID'] = String(response.id);
             newDelObj['ID_Замовлення'] = String(response.id);
@@ -6181,8 +6275,10 @@ body.light-theme .login-error {
           saveDeliveriesToLocalStorage();
           renderCalendar();
         }).withFailureHandler(function(err) {
-          document.getElementById('save-btn').disabled = false;
-          document.getElementById('save-btn').textContent = "Зберегти доставку";
+          resetSaveButton();
+          alert("Помилка зв'язку з сервером: " + (err.message || err));
+          const idx = state.deliveries.findIndex(d => String(d['ID']) === String(tempId));
+          if (idx !== -1) state.deliveries.splice(idx, 1);
           saveDeliveriesToLocalStorage();
           renderCalendar();
         }).addDelivery(deliveryData);
@@ -6379,6 +6475,29 @@ body.light-theme .login-error {
       const targetCar = newCarId || del['ID_Авто'];
       const targetDate = newDate || formatDateStr(state.currentDate);
       const targetTime = newTime;
+
+      const oldTime = del['Час'];
+      const oldCar = del['ID_Авто'];
+      const oldDate = del['Дата'];
+      const oldAddress = del['Адреса'];
+
+      // Blocking recycling of expired old deliveries (> 7 days) and completed deliveries via drag & drop
+      if (oldDate && targetDate && oldDate !== targetDate) {
+        if (del['Статус'] === 'Виконано') {
+          alert("⛔ Дія заблокована: заборонено змінювати дату вже виконаної доставки!");
+          return;
+        }
+        const oldDateObj = parseDateStr(oldDate);
+        if (oldDateObj) {
+          const now = new Date();
+          const diffDays = Math.floor((now.getTime() - oldDateObj.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays > 7) {
+            alert(`⛔ Дія заблокована: заборонено перетягувати замовлення минулих періодів (${oldDate}, понад 7 днів тому) на нову дату!\nБудь ласка, створіть нову картку доставки.`);
+            return;
+          }
+        }
+      }
+
       const isOccupied = targetCar !== 'Не призначено' && state.deliveries.some(d => 
         d['ID'] != delId && 
         String(d['ID_Авто']) === String(targetCar) && 
@@ -6392,10 +6511,6 @@ body.light-theme .login-error {
         alert(`Цей часовий слот (${targetTime}) для ${window.getCarName(targetCar)} вже зайнятий іншою доставкою за іншою адресою!`);
         return;
       }
-      const oldTime = del['Час'];
-      const oldCar = del['ID_Авто'];
-      const oldDate = del['Дата'];
-      const oldAddress = del['Адреса'];
       
       let newAddress = oldAddress;
       if (String(targetCar) === "Самовивіз" && String(oldCar) !== "Самовивіз") {
