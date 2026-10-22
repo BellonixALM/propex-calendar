@@ -100,10 +100,41 @@ async def process_warehouse_assign(callback: CallbackQuery):
                 except Exception as e:
                     print(f"Error fetching worker name: {e}")
             
-            try:
-                await callback.message.edit_text(callback.message.html_text + f"\n\n✅ <b>Призначено комірника:</b> {worker_name}", parse_mode="HTML")
-            except Exception:
-                await callback.message.answer(f"✅ <b>Призначено комірника:</b> {worker_name}", parse_mode="HTML")
+            work_kb = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="✅ Підтвердити (Зібрано)", callback_data=f"wh_confirm_{delivery_id}")],
+                [InlineKeyboardButton(text="⚠️ Проблема зі збіркою", callback_data=f"wh_problem_{delivery_id}")]
+            ])
+
+            is_self = str(worker_id) == str(callback.from_user.id) or worker_id == "general"
+            if is_self:
+                try:
+                    await callback.message.edit_text(
+                        callback.message.html_text + f"\n\n✅ <b>Призначено:</b> {worker_name}\n\nКоли замовлення буде зібране, натисніть кнопку нижче:",
+                        reply_markup=work_kb,
+                        parse_mode="HTML"
+                    )
+                except Exception:
+                    await callback.message.answer(
+                        f"✅ <b>Призначено комірника:</b> {worker_name}\n\nКоли замовлення буде зібране, натисніть кнопку нижче:",
+                        reply_markup=work_kb,
+                        parse_mode="HTML"
+                    )
+            else:
+                try:
+                    await callback.message.edit_text(callback.message.html_text + f"\n\n✅ <b>Призначено комірника:</b> {worker_name}", parse_mode="HTML")
+                except Exception:
+                    await callback.message.answer(f"✅ <b>Призначено комірника:</b> {worker_name}", parse_mode="HTML")
+                
+                try:
+                    if str(worker_id).isdigit():
+                        await callback.bot.send_message(
+                            chat_id=int(worker_id),
+                            text=f"📦 <b>Вам призначено збірку замовлення (ID: {delivery_id})</b>\n\nНатисніть 'Підтвердити', коли воно буде готове, або повідомте про проблему:",
+                            reply_markup=work_kb,
+                            parse_mode="HTML"
+                        )
+                except Exception as ex_send:
+                    print(f"Error forwarding task to worker {worker_id}: {ex_send}")
         else:
             await callback.message.answer("❌ Помилка при призначенні комірника. Спробуйте ще раз.")
     else:

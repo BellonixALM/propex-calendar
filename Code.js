@@ -4,7 +4,7 @@
 var SPREADSHEET_ID = '198_7ofajvsBszwRDm5pnbIrGxHUMphqPumX9pNOPZ6w';
 
 // ТОКЕН ВАШОГО TELEGRAM БОТА ДЛЯ АВТОМАТИЧНИХ СПОВІЩЕНЬ
-var BOT_TOKEN = '8662663470:AAGl8KqJHrmxXVUO3d-j1Rakjgg4W60PTzg';
+var BOT_TOKEN = '8662663470:AAEvkg1XbWPINGRirUuQhyy2eoBMJBo0DN4';
 
 function ensureInvoiceHeaderExists() {
   var ss = getSpreadsheet();
