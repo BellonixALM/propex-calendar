@@ -4907,7 +4907,7 @@ body.light-theme .login-error {
       let statusClass = 'planned';
       const rawStatus = (del['Статус'] || '').trim();
       const lowerStatus = rawStatus.toLowerCase();
-      if (['в процесі', 'завантажено', 'в дорозі', 'на маршруті'].includes(lowerStatus) || lowerStatus.includes('забрано')) statusClass = 'in-progress-supply';
+      if (['в процесі', 'завантажено', 'в дорозі', 'на маршруті'].includes(lowerStatus) || lowerStatus.includes('забрано') || lowerStatus.includes('прийнято')) statusClass = 'in-progress-supply';
       else if (['виконано', 'виконана'].includes(lowerStatus)) statusClass = 'completed';
       else if (lowerStatus.includes('аварія') || lowerStatus.includes('проблема')) statusClass = 'problem';
       else if (lowerStatus.includes('скасовано') || lowerStatus.includes('скасована')) statusClass = 'cancelled';
@@ -4986,9 +4986,19 @@ body.light-theme .login-error {
       
       // Dedicated 4-Stage Icon Logic for Ira Order Supply Workflow:
       if (isIraOrder) {
-        if (whStatus === 'Прийнято на склад' || whStatus === 'Отримано' || statusClass === 'completed' || delStatus === 'Виконано') {
-          // Stage 4: Warehouse finished reception -> Green Checkmark Circle
-          whIcon = '<span class="wh-icon" title="Товар успішно прийнято на склад Propex" style="color:#10b981; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
+        const isSupplyAccepted = (
+          whStatus === 'Прийнято на склад' || 
+          whStatus === 'Отримано' || 
+          delStatus === 'Прийнято на склад' || 
+          delStatus === 'Прийнято' || 
+          delStatus === 'Виконано' || 
+          statusClass === 'completed' ||
+          lowerStatus.includes('прийнято') ||
+          lowerStatus === 'виконано'
+        );
+        if (isSupplyAccepted) {
+          // Stage 4: Warehouse finished reception -> Purple Checkmark Circle
+          whIcon = '<span class="wh-icon" title="Поставка успішно прийнята на склад Propex" style="color:#a855f7; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="check-circle" style="width:20px;height:20px;"></i></span>';
         } else if (whStatus === 'Прийомка в процесі' || whStatus === 'Приймається' || whStatus === 'В процесі збору' || whStatus === 'Збирається') {
           // Stage 3.5: Warehouse started receiving (checked 1st item) -> Amber Box Icon
           whIcon = '<span class="wh-icon" title="Відбувається приймання товару на складі Propex" style="color:#eab308; display:inline-flex; align-items:center; margin-left:6px;"><i data-lucide="package" style="width:20px;height:20px;"></i></span>';
